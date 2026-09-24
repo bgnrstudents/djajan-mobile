@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/app_bottom_navigation.dart';
+import '../order/order_list_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -211,12 +212,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildPesananPage() {
-    return const Center(
-      child: Text(
-        'Halaman Pesanan',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-      ),
-    );
+    return const OrderListScreen();
   }
 
   Widget _buildKeranjangPage() {
