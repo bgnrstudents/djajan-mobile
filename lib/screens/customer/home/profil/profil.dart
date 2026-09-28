@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../config/app_config.dart';
 import '../../../../routes/app_routes.dart';
+
+const String kreonganKeyword = 'kreongan';
 
 class ProfileUser {
   final String name;
@@ -17,6 +20,7 @@ class ProfileFormField {
   final int maxLines;
   final String? helperText;
   final bool requiresKreongan;
+  final bool requiredField;
 
   const ProfileFormField({
     required this.label,
@@ -25,6 +29,7 @@ class ProfileFormField {
     this.maxLines = 1,
     this.helperText,
     this.requiresKreongan = false,
+    this.requiredField = true,
   });
 }
 
@@ -44,6 +49,46 @@ class ProfileMenuItem {
     this.trailing,
     this.onTap,
   });
+}
+
+void showProfileHelp(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Bantuan'),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Butuh bantuan dengan pesanan atau akun Anda?'),
+          SizedBox(height: 16),
+          Text('Admin Djajan', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 4),
+          SelectableText('WhatsApp: 0812-3456-7890'),
+          SelectableText('Layanan: setiap hari, 08.00-20.00'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () async {
+            await Clipboard.setData(
+              const ClipboardData(text: '0812-3456-7890'),
+            );
+            if (!context.mounted) return;
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Nomor admin berhasil disalin')),
+            );
+          },
+          child: const Text('Salin Nomor'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Tutup'),
+        ),
+      ],
+    ),
+  );
 }
 
 class ProfilScreen extends StatefulWidget {
@@ -86,7 +131,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
       initialValue: _address,
       maxLines: 3,
     ),
-    const ProfileFormField(label: 'Patokan', initialValue: ''),
+    const ProfileFormField(
+      label: 'Patokan',
+      initialValue: '',
+      requiredField: false,
+    ),
   ];
 
   List<ProfileFormField> get _businessFields => [
@@ -614,11 +663,14 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
+                  if (widget.fields[index].requiredField &&
+                      (value == null || value.trim().isEmpty)) {
                     return '${widget.fields[index].label} wajib diisi';
                   }
-                  if (widget.fields[index].requiresKreongan &&
-                      !value.toLowerCase().contains('kreongan')) {
+                  if (value != null &&
+                      value.trim().isNotEmpty &&
+                      widget.fields[index].requiresKreongan &&
+                      !value.toLowerCase().contains(kreonganKeyword)) {
                     return 'Alamat usaha harus berada di Kreongan';
                   }
                   return null;

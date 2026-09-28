@@ -23,7 +23,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           if (currentIndex == 3)
             IconButton(
               tooltip: 'Bantuan',
-              onPressed: _showHelp,
+              onPressed: () => showProfileHelp(context),
               icon: const Icon(Icons.help_outline),
             ),
         ],
@@ -59,24 +59,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       default:
         return _buildHomePage();
     }
-  }
-
-  void _showHelp() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Bantuan'),
-        content: const Text(
-          'Hubungi layanan bantuan Djajan untuk mendapatkan bantuan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildHomePage() {
