@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/app_bottom_navigation.dart';
+import '../profile/cart.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -15,7 +16,28 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Djajan')),
+      appBar: currentIndex == 2
+          ? null
+          : AppBar(
+              title: Text(_getAppBarTitle()),
+              actions: [
+                if (currentIndex == 0)
+                  IconButton(
+                    icon: const Badge(
+                      label: Text('2'),
+                      backgroundColor: Color(0xFF006B45),
+                      child: Icon(Icons.shopping_cart_outlined),
+                    ),
+                    tooltip: 'Keranjang',
+                    onPressed: () {
+                      setState(() {
+                        currentIndex = 2;
+                      });
+                    },
+                  ),
+                const SizedBox(width: 8),
+              ],
+            ),
 
       body: _buildCurrentPage(),
 
@@ -28,6 +50,21 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         },
       ),
     );
+  }
+
+  String _getAppBarTitle() {
+    switch (currentIndex) {
+      case 0:
+        return 'Djajan';
+      case 1:
+        return 'Pesanan';
+      case 2:
+        return 'Keranjang';
+      case 3:
+        return 'Profil';
+      default:
+        return 'Djajan';
+    }
   }
 
   Widget _buildCurrentPage() {
@@ -84,7 +121,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           const SizedBox(height: 12),
 
           SizedBox(
-            height: 90,
+            height: 105,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -149,6 +186,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       width: 90,
       margin: const EdgeInsets.only(right: 12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 55,
@@ -163,7 +201,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
           const SizedBox(height: 6),
 
-          Text(label, textAlign: TextAlign.center),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -220,11 +263,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildKeranjangPage() {
-    return const Center(
-      child: Text(
-        'Halaman Keranjang',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-      ),
+    return CartScreen(
+      showAppBar: true,
+      onBack: () {
+        setState(() {
+          currentIndex = 0;
+        });
+      },
     );
   }
 

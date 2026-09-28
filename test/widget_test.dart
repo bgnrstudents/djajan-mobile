@@ -1,30 +1,45 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:djajan_mobile/screens/customer/profile/cart.dart';
+import 'package:djajan_mobile/screens/customer/home/customer_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:djajan_mobile/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const DjajanApp());
+  testWidgets('CartScreen displays all initial design sections', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CartScreen(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Initial visible elements in cart
+    expect(find.text('Pesanan dari 2 UMKM Berbeda'), findsOneWidget);
+    expect(find.text('Kontak & Alamat Penerima'), findsOneWidget);
+    expect(find.text('Muhammad Rizki'), findsOneWidget);
+    expect(find.text('WhatsApp Aktif'), findsOneWidget);
+    expect(find.text('Dapur Bu Minten'), findsOneWidget);
+    expect(find.text('Nasi Kotak Ayam Geprek'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('CustomerHomeScreen has working cart icon button in AppBar', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CustomerHomeScreen(),
+      ),
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Initial screen is Beranda with 'Mau jajan apa hari ini?'
+    expect(find.text('Mau jajan apa hari ini?'), findsOneWidget);
+
+    // Find the cart action button on AppBar
+    final cartIconFinder = find.byIcon(Icons.shopping_cart_outlined).first;
+    expect(cartIconFinder, findsOneWidget);
+
+    // Tap cart icon
+    await tester.tap(cartIconFinder);
+    await tester.pumpAndSettle();
+
+    // Now cart screen should be displayed
+    expect(find.text('Pesanan dari 2 UMKM Berbeda'), findsOneWidget);
+    expect(find.text('Dapur Bu Minten'), findsOneWidget);
   });
 }
