@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/app_bottom_navigation.dart';
+import 'profil/profil.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -15,7 +16,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Djajan')),
+      appBar: AppBar(
+        title: const Text('Djajan'),
+        centerTitle: false,
+        actions: [
+          if (currentIndex == 3)
+            IconButton(
+              tooltip: 'Bantuan',
+              onPressed: _showHelp,
+              icon: const Icon(Icons.help_outline),
+            ),
+        ],
+      ),
 
       body: _buildCurrentPage(),
 
@@ -47,6 +59,24 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       default:
         return _buildHomePage();
     }
+  }
+
+  void _showHelp() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bantuan'),
+        content: const Text(
+          'Hubungi layanan bantuan Djajan untuk mendapatkan bantuan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildHomePage() {
@@ -229,11 +259,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildProfilPage() {
-    return const Center(
-      child: Text(
-        'Halaman Profil',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-      ),
-    );
+    return const ProfilScreen();
   }
 }
