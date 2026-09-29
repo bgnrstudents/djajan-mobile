@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/app_bottom_navigation.dart';
-import 'profil/profil.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -16,18 +15,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Djajan'),
-        centerTitle: false,
-        actions: [
-          if (currentIndex == 3)
-            IconButton(
-              tooltip: 'Bantuan',
-              onPressed: () => showProfileHelp(context),
-              icon: const Icon(Icons.help_outline),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Djajan')),
 
       body: _buildCurrentPage(),
 
@@ -241,6 +229,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildProfilPage() {
-    return const ProfilScreen();
+    return const Center(
+      child: Text(
+        'Halaman Profil',
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 }
