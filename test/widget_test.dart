@@ -1,4 +1,4 @@
-import 'package:djajan_mobile/screens/customer/profile/cart.dart';
+import 'package:djajan_mobile/screens/customer/cart/cart.dart';
 import 'package:djajan_mobile/screens/customer/home/customer_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -6,7 +6,7 @@ import 'routes/app_routes.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/customer/home/customer_home_screen.dart'; 
-import 'screens/customer/profile/cart.dart';
+import 'screens/customer/cart/cart.dart';
 
 void main() {
   runApp(const DjajanApp());

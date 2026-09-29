@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../models/product.dart';
 import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/product_card.dart';
+import '../order/order_list_screen.dart';
 import '../profile/profil.dart';
+import '../cart/cart.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -80,21 +82,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         return _buildHomePage();
 
       case 1:
-        return const Center(child: Text('Halaman Pesanan'));
+        return const OrderListScreen();
 
       case 2:
-        return const Center(child: Text('Halaman Keranjang'));
+        return const CartScreen();
 
       case 3:
-        return _buildProfilPage();
+        return const ProfilScreen();
 
       default:
         return _buildHomePage();
     }
-  }
-
-  Widget _buildProfilPage() {
-    return const ProfilScreen();
   }
 
   Widget _buildHomePage() {
@@ -109,7 +107,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
           _buildHeroBanner(),
 
-          // const SizedBox(height: 20),
           _buildCategorySection(),
 
           const SizedBox(height: 20),
