@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/app_config.dart';
-import 'order_model.dart';
+import '../../../models/order_model.dart';
 
 /// Warna sesuai desain Figma Djajan.
 class OC {
@@ -39,8 +39,18 @@ String rupiah(num v) {
 }
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sept', 'Okt', 'Nov', 'Des',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sept',
+  'Okt',
+  'Nov',
+  'Des',
 ];
 
 String _t(int v) => v.toString().padLeft(2, '0');
@@ -55,13 +65,15 @@ String fmtDateComma(DateTime d) => '${fmtDate(d)}, ${fmtTime(d)}';
 void showToast(BuildContext context, String message, {bool error = false}) {
   final m = ScaffoldMessenger.of(context);
   m.hideCurrentSnackBar();
-  m.showSnackBar(SnackBar(
-    content: Text(message),
-    behavior: SnackBarBehavior.floating,
-    backgroundColor: error ? OC.danger : OC.ink,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    duration: const Duration(seconds: 2),
-  ));
+  m.showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: error ? OC.danger : OC.ink,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      duration: const Duration(seconds: 2),
+    ),
+  );
 }
 
 Future<void> copyText(BuildContext context, String text, String message) async {
@@ -81,7 +93,8 @@ Future<void> openWhatsApp(
   required String message,
 }) async {
   final uri = Uri.parse(
-      'https://wa.me/${_waNumber(phone)}?text=${Uri.encodeComponent(message)}');
+    'https://wa.me/${_waNumber(phone)}?text=${Uri.encodeComponent(message)}',
+  );
   var ok = false;
   try {
     ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -90,7 +103,10 @@ Future<void> openWhatsApp(
   }
   if (!ok && context.mounted) {
     await copyText(
-        context, uri.toString(), 'WhatsApp tidak dapat dibuka. Tautan disalin.');
+      context,
+      uri.toString(),
+      'WhatsApp tidak dapat dibuka. Tautan disalin.',
+    );
   }
 }
 
@@ -119,11 +135,19 @@ class OrderHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 10, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       padding: EdgeInsets.fromLTRB(
-          8, MediaQuery.of(context).padding.top + 6, 16, 10),
+        8,
+        MediaQuery.of(context).padding.top + 6,
+        16,
+        10,
+      ),
       child: Row(
         children: [
           IconButton(
@@ -134,7 +158,7 @@ class OrderHeader extends StatelessWidget {
             'assets/images/logoNoBg.png',
             width: 40,
             height: 40,
-            errorBuilder: (context, error, stackTrace) =>
+            errorBuilder: (_, __, ___) =>
                 const Icon(Icons.eco, color: OC.primary, size: 32),
           ),
           const SizedBox(width: 10),
@@ -142,21 +166,27 @@ class OrderHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: OC.ink,
-                        height: 1.2)),
-                Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: OC.muted)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: OC.ink,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: OC.muted,
+                  ),
+                ),
               ],
             ),
           ),
-         if (trailing case final t?) t,
+          if (trailing != null) trailing!,
         ],
       ),
     );
@@ -184,7 +214,11 @@ class OrderCard extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(color: Color(0x0F1A2340), blurRadius: 14, offset: Offset(0, 3)),
+          BoxShadow(
+            color: Color(0x0F1A2340),
+            blurRadius: 14,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: child,
@@ -214,17 +248,23 @@ class Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = Text(text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w800,
-            color: fg,
-            letterSpacing: 0.3));
+    final label = Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w800,
+        color: fg,
+        letterSpacing: 0.3,
+      ),
+    );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -280,11 +320,11 @@ class NetImage extends StatelessWidget {
   });
 
   Widget _placeholder() => Container(
-        width: width,
-        height: height,
-        color: const Color(0xFFE6E8F3),
-        child: const Icon(Icons.restaurant, color: OC.faint),
-      );
+    width: width,
+    height: height,
+    color: const Color(0xFFE6E8F3),
+    child: const Icon(Icons.restaurant, color: OC.faint),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -297,8 +337,9 @@ class NetImage extends StatelessWidget {
               width: width,
               height: height,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => _placeholder(),
-              loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : _placeholder(),
+              errorBuilder: (_, __, ___) => _placeholder(),
+              loadingBuilder: (c, child, p) =>
+                  p == null ? child : _placeholder(),
             ),
     );
   }
@@ -323,11 +364,16 @@ class TitleRow extends StatelessWidget {
         Icon(icon, color: OC.primary, size: 22),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w700, color: OC.ink)),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: OC.ink,
+            ),
+          ),
         ),
-         if (trailing case final t?) t,
+        if (trailing != null) trailing!,
       ],
     );
   }
@@ -360,11 +406,14 @@ class MoneyRow extends StatelessWidget {
             labelTrailing!,
           ],
           const Spacer(),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: color ?? OC.ink)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: color ?? OC.ink,
+            ),
+          ),
         ],
       ),
     );
@@ -389,23 +438,42 @@ class OrderInput {
   ];
 
   static final List<TextInputFormatter> address = [
-    FilteringTextInputFormatter.allow(RegExp("[$_l" r"0-9 .,/\-\n]")),
+    FilteringTextInputFormatter.allow(
+      RegExp(
+        "[$_l"
+        r"0-9 .,/\-\n]",
+      ),
+    ),
     LengthLimitingTextInputFormatter(150),
   ];
 
   static final List<TextInputFormatter> landmark = [
-    FilteringTextInputFormatter.allow(RegExp("[$_l" r"0-9 .,/\-']")),
+    FilteringTextInputFormatter.allow(
+      RegExp(
+        "[$_l"
+        r"0-9 .,/\-']",
+      ),
+    ),
     LengthLimitingTextInputFormatter(80),
   ];
 
   static final List<TextInputFormatter> purpose = [
-    FilteringTextInputFormatter.allow(RegExp("[$_l" r"0-9 .,/\-'&()]")),
+    FilteringTextInputFormatter.allow(
+      RegExp(
+        "[$_l"
+        r"0-9 .,/\-'&()]",
+      ),
+    ),
     LengthLimitingTextInputFormatter(60),
   ];
 
   static final List<TextInputFormatter> packing = [
     FilteringTextInputFormatter.allow(
-        RegExp("[$_l" r"""0-9 .,!?/\-'&()":;\n]""")),
+      RegExp(
+        "[$_l"
+        r"""0-9 .,!?/\-'&()":;\n]""",
+      ),
+    ),
     LengthLimitingTextInputFormatter(120),
   ];
 }
@@ -432,29 +500,38 @@ Future<Recipient?> showRecipientSheet(
         fillColor: OC.box,
         counterText: '',
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
         errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: OC.danger, width: 1.2)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OC.danger, width: 1.2),
+        ),
         focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: OC.danger, width: 1.5)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OC.danger, width: 1.5),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: OC.primary, width: 1.5)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OC.primary, width: 1.5),
+        ),
       );
 
-  try {
-    return await showModalBottomSheet<Recipient>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) {
+  return await showModalBottomSheet<Recipient>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (ctx) {
         return Padding(
           padding: EdgeInsets.fromLTRB(
-              20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+            20,
+            20,
+            20,
+            MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
           child: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -463,19 +540,25 @@ Future<Recipient?> showRecipientSheet(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Ubah Kontak & Alamat',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: OC.ink)),
+                  const Text(
+                    'Ubah Kontak & Alamat',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: OC.ink,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: name,
                     inputFormatters: OrderInput.name,
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
-                    decoration: deco('Nama penerima', Icons.person_outline,
-                        hint: 'Contoh: Muhammad Rizki'),
+                    decoration: deco(
+                      'Nama penerima',
+                      Icons.person_outline,
+                      hint: 'Contoh: Muhammad Rizki',
+                    ),
                     validator: OrderValidator.name,
                   ),
                   const SizedBox(height: 12),
@@ -484,8 +567,11 @@ Future<Recipient?> showRecipientSheet(
                     inputFormatters: OrderInput.phone,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    decoration: deco('Nomor WhatsApp', Icons.phone_outlined,
-                        hint: '0812-3456-7890 atau +62 812...'),
+                    decoration: deco(
+                      'Nomor WhatsApp',
+                      Icons.phone_outlined,
+                      hint: '0812-3456-7890 atau +62 812...',
+                    ),
                     validator: OrderValidator.phone,
                   ),
                   const SizedBox(height: 12),
@@ -496,8 +582,11 @@ Future<Recipient?> showRecipientSheet(
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 3,
                     minLines: 2,
-                    decoration: deco('Alamat lengkap', Icons.location_on_outlined,
-                        hint: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa ...'),
+                    decoration: deco(
+                      'Alamat lengkap',
+                      Icons.location_on_outlined,
+                      hint: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa ...',
+                    ),
                     validator: OrderValidator.address,
                   ),
                   const SizedBox(height: 12),
@@ -505,8 +594,11 @@ Future<Recipient?> showRecipientSheet(
                     controller: note,
                     inputFormatters: OrderInput.landmark,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: deco('Patokan (opsional)', Icons.home_outlined,
-                        hint: 'Rumah pagar hijau samping pos ronda'),
+                    decoration: deco(
+                      'Patokan (opsional)',
+                      Icons.home_outlined,
+                      hint: 'Rumah pagar hijau samping pos ronda',
+                    ),
                     validator: OrderValidator.landmark,
                   ),
                   const SizedBox(height: 18),
@@ -517,22 +609,27 @@ Future<Recipient?> showRecipientSheet(
                       style: FilledButton.styleFrom(
                         backgroundColor: OC.primary,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: () {
                         if (!formKey.currentState!.validate()) return;
                         Navigator.pop(
                           ctx,
-                          OrderValidator.normalizeRecipient(Recipient(
-                            name: name.text,
-                            phone: phone.text,
-                            address: address.text,
-                            addressNote: note.text,
-                          )),
+                          OrderValidator.normalizeRecipient(
+                            Recipient(
+                              name: name.text,
+                              phone: phone.text,
+                              address: address.text,
+                              addressNote: note.text,
+                            ),
+                          ),
                         );
                       },
-                      child: const Text('Simpan',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: const Text(
+                        'Simpan',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -540,12 +637,6 @@ Future<Recipient?> showRecipientSheet(
             ),
           ),
         );
-      },
-    );
-  } finally {
-    name.dispose();
-    phone.dispose();
-    address.dispose();
-    note.dispose();
-  }
+    },
+  );
 }
