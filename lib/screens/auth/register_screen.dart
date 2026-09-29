@@ -292,7 +292,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Pendaftaran berhasil! Silakan masuk dengan akun Anda.'),
+                                  backgroundColor: primaryGreen,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              Navigator.pop(context);
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryGreen,
                             shape: RoundedRectangleBorder(
@@ -308,11 +319,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               color: Colors.white,
                             ),
                           ),
-                        ),
+                        )
                       ),
                     ],
-                  ),
                 ),
+              ),
               ),
 
               const SizedBox(height: 20),

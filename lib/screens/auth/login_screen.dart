@@ -231,7 +231,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Berhasil masuk! Selamat datang di Djajan.'),
+                                  backgroundColor: primaryGreen,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              Navigator.pushReplacementNamed(context, '/customerHome');
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryGreen,
                             shape: RoundedRectangleBorder(
@@ -257,8 +268,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
-                  ),
                 ),
+              ),
               ),
 
               const SizedBox(height: 20),
