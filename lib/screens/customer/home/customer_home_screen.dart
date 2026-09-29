@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/app_bottom_navigation.dart';
-import 'profil/profil.dart';
+import '../../profile/profil.dart';
 import '../profile/cart.dart';
 
 class CustomerHomeScreen extends StatefulWidget {

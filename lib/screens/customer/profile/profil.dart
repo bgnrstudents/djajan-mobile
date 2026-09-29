@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../config/app_config.dart';
-import '../../../../routes/app_routes.dart';
+import '../../../config/app_config.dart';
+import '../../../routes/app_routes.dart';
 
 const String kreonganKeyword = 'kreongan';
 
