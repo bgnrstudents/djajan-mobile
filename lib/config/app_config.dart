@@ -7,4 +7,4 @@ class AppConfig {
   static const Color backgroundColor = Color(0xFFFFFFFF);
   static const Color textColor = Color(0xFF1F1F1F);
   static const Color secondaryTextColor = Color(0xFF666666);
-}
+} 
