@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'order_model.dart';
 import 'order_service.dart';
 import 'order_payment_screen.dart';
+import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
 
 /// Tahap 1 alur pesanan: Checkout (rincian per UMKM, pengantaran, metode bayar).
@@ -20,7 +21,7 @@ class OrderCheckoutScreen extends StatefulWidget {
     required this.cartLines,
     this.initialPurpose,
     this.initialNote,
-    this.initialMethod = PaymentMethod.qris,
+    this.initialMethod = PaymentMethod.midtrans,
   });
 
   @override
@@ -166,7 +167,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       // Selalu 3 halaman: Checkout -> Proses Checkout -> Status Pesanan.
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (_) => OrderPaymentScreen(orderId: order.id)),
+          builder: (_) => _method == PaymentMethod.midtrans
+              ? MidtransPaymentScreen(orderId: order.id)
+              : OrderPaymentScreen(orderId: order.id),
+        ),
       );
     } on OrderException catch (e) {
       if (mounted) showToast(context, e.message, error: true);
@@ -641,10 +645,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _methodTile(
-                    method: PaymentMethod.qris,
-                    icon: Icons.qr_code_2_rounded,
-                    title: 'QRIS Warga',
-                    subtitle: 'BCA, Mandiri, Dana, GoPay',
+                    method: PaymentMethod.midtrans,
+                    icon: Icons.bolt_rounded,
+                    title: 'Bayar Sekarang',
+                    subtitle: 'QRIS, GoPay, VA',
                   ),
                 ),
               ],

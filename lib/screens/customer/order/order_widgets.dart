@@ -158,7 +158,7 @@ class OrderHeader extends StatelessWidget {
             'assets/images/logoNoBg.png',
             width: 40,
             height: 40,
-            errorBuilder: (_, __, ___) =>
+            errorBuilder: (_, _, _) =>
                 const Icon(Icons.eco, color: OC.primary, size: 32),
           ),
           const SizedBox(width: 10),
@@ -186,7 +186,7 @@ class OrderHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );
@@ -337,7 +337,7 @@ class NetImage extends StatelessWidget {
               width: width,
               height: height,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _placeholder(),
+              errorBuilder: (_, _, _) => _placeholder(),
               loadingBuilder: (c, child, p) =>
                   p == null ? child : _placeholder(),
             ),
@@ -373,7 +373,7 @@ class TitleRow extends StatelessWidget {
             ),
           ),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }

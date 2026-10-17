@@ -13,7 +13,7 @@ enum OrderType { instant, preOrder }
 
 enum DeliveryMethod { courier, pickup }
 
-enum PaymentMethod { cod, qris }
+enum PaymentMethod { cod, midtrans, qris, manualTransfer }
 
 extension OrderStatusX on OrderStatus {
   String get label {
@@ -76,6 +76,38 @@ class CartLine {
   });
 
   double get subtotal => quantity * price;
+
+  CartLine copyWith({
+    String? productId,
+    String? productName,
+    String? variant,
+    String? unit,
+    String? imageUrl,
+    int? quantity,
+    double? price,
+    OrderType? type,
+    String? umkmId,
+    String? umkmName,
+    String? umkmType,
+    double? courierFee,
+    String? pickupLocation,
+  }) {
+    return CartLine(
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      variant: variant ?? this.variant,
+      unit: unit ?? this.unit,
+      imageUrl: imageUrl ?? this.imageUrl,
+      quantity: quantity ?? this.quantity,
+      price: price ?? this.price,
+      type: type ?? this.type,
+      umkmId: umkmId ?? this.umkmId,
+      umkmName: umkmName ?? this.umkmName,
+      umkmType: umkmType ?? this.umkmType,
+      courierFee: courierFee ?? this.courierFee,
+      pickupLocation: pickupLocation ?? this.pickupLocation,
+    );
+  }
 }
 
 class OrderItem {
@@ -186,6 +218,8 @@ class Order {
   final OrderStatus status;
   final PaymentAccount account;
   final DateTime? paymentDeadline;
+  final String? snapToken;
+  final String? paymentUrl;
   final Uint8List? proofBytes;
   final String? proofName;
   final DateTime? proofUploadedAt;
@@ -202,6 +236,8 @@ class Order {
     required this.status,
     required this.account,
     this.paymentDeadline,
+    this.snapToken,
+    this.paymentUrl,
     this.proofBytes,
     this.proofName,
     this.proofUploadedAt,
@@ -223,6 +259,8 @@ class Order {
     Recipient? recipient,
     OrderStatus? status,
     DateTime? paymentDeadline,
+    String? snapToken,
+    String? paymentUrl,
     Uint8List? proofBytes,
     String? proofName,
     DateTime? proofUploadedAt,
@@ -240,6 +278,8 @@ class Order {
       status: status ?? this.status,
       account: account,
       paymentDeadline: paymentDeadline ?? this.paymentDeadline,
+      snapToken: snapToken ?? this.snapToken,
+      paymentUrl: paymentUrl ?? this.paymentUrl,
       proofBytes: clearProof ? null : (proofBytes ?? this.proofBytes),
       proofName: clearProof ? null : (proofName ?? this.proofName),
       proofUploadedAt:

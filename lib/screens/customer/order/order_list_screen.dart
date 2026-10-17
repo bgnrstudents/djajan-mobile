@@ -5,6 +5,7 @@ import 'order_service.dart';
 import 'order_checkout_screen.dart';
 import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
+import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
 
 /// Tab "Pesanan" pada navigasi bawah: daftar pesanan + filter.
@@ -284,7 +285,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => OrderPaymentScreen(orderId: o.id)),
+                          builder: (_) => o.paymentMethod == PaymentMethod.midtrans
+                              ? MidtransPaymentScreen(orderId: o.id)
+                              : OrderPaymentScreen(orderId: o.id),
+                        ),
                       ),
                       child: Text(
                           o.paymentMethod == PaymentMethod.cod

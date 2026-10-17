@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'order_model.dart';
 import 'order_service.dart';
 import 'order_payment_screen.dart';
+import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
 
 /// Tahap 3 alur pesanan: Status Pesanan (timeline, rincian, aksi).
@@ -377,10 +378,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             backgroundColor: OC.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => OrderPaymentScreen(orderId: o.id)),
-          ),
+          onPressed: () {
+            if (o.paymentMethod == PaymentMethod.midtrans) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MidtransPaymentScreen(orderId: o.id),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrderPaymentScreen(orderId: o.id),
+                ),
+              );
+            }
+          },
           icon: const Icon(Icons.upload_file_rounded, size: 18),
           label: Text(cod ? 'Konfirmasi Pesanan' : 'Bayar Sekarang',
               style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -578,6 +592,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     String s3;
     if (o.paymentMethod == PaymentMethod.cod) {
       s3 = 'Bayar tunai ke kurir warga saat pesanan tiba.';
+    } else if (o.paymentMethod == PaymentMethod.midtrans) {
+      s3 = o.status == OrderStatus.waitingPayment
+          ? 'Selesaikan pembayaran instan via Midtrans (QRIS, e-wallet, atau VA).'
+          : 'Pembayaran instan via Midtrans telah terverifikasi otomatis.';
     } else if (o.hasProof) {
       s3 = prog.done >= 3
           ? 'Bukti transfer terverifikasi oleh bendahara UMKM desa.'
@@ -1221,6 +1239,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     String note;
     if (o.paymentMethod == PaymentMethod.cod) {
       note = 'Dibayar tunai saat pesanan tiba';
+    } else if (o.paymentMethod == PaymentMethod.midtrans) {
+      note = o.status == OrderStatus.waitingPayment
+          ? 'Menunggu pembayaran Anda'
+          : 'Pembayaran instan terverifikasi';
     } else if (o.status == OrderStatus.waitingPayment) {
       note = 'Menunggu pembayaran Anda';
     } else if (o.hasProof) {

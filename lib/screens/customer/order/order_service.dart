@@ -1,7 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 
+import '../notification/notification_service.dart';
 import 'order_model.dart';
 
 class OrderService extends ChangeNotifier {
@@ -131,6 +130,15 @@ class OrderService extends ChangeNotifier {
 
     _orders.add(order);
     notifyListeners();
+
+    _notify(
+      title: isCod ? 'Pesanan COD Dibuat' : 'Menunggu Pembayaran',
+      message: isCod
+          ? 'Pesanan di ${_vendorName(order)} berhasil dibuat. UMKM akan mengonfirmasi pesanan Anda.'
+          : 'Pesanan di ${_vendorName(order)} berhasil dibuat. Selesaikan pembayaran sebelum batas waktu.',
+      type: isCod ? AppNotificationType.order : AppNotificationType.payment,
+      orderId: order.id,
+    );
     return order;
   }
 
@@ -153,12 +161,21 @@ class OrderService extends ChangeNotifier {
 
     await Future.delayed(const Duration(milliseconds: 900));
 
-    return _replace(order.copyWith(
+    final updated = _replace(order.copyWith(
       proofBytes: bytes,
       proofName: fileName,
       proofUploadedAt: DateTime.now(),
       status: OrderStatus.reviewing,
     ));
+
+    _notify(
+      title: 'Bukti Pembayaran Terkirim',
+      message:
+          'Bukti pembayaran untuk ${_vendorName(updated)} sedang diperiksa UMKM.',
+      type: AppNotificationType.payment,
+      orderId: updated.id,
+    );
+    return updated;
   }
 
   Future<Order> confirmCodOrder(String orderId) async {
@@ -170,7 +187,30 @@ class OrderService extends ChangeNotifier {
       throw const OrderException('Pesanan sudah dikonfirmasi.');
     }
     await Future.delayed(const Duration(milliseconds: 600));
-    return _replace(order.copyWith(status: OrderStatus.reviewing));
+    final updated = _replace(order.copyWith(status: OrderStatus.reviewing));
+    _notify(
+      title: 'Pesanan COD Dikonfirmasi',
+      message: 'Pesanan COD di ${_vendorName(updated)} siap diproses.',
+      orderId: updated.id,
+    );
+    return updated;
+  }
+
+  Future<Order> markAsPaidViaMidtrans(String orderId) async {
+    final order = _require(orderId);
+    if (order.status != OrderStatus.waitingPayment) {
+      throw const OrderException('Pesanan ini sudah dibayar atau dalam proses.');
+    }
+    await Future.delayed(const Duration(milliseconds: 600));
+    final updated = _replace(order.copyWith(status: OrderStatus.reviewing));
+    _notify(
+      title: 'Pembayaran Berhasil',
+      message:
+          'Pembayaran pesanan ${updated.refId} berhasil. UMKM akan segera memproses.',
+      type: AppNotificationType.payment,
+      orderId: updated.id,
+    );
+    return updated;
   }
 
   Future<Order> updateRecipient(String orderId, Recipient recipient) async {
@@ -186,20 +226,29 @@ class OrderService extends ChangeNotifier {
 
   Future<Order> advanceStatus(String orderId) async {
     final order = _require(orderId);
+    final OrderStatus next;
     switch (order.status) {
+      case OrderStatus.reviewing:
+        next = OrderStatus.processing;
+      case OrderStatus.processing:
+        next = OrderStatus.delivering;
+      case OrderStatus.delivering:
+        next = OrderStatus.completed;
       case OrderStatus.waitingPayment:
         throw const OrderException(
             'Unggah bukti transfer terlebih dahulu.');
-      case OrderStatus.reviewing:
-        return _replace(order.copyWith(status: OrderStatus.processing));
-      case OrderStatus.processing:
-        return _replace(order.copyWith(status: OrderStatus.delivering));
-      case OrderStatus.delivering:
-        return _replace(order.copyWith(status: OrderStatus.completed));
       case OrderStatus.completed:
       case OrderStatus.cancelled:
         throw const OrderException('Pesanan sudah berakhir.');
     }
+
+    final updated = _replace(order.copyWith(status: next));
+    _notify(
+      title: _statusTitle(next),
+      message: _statusMessage(updated),
+      orderId: updated.id,
+    );
+    return updated;
   }
 
   Future<Order> cancelOrder(String orderId) async {
@@ -208,7 +257,13 @@ class OrderService extends ChangeNotifier {
       throw const OrderException(
           'Pesanan yang sudah diproses tidak dapat dibatalkan.');
     }
-    return _replace(order.copyWith(status: OrderStatus.cancelled));
+    final updated = _replace(order.copyWith(status: OrderStatus.cancelled));
+    _notify(
+      title: 'Pesanan Dibatalkan',
+      message: 'Pesanan ${updated.refId} telah dibatalkan.',
+      orderId: updated.id,
+    );
+    return updated;
   }
 
   Future<void> deleteOrder(String orderId) async {
@@ -235,6 +290,54 @@ class OrderService extends ChangeNotifier {
   }
 
   static String _two(int v) => v.toString().padLeft(2, '0');
+
+  // -------------------------------------------------------- Notifikasi
+  void _notify({
+    required String title,
+    required String message,
+    required String orderId,
+    AppNotificationType type = AppNotificationType.order,
+  }) {
+    NotificationService().push(
+      title: title,
+      message: message,
+      type: type,
+      orderId: orderId,
+    );
+  }
+
+  static String _vendorName(Order order) =>
+      order.vendors.isEmpty ? 'UMKM' : order.vendors.first.umkmName;
+
+  static String _statusTitle(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.processing:
+        return 'Pesanan Sedang Diproses';
+      case OrderStatus.delivering:
+        return 'Pesanan Sedang Dikirim';
+      case OrderStatus.completed:
+        return 'Pesanan Selesai';
+      case OrderStatus.waitingPayment:
+      case OrderStatus.reviewing:
+      case OrderStatus.cancelled:
+        return 'Update Pesanan';
+    }
+  }
+
+  static String _statusMessage(Order order) {
+    switch (order.status) {
+      case OrderStatus.processing:
+        return '${_vendorName(order)} sedang menyiapkan pesanan ${order.refId}.';
+      case OrderStatus.delivering:
+        return 'Kurir warga sedang mengantar pesanan ${order.refId}.';
+      case OrderStatus.completed:
+        return 'Pesanan ${order.refId} sudah selesai. Jangan lupa beri ulasan!';
+      case OrderStatus.waitingPayment:
+      case OrderStatus.reviewing:
+      case OrderStatus.cancelled:
+        return 'Status pesanan ${order.refId} diperbarui.';
+    }
+  }
 
   static const PaymentAccount _defaultAccount = PaymentAccount(
     bank: 'BRI',

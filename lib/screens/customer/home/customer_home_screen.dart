@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/sample_catalog.dart';
 import '../../../models/product.dart';
+import '../../../models/umkm.dart';
 import '../../../widgets/app_bottom_navigation.dart';
 import '../../../widgets/product_card.dart';
+import '../../../widgets/umkm_card.dart';
+import '../catalog/catalog_list_screen.dart';
+import '../notification/notification_screen.dart';
+import '../notification/notification_service.dart';
 import '../order/order_list_screen.dart';
 import '../profile/profil.dart';
 import '../cart/cart.dart';
+import '../cart/cart_service.dart';
+import '../product/product_detail_screen.dart';
+import '../umkm/umkm_storefront_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -20,40 +29,26 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   String selectedOrderType = 'Semua';
   final TextEditingController searchController = TextEditingController();
 
-  final List<Product> products = [
-    Product(
-      name: 'Nasi Kotak Ayam Geprek',
-      umkm: 'Bu Minten',
-      price: 15000,
-      rating: 4.8,
-      category: 'Makanan',
-      orderType: 'Pre-Order',
-    ),
-    Product(
-      name: 'Es Teh Solo Original',
-      umkm: 'Toko Pak Budi',
-      price: 5000,
-      rating: 4.9,
-      category: 'Minuman',
-      orderType: 'Pesan Sekarang',
-    ),
-    Product(
-      name: 'Brownies Lumer',
-      umkm: 'Dapur Mba Rina',
-      price: 25000,
-      rating: 4.7,
-      category: 'Jajanan',
-      orderType: 'Pre-Order',
-    ),
-    Product(
-      name: 'Gorengan Hangat Combo',
-      umkm: 'Warung Bu Siti',
-      price: 10000,
-      rating: 4.8,
-      category: 'Jajanan',
-      orderType: 'Pesan Sekarang',
-    ),
-  ];
+  // Sumber data katalog bersama (beranda, katalog, storefront).
+  final List<Product> products = SampleCatalog.products;
+  final List<Umkm> umkms = SampleCatalog.umkms;
+
+  void _openStorefront(Umkm umkm) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)),
+    );
+  }
+
+  void _openCatalog({String category = 'Semua', String query = ''}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CatalogListScreen(
+          initialCategory: category,
+          initialQuery: query,
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -85,7 +80,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         return const OrderListScreen();
 
       case 2:
-        return const CartScreen();
+        return CartScreen(
+          onExploreProducts: () {
+            setState(() {
+              currentIndex = 0;
+            });
+          },
+        );
 
       case 3:
         return const ProfilScreen();
@@ -109,12 +110,70 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
           _buildCategorySection(),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
+
+          _buildUmkmSection(),
+
+          const SizedBox(height: 22),
 
           _buildProductSection(),
           const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+
+  // ---------------------------------------------------------- UMKM Section
+  Widget _buildUmkmSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'UMKM di Desa',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Warung & dapur warga sekitar Anda',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => _openCatalog(),
+                child: const Text('Lihat Semua'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 196,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            scrollDirection: Axis.horizontal,
+            itemCount: umkms.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final umkm = umkms[index];
+              return UmkmCard(
+                umkm: umkm,
+                productCount: SampleCatalog.productsOf(umkm.id).length,
+                onTap: () => _openStorefront(umkm),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -125,7 +184,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Lokasi Anda',
@@ -168,28 +227,53 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ),
 
-          IconButton(
-            onPressed: () {},
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications_none, size: 27),
-
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1),
-                    ),
+          AnimatedBuilder(
+            animation: NotificationService(),
+            builder: (context, _) {
+              final unread = NotificationService().unreadCount;
+              return IconButton(
+                tooltip: 'Notifikasi',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationScreen(),
                   ),
                 ),
-              ],
-            ),
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_none, size: 27),
+
+                    if (unread > 0)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(9),
+                            border: Border.all(color: Colors.white, width: 1.2),
+                          ),
+                          child: Text(
+                            unread > 9 ? '9+' : '$unread',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -204,12 +288,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         onChanged: (value) {
           setState(() {});
         },
+        onSubmitted: (value) => _openCatalog(query: value.trim()),
+        textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: 'Cari makanan, jajanan, atau UMKM...',
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
           prefixIcon: const Icon(Icons.search, size: 22),
           suffixIcon: IconButton(
-            onPressed: () {},
+            tooltip: 'Cari & filter lanjutan',
+            onPressed: () => _openCatalog(query: searchController.text.trim()),
             icon: const Icon(Icons.tune, size: 21),
           ),
           filled: true,
@@ -325,7 +412,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 ),
               ),
 
-              TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
+              TextButton(
+                onPressed: () => _openCatalog(category: selectedCategory),
+                child: const Text('Lihat Semua'),
+              ),
             ],
           ),
         ),
@@ -503,14 +593,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                mainAxisExtent: 220,
+                mainAxisExtent: 235,
               ),
               itemBuilder: (context, index) {
                 final product = filteredProducts[index];
+                final umkm = SampleCatalog.umkmById(product.umkmId);
 
                 return ProductCard(
                   product: product,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailScreen(product: product),
+                      ),
+                    );
+                  },
+                  onUmkmTap: umkm == null ? null : () => _openStorefront(umkm),
                   onAddToCart: () {
+                    CartService().addProduct(product);
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -545,7 +646,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           return Expanded(
             child: GestureDetector(
               onTap: () {
-                setState(() {
+                setState(() {   
                   selectedOrderType = type;
                 });
               },

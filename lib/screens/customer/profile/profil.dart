@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../../../config/app_config.dart';
 import '../../../routes/app_routes.dart';
+import '../favorite/favorite_screen.dart';
+import '../favorite/favorite_service.dart';
 
 const String kreonganKeyword = 'kreongan';
 
@@ -21,6 +23,7 @@ class ProfileFormField {
   final String? helperText;
   final bool requiresKreongan;
   final bool requiredField;
+  final IconData? prefixIcon;
 
   const ProfileFormField({
     required this.label,
@@ -30,6 +33,7 @@ class ProfileFormField {
     this.helperText,
     this.requiresKreongan = false,
     this.requiredField = true,
+    this.prefixIcon,
   });
 }
 
@@ -52,37 +56,106 @@ class ProfileMenuItem {
 }
 
 void showProfileHelp(BuildContext context) {
+  const primaryColor = AppConfig.primaryColor;
+  const inkColor = Color(0xFF1E293B);
+  const mutedColor = Color(0xFF64748B);
+
   showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Bantuan'),
-      content: const Column(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      icon: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF3EC),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(
+          Icons.headset_mic_outlined,
+          color: primaryColor,
+          size: 32,
+        ),
+      ),
+      title: const Text(
+        'Pusat Bantuan',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: inkColor,
+        ),
+      ),
+      content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Butuh bantuan dengan pesanan atau akun Anda?'),
-          SizedBox(height: 16),
-          Text('Admin Djajan', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 4),
-          SelectableText('WhatsApp: 0812-3456-7890'),
-          SelectableText('Layanan: setiap hari, 08.00-20.00'),
+          const Text(
+            'Butuh bantuan dengan pesanan atau akun? Hubungi Admin Djajan via WhatsApp.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: mutedColor,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.phone, size: 16, color: primaryColor),
+                    SizedBox(width: 8),
+                    SelectableText(
+                      '0812-3456-7890',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: inkColor,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Layanan: Setiap hari, 08.00 - 20.00 WIB',
+                  style: TextStyle(fontSize: 12, color: mutedColor),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
+      actionsAlignment: MainAxisAlignment.center,
       actions: [
         TextButton(
           onPressed: () async {
             await Clipboard.setData(
-              const ClipboardData(text: '0812-3456-7890'),
+              const ClipboardData(text: '081234567890'),
             );
             if (!context.mounted) return;
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Nomor admin berhasil disalin')),
+              const SnackBar(
+                content: Text('Nomor admin berhasil disalin'),
+                backgroundColor: primaryColor,
+                behavior: SnackBarBehavior.floating,
+              ),
             );
           },
           child: const Text('Salin Nomor'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: () => Navigator.pop(context),
           child: const Text('Tutup'),
         ),
@@ -111,40 +184,45 @@ class _ProfilScreenState extends State<ProfilScreen> {
   );
 
   List<ProfileFormField> get _accountFields => [
-    ProfileFormField(label: 'Nama Lengkap', initialValue: _user.name),
+    ProfileFormField(label: 'Nama Lengkap', initialValue: _user.name, prefixIcon: Icons.person_outline),
     ProfileFormField(
       label: 'Nomor Handphone',
       initialValue: _user.phoneNumber,
       keyboardType: TextInputType.phone,
+      prefixIcon: Icons.phone_outlined,
     ),
     const ProfileFormField(
       label: 'Email',
       initialValue: 'della@email.com',
       keyboardType: TextInputType.emailAddress,
+      prefixIcon: Icons.email_outlined,
     ),
   ];
 
   List<ProfileFormField> get _addressFields => [
-    ProfileFormField(label: 'Label Alamat', initialValue: _addressLabel),
+    ProfileFormField(label: 'Label Alamat', initialValue: _addressLabel, prefixIcon: Icons.label_outline),
     ProfileFormField(
       label: 'Alamat Lengkap',
       initialValue: _address,
       maxLines: 3,
+      prefixIcon: Icons.location_on_outlined,
     ),
     const ProfileFormField(
       label: 'Patokan',
       initialValue: '',
       requiredField: false,
+      prefixIcon: Icons.near_me_outlined,
     ),
   ];
 
   List<ProfileFormField> get _businessFields => [
-    ProfileFormField(label: 'Nama Usaha', initialValue: _businessName ?? ''),
-    ProfileFormField(label: 'Nama Pemilik', initialValue: _user.name),
+    ProfileFormField(label: 'Nama Usaha', initialValue: _businessName ?? '', prefixIcon: Icons.storefront_outlined),
+    ProfileFormField(label: 'Nama Pemilik', initialValue: _user.name, prefixIcon: Icons.badge_outlined),
     ProfileFormField(
       label: 'Nomor Handphone',
       initialValue: _user.phoneNumber,
       keyboardType: TextInputType.phone,
+      prefixIcon: Icons.phone_outlined,
     ),
     ProfileFormField(
       label: 'Alamat Usaha di Kreongan',
@@ -152,10 +230,18 @@ class _ProfilScreenState extends State<ProfilScreen> {
       maxLines: 3,
       helperText: 'Pendaftaran usaha hanya untuk warga Kreongan.',
       requiresKreongan: true,
+      prefixIcon: Icons.location_on_outlined,
     ),
   ];
 
   List<ProfileMenuItem> get _menuItems => [
+    ProfileMenuItem(
+      icon: Icons.favorite_border,
+      title: 'Favorit Saya',
+      subtitle: _favoriteSubtitle,
+      iconColor: const Color(0xFFE11D48),
+      onTap: _openFavorites,
+    ),
     ProfileMenuItem(
       icon: Icons.location_on_outlined,
       title: 'Daftar Alamat Pengiriman',
@@ -186,10 +272,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
       title: 'Tentang Djajan',
       subtitle: 'Pemberdayaan warung & petani desa',
       iconColor: const Color(0xFF7094B6),
-      onTap: () => _openSimplePage(
-        title: 'Tentang Djajan',
-        message: 'Djajan membantu tetangga menemukan produk lokal.',
-      ),
+      onTap: _openAboutDjajan,
     ),
     ProfileMenuItem(
       icon: Icons.logout,
@@ -200,38 +283,56 @@ class _ProfilScreenState extends State<ProfilScreen> {
     ),
   ];
 
+  String get _favoriteSubtitle {
+    final favorites = FavoriteService();
+    if (favorites.isEmpty) {
+      return 'Simpan produk & warung langganan Anda';
+    }
+    return '${favorites.productCount} produk • ${favorites.umkmCount} UMKM disimpan';
+  }
+
+  void _openFavorites() {
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const FavoriteScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Profil Saya',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Kelola akun dan preferensi belanja lokal Anda',
-            style: TextStyle(color: AppConfig.secondaryTextColor),
-          ),
-          const SizedBox(height: 16),
-          _ProfileHeader(
-            user: _user,
-            businessName: _businessName,
-            onEdit: _editProfile,
-          ),
-          const SizedBox(height: 14),
-          _PromoBanner(
-            businessName: _businessName,
-            onTap: _openBusinessRegistration,
-          ),
-          const SizedBox(height: 14),
-          _ProfileMenu(items: _menuItems),
-          const SizedBox(height: 20),
-          const _SafetyNotice(),
-        ],
+    return AnimatedBuilder(
+      animation: FavoriteService(),
+      builder: (context, _) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Profil Saya',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Kelola akun dan preferensi belanja lokal Anda',
+              style: TextStyle(color: AppConfig.secondaryTextColor),
+            ),
+            const SizedBox(height: 16),
+            _ProfileHeader(
+              user: _user,
+              businessName: _businessName,
+              onEdit: _editProfile,
+            ),
+            const SizedBox(height: 14),
+            _PromoBanner(
+              businessName: _businessName,
+              onTap: _openBusinessRegistration,
+            ),
+            const SizedBox(height: 14),
+            _ProfileMenu(items: _menuItems),
+            const SizedBox(height: 20),
+            const _SafetyNotice(),
+          ],
+        ),
       ),
     );
   }
@@ -248,6 +349,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
   Future<void> _openAccountForm() async {
     final values = await _openFormPage(
       title: 'Informasi Akun',
+      subtitle: 'Perbarui data diri Anda',
+      icon: Icons.person_outline,
       fields: _accountFields,
     );
 
@@ -264,6 +367,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
   Future<void> _openAddressForm() async {
     final values = await _openFormPage(
       title: 'Alamat Pengiriman',
+      subtitle: 'Pastikan alamat akurat untuk pengantaran',
+      icon: Icons.location_on_outlined,
       fields: _addressFields,
     );
 
@@ -278,6 +383,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
   Future<void> _openBusinessRegistration({bool editing = false}) async {
     final values = await _openFormPage(
       title: editing ? 'Edit Data Usaha' : 'Daftarkan Usaha',
+      subtitle: editing
+          ? 'Perbarui informasi UMKM Anda'
+          : 'Bergabung sebagai mitra UMKM Djajan',
+      icon: Icons.storefront_outlined,
       fields: _businessFields,
     );
 
@@ -322,23 +431,46 @@ class _ProfilScreenState extends State<ProfilScreen> {
     setState(() => _notificationsEnabled = value);
   }
 
-  void _openSimplePage({required String title, required String message}) {
+  void _openAboutDjajan() {
+    _openSimplePage(
+      title: 'Tentang Djajan',
+      message:
+          'Djajan adalah platform pemesanan makanan dan jajanan hyperlocal yang memberdayakan UMKM di Desa Kreyongan Atas.\n\n'
+          'Kami percaya setiap warung, dapur, dan kerajinan warga punya potensi besar untuk berkembang.\n\n'
+          'Djajan membantu menghubungkan tetangga dengan produk lokal berkualitas, '
+          'memperkuat ekonomi desa, dan menjaga cita rasa otentik kuliner rumahan.',
+      icon: Icons.eco,
+    );
+  }
+
+  void _openSimplePage({
+    required String title,
+    required String message,
+    required IconData icon,
+  }) {
     Navigator.push<void>(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => _SimpleProfilePage(title: title, message: message),
+        builder: (_) => _InfoPage(title: title, message: message, icon: icon),
       ),
     );
   }
 
   Future<Map<String, String>?> _openFormPage({
     required String title,
+    required String subtitle,
+    required IconData icon,
     required List<ProfileFormField> fields,
   }) {
     return Navigator.push<Map<String, String>>(
       context,
       MaterialPageRoute<Map<String, String>>(
-        builder: (_) => _ProfileFormPage(title: title, fields: fields),
+        builder: (_) => _ProfileFormPage(
+          title: title,
+          subtitle: subtitle,
+          icon: icon,
+          fields: fields,
+        ),
       ),
     );
   }
@@ -592,20 +724,92 @@ class _ProfileMenuTile extends StatelessWidget {
   }
 }
 
-class _SimpleProfilePage extends StatelessWidget {
-  const _SimpleProfilePage({required this.title, required this.message});
+class _InfoPage extends StatelessWidget {
+  const _InfoPage({
+    required this.title,
+    required this.message,
+    required this.icon,
+  });
 
   final String title;
   final String message;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = AppConfig.primaryColor;
+    const inkColor = Color(0xFF1E293B);
+    const mutedColor = Color(0xFF64748B);
+    const bgColor = Color(0xFFF8F9FD);
+
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(message, textAlign: TextAlign.center),
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: bgColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: inkColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: inkColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF3EC),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Icon(icon, color: primaryColor, size: 40),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: inkColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: mutedColor,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -613,9 +817,16 @@ class _SimpleProfilePage extends StatelessWidget {
 }
 
 class _ProfileFormPage extends StatefulWidget {
-  const _ProfileFormPage({required this.title, required this.fields});
+  const _ProfileFormPage({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.fields,
+  });
 
   final String title;
+  final String subtitle;
+  final IconData icon;
   final List<ProfileFormField> fields;
 
   @override
@@ -625,6 +836,13 @@ class _ProfileFormPage extends StatefulWidget {
 class _ProfileFormPageState extends State<_ProfileFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final List<TextEditingController> _controllers;
+
+  static const primaryColor = AppConfig.primaryColor;
+  static const inkColor = Color(0xFF1E293B);
+  static const mutedColor = Color(0xFF64748B);
+  static const faintColor = Color(0xFF94A3B8);
+  static const lineColor = Color(0xFFE2E8F0);
+  static const bgColor = Color(0xFFF8F9FD);
 
   @override
   void initState() {
@@ -646,42 +864,188 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: bgColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: inkColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            color: inkColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
-            for (var index = 0; index < widget.fields.length; index++) ...[
-              TextFormField(
-                controller: _controllers[index],
-                keyboardType: widget.fields[index].keyboardType,
-                maxLines: widget.fields[index].maxLines,
-                decoration: InputDecoration(
-                  labelText: widget.fields[index].label,
-                  helperText: widget.fields[index].helperText,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (widget.fields[index].requiredField &&
-                      (value == null || value.trim().isEmpty)) {
-                    return '${widget.fields[index].label} wajib diisi';
-                  }
-                  if (value != null &&
-                      value.trim().isNotEmpty &&
-                      widget.fields[index].requiresKreongan &&
-                      !value.toLowerCase().contains(kreonganKeyword)) {
-                    return 'Alamat usaha harus berada di Kreongan';
-                  }
-                  return null;
-                },
+            // Header Info Box
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
               ),
-              const SizedBox(height: 16),
-            ],
-            FilledButton.icon(
-              onPressed: _saveForm,
-              icon: const Icon(Icons.save_outlined),
-              label: const Text('Simpan'),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF3EC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(widget.icon, color: primaryColor, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: inkColor,
+                          ),
+                        ),
+                        Text(
+                          widget.subtitle,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: mutedColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Form Fields Card
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: lineColor),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var index = 0; index < widget.fields.length; index++) ...[
+                    Text(
+                      widget.fields[index].label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: inkColor,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _controllers[index],
+                      keyboardType: widget.fields[index].keyboardType,
+                      maxLines: widget.fields[index].maxLines,
+                      decoration: InputDecoration(
+                        hintText: 'Masukkan ${widget.fields[index].label.toLowerCase()}',
+                        hintStyle: const TextStyle(
+                          fontSize: 13.5,
+                          color: faintColor,
+                        ),
+                        helperText: widget.fields[index].helperText,
+                        helperStyle: const TextStyle(fontSize: 11.5, color: mutedColor),
+                        prefixIcon: widget.fields[index].prefixIcon != null
+                            ? Icon(
+                                widget.fields[index].prefixIcon,
+                                size: 20,
+                                color: mutedColor,
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 16,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: lineColor),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: lineColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: primaryColor, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (widget.fields[index].requiredField &&
+                            (value == null || value.trim().isEmpty)) {
+                          return '${widget.fields[index].label} wajib diisi';
+                        }
+                        if (value != null &&
+                            value.trim().isNotEmpty &&
+                            widget.fields[index].requiresKreongan &&
+                            !value.toLowerCase().contains(kreonganKeyword)) {
+                          return 'Alamat usaha harus berada di wilayah Kreongan';
+                        }
+                        return null;
+                      },
+                    ),
+                    if (index < widget.fields.length - 1)
+                      const SizedBox(height: 16),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Save Button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton.icon(
+                onPressed: _saveForm,
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: const Text(
+                  'Simpan Perubahan',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

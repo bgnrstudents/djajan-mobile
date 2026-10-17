@@ -57,7 +57,7 @@ class _DemoRootState extends State<_DemoRoot> {
             initialPurpose: 'Rapat Desa RT 02',
             initialNote:
                 'Sambal dipisah, kemangi dipacking rapi untuk bapak-bapak lurah',
-            initialMethod: PaymentMethod.qris,
+            initialMethod: PaymentMethod.midtrans,
           ),
         ),
       );
