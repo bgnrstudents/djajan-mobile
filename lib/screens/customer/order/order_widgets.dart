@@ -274,6 +274,59 @@ class OrderHeader extends StatelessWidget {
   }
 }
 
+/// Kartu dengan Header berwarna (Style Paket 1: Struktur Tegas)
+class TitledCard extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final Widget child;
+  final Widget? trailing;
+
+  const TitledCard({
+    super.key, 
+    required this.title, 
+    this.icon, 
+    required this.child,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: OC.line),
+        boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            color: OC.primarySoft,
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: OC.primary),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(child: Text(title.toUpperCase(), style: OT.label.copyWith(color: OC.primary, fontWeight: FontWeight.bold))),
+                if (trailing != null) trailing!,
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class OrderCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;

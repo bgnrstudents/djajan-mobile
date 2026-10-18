@@ -29,9 +29,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
       backgroundColor: OC.bg,
       body: Column(
         children: [
-          // Header Native Djajan (Ijo Tua Mewah)
           _buildNativeHeader(order),
-          
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
@@ -41,13 +39,11 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                   _payMethodTile('GoPay', 'Konfirmasi langsung di aplikasi Gojek', Icons.wallet_membership_outlined),
                   _payMethodTile('ShopeePay', 'Konfirmasi langsung di aplikasi Shopee', Icons.shopping_bag_outlined),
                 ]),
-                
                 _methodSection('TRANSFER VIRTUAL ACCOUNT', [
                   _payMethodTile('Mandiri Bill Payment', 'Cek otomatis tanpa unggah bukti', Icons.account_balance_rounded),
                   _payMethodTile('BCA Virtual Account', 'Cek otomatis tanpa unggah bukti', Icons.account_balance_rounded),
                   _payMethodTile('BNI Virtual Account', 'Cek otomatis tanpa unggah bukti', Icons.account_balance_rounded),
                 ]),
-
                 _methodSection('GERAI RETAIL', [
                   _payMethodTile('Alfamart', 'Tunjukkan kode ke kasir Alfamart', Icons.storefront_rounded),
                   _payMethodTile('Indomaret', 'Tunjukkan kode ke kasir Indomaret', Icons.storefront_rounded),
@@ -55,7 +51,6 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
               ],
             ),
           ),
-          
           _buildSecureFooter(),
         ],
       ),
@@ -66,7 +61,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 10, 16, 24),
       decoration: const BoxDecoration(
-        color: OC.primary, // IJO TUA DJAJAN
+        color: OC.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
       child: Column(
@@ -160,4 +155,11 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     await Future.delayed(const Duration(seconds: 2));
     
     final order = _service.findById(widget.orderId);
-    if (order != null) {\n      await _service.updateStatus(widget.orderId, OrderStatus.processing);\n      if (!mounted) return;\n      Navigator.pop(context);\n      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => OrderConfirmationScreen(order: order, orderService: _service)));\n    }\n  }\n}\n
+    if (order != null) {
+      await _service.updateStatus(widget.orderId, OrderStatus.processing);
+      if (!mounted) return;
+      Navigator.pop(context);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => OrderConfirmationScreen(order: order, orderService: _service)));
+    }
+  }
+}
