@@ -5,24 +5,110 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../config/app_config.dart';
 import 'order_model.dart';
 
-/// Warna sesuai desain Figma Djajan.
+/// Palet tunggal untuk seluruh halaman pesanan.
+///
+/// Sengaja memakai hijau brand Djajan + warna netral saja, supaya halaman
+/// keranjang/checkout/pesanan terasa satu aplikasi dengan halaman lain.
+/// (Sebelumnya halaman ini memakai palet lavender-biru yang lepas dari brand.)
 class OC {
-  static const Color primary = AppConfig.primaryColor;
-  static const Color bg = Color(0xFFFAF8FF);
-  static const Color ink = Color(0xFF191B23);
-  static const Color muted = Color(0xFF4A5250);
-  static const Color faint = Color(0xFF8A9090);
-  static const Color line = Color(0xFFE1E3EE);
-  static const Color box = Color(0xFFEEF0FC); // kotak informasi biru muda
-  static const Color banner = Color(0xFFE1E4FA);
-  static const Color mint = Color(0xFF94F990); // chip hijau cerah
-  static const Color mintSoft = Color(0xFFD8F6DC);
-  static const Color mintText = Color(0xFF00531A);
-  static const Color peach = Color(0xFFFFDDB8);
-  static const Color peachSoft = Color(0xFFFFDCC2);
-  static const Color amber = Color(0xFF633F00);
+  static const Color primary = AppConfig.primaryColor; // #175D2B
+  static const Color primarySoft = Color(0xFFEAF3EC);
+  static const Color accent = AppConfig.secondaryColor; // #FFBE25
+
+  static const Color bg = Color(0xFFF6F7F6);
+  static const Color card = Colors.white;
+
+  static const Color ink = Color(0xFF16201A);
+  static const Color muted = Color(0xFF5F6B64);
+  static const Color faint = Color(0xFF98A29C);
+  static const Color line = Color(0xFFE8EAE8);
+
+  static const Color box = Color(0xFFF4F6F4); // blok informasi netral
+  static const Color banner = Color(0xFFEDF4EE); // banner hijau muda
+
+  static const Color mint = Color(0xFFDCEFE1); // chip hijau
+  static const Color mintSoft = Color(0xFFEDF6EF); // keadaan terpilih
+  static const Color mintText = Color(0xFF14532D);
+
+  static const Color peach = Color(0xFFFDF0D9); // chip pre-order
+  static const Color peachSoft = Color(0xFFFFF7EA);
+  static const Color amber = Color(0xFF8A5A00);
+
   static const Color danger = Color(0xFFBA1A1A);
-  static const Color dangerSoft = Color(0xFFFFDAD6);
+  static const Color dangerSoft = Color(0xFFFDE7E4);
+}
+
+/// Skala tipografi bersama untuk seluruh halaman pesanan.
+///
+/// Tujuannya supaya ukuran teks konsisten antar halaman. Sebelumnya banyak
+/// judul berukuran 20-27px yang saling berebut perhatian sehingga tidak ada
+/// hierarki (nama UMKM sekaligus judul halaman sekaligus total pembayaran).
+class OT {
+  /// Judul halaman, mis. "Pesanan Saya".
+  static const TextStyle pageTitle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w800,
+    color: OC.ink,
+    height: 1.2,
+  );
+
+  /// Judul di dalam kartu, mis. "Rincian Pembayaran".
+  static const TextStyle cardTitle = TextStyle(
+    fontSize: 15.5,
+    fontWeight: FontWeight.w700,
+    color: OC.ink,
+    height: 1.2,
+  );
+
+  /// Judul bagian di dalam satu halaman (di bawah judul halaman).
+  static const TextStyle sectionTitle = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w800,
+    color: OC.ink,
+    height: 1.2,
+  );
+
+  /// Nama produk / baris penting.
+  static const TextStyle item = TextStyle(
+    fontSize: 13.5,
+    fontWeight: FontWeight.w600,
+    color: OC.ink,
+  );
+
+  /// Label kecil huruf besar, mis. "CATATAN KHUSUS".
+  static const TextStyle label = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    color: OC.muted,
+    letterSpacing: 0.4,
+  );
+
+  /// Teks isi.
+  static const TextStyle body = TextStyle(
+    fontSize: 13,
+    color: OC.ink,
+    height: 1.35,
+  );
+
+  /// Teks pendukung.
+  static const TextStyle secondary = TextStyle(fontSize: 12.5, color: OC.muted);
+
+  /// Teks paling kecil / samar.
+  static const TextStyle caption = TextStyle(fontSize: 11.5, color: OC.faint);
+
+  /// Angka uang ukuran sedang.
+  static const TextStyle money = TextStyle(
+    fontSize: 13.5,
+    fontWeight: FontWeight.w800,
+    color: OC.ink,
+  );
+
+  /// Angka uang ukuran besar (total).
+  static const TextStyle moneyLarge = TextStyle(
+    fontSize: 19,
+    fontWeight: FontWeight.w800,
+    color: OC.primary,
+  );
 }
 
 // ------------------------------------------------------------ formatters
@@ -134,42 +220,37 @@ class OrderHeader extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0F000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border(bottom: BorderSide(color: OC.line)),
       ),
       padding: EdgeInsets.fromLTRB(
+        4,
+        MediaQuery.of(context).padding.top + 4,
+        12,
         8,
-        MediaQuery.of(context).padding.top + 6,
-        16,
-        10,
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: OC.ink),
+            icon: const Icon(Icons.arrow_back_rounded, color: OC.ink, size: 22),
             onPressed: onBack ?? () => Navigator.maybePop(context),
           ),
           Image.asset(
             'assets/images/logoNoBg.png',
-            width: 40,
-            height: 40,
+            width: 34,
+            height: 34,
             errorBuilder: (_, _, _) =>
-                const Icon(Icons.eco, color: OC.primary, size: 32),
+                const Icon(Icons.eco, color: OC.primary, size: 28),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: OC.ink,
                     height: 1.2,
@@ -178,7 +259,7 @@ class OrderHeader extends StatelessWidget {
                 Text(
                   subtitle,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w500,
                     color: OC.muted,
                   ),
@@ -201,7 +282,7 @@ class OrderCard extends StatelessWidget {
   const OrderCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(14),
     this.color = Colors.white,
   });
 
@@ -212,12 +293,13 @@ class OrderCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: OC.line),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F1A2340),
-            blurRadius: 14,
-            offset: Offset(0, 3),
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -322,7 +404,7 @@ class NetImage extends StatelessWidget {
   Widget _placeholder() => Container(
     width: width,
     height: height,
-    color: const Color(0xFFE6E8F3),
+    color: OC.box,
     child: const Icon(Icons.restaurant, color: OC.faint),
   );
 

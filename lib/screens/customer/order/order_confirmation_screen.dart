@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_config.dart';
 import 'order_model.dart';
 import 'order_service.dart';
+import 'order_widgets.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
   final Order order;
@@ -76,12 +77,12 @@ class OrderConfirmationScreen extends StatelessWidget {
           const SizedBox(height: 20),
           const Text(
             'Pembayaran Berhasil!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: OT.pageTitle,
           ),
           const SizedBox(height: 8),
           Text(
             'Pesanan ${order.refId} telah dikonfirmasi',
-            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            style: OT.secondary,
           ),
         ],
       ),
@@ -116,11 +117,11 @@ class OrderConfirmationScreen extends StatelessWidget {
                   children: [
                     Text(
                       order.vendorNames,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: OT.cardTitle,
                     ),
                     Text(
                       order.vendors.first.umkmType,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      style: OT.caption,
                     ),
                   ],
                 ),
@@ -136,11 +137,11 @@ class OrderConfirmationScreen extends StatelessWidget {
                   children: [
                     Text(
                       'TOTAL',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                      style: OT.label,
                     ),
                     Text(
-                      'Rp ${order.total.toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppConfig.primaryColor),
+                      rupiah(order.total),
+                      style: OT.moneyLarge,
                     ),
                   ],
                 ),
@@ -215,7 +216,7 @@ class OrderConfirmationScreen extends StatelessWidget {
         children: [
           const Text(
             'Langkah Selanjutnya',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: OT.sectionTitle,
           ),
           const SizedBox(height: 20),
           _buildNextStepItem(

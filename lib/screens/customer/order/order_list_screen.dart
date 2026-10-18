@@ -62,18 +62,16 @@ class _OrderListScreenState extends State<OrderListScreen> {
         builder: (context, _) {
           final list = _filtered();
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
             children: [
-              const Text('Pesanan Saya',
-                  style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w800, color: OC.ink)),
+              const Text('Pesanan Saya', style: OT.pageTitle),
               const Text('Pantau pesanan jajan & katering dari UMKM desa',
-                  style: TextStyle(fontSize: 13.5, color: OC.muted)),
-              const SizedBox(height: 14),
+                  style: OT.secondary),
+              const SizedBox(height: 12),
               _checkoutPromo(),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               _filters(),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               if (list.isEmpty) _empty() else ...list.map(_orderCard),
             ],
           );
@@ -84,16 +82,17 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   Widget _checkoutPromo() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: OC.primary, borderRadius: BorderRadius.circular(18)),
+          color: OC.primary, borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
           const IconBadge(
               icon: Icons.shopping_bag_outlined,
               bg: Color(0x33FFFFFF),
-              fg: Colors.white),
-          const SizedBox(width: 12),
+              fg: Colors.white,
+              size: 38),
+          const SizedBox(width: 10),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,10 +100,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 Text('Coba alur pesanan',
                     style: TextStyle(
                         color: Colors.white,
-                        fontSize: 15,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w800)),
                 Text('Checkout contoh dari 2 UMKM (Bu Minten & Pak Budi)',
-                    style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 12.5)),
+                    style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 12)),
               ],
             ),
           ),
@@ -113,11 +112,13 @@ class _OrderListScreenState extends State<OrderListScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: OC.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              minimumSize: const Size(0, 38),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: _startCheckout,
             child: const Text('Checkout',
-                style: TextStyle(fontWeight: FontWeight.w800)),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
           ),
         ],
       ),
@@ -147,6 +148,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 side: const BorderSide(color: OC.line),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 labelStyle: TextStyle(
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: _filter == f ? Colors.white : OC.ink),
                 onSelected: (_) => setState(() => _filter = f),
@@ -159,14 +161,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   Widget _empty() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 60),
+      padding: const EdgeInsets.symmetric(vertical: 56),
       child: Column(
         children: [
-          Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey[400]),
+          const Icon(Icons.receipt_long_outlined, size: 60, color: OC.faint),
           const SizedBox(height: 12),
           const Text('Belum ada pesanan',
               style: TextStyle(
-                  fontSize: 17, fontWeight: FontWeight.w700, color: OC.muted)),
+                  fontSize: 16.5, fontWeight: FontWeight.w700, color: OC.muted)),
           const SizedBox(height: 4),
           const Text('Pesanan yang sesuai filter akan muncul di sini',
               style: TextStyle(fontSize: 13, color: OC.faint)),
@@ -182,7 +184,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
         return (bg: OC.peach, fg: OC.amber);
       case OrderStatus.processing:
       case OrderStatus.delivering:
-        return (bg: OC.banner, fg: const Color(0xFF1A4BA0));
+        return (bg: OC.banner, fg: OC.mintText);
       case OrderStatus.completed:
         return (bg: OC.mint, fg: OC.mintText);
       case OrderStatus.cancelled:
@@ -196,9 +198,9 @@ class _OrderListScreenState extends State<OrderListScreen> {
     final more = o.vendors.fold(0, (s, v) => s + v.items.length) - 1;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _openDetail(o),
         child: OrderCard(
           child: Column(
@@ -209,7 +211,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   Expanded(
                     child: Text(o.refId,
                         style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                             color: OC.ink)),
                   ),
@@ -223,8 +225,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  NetImage(url: firstItem.imageUrl, width: 64, height: 64, radius: 12),
-                  const SizedBox(width: 12),
+                  NetImage(url: firstItem.imageUrl, width: 56, height: 56, radius: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,28 +235,28 @@ class _OrderListScreenState extends State<OrderListScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 12.5,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: OC.muted)),
                         Text(firstItem.productName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: OC.ink)),
                         Text(
                             more > 0
                                 ? '${firstItem.quantity}x ${firstItem.unit.toLowerCase()} • +$more menu lainnya'
                                 : '${firstItem.quantity}x ${firstItem.unit.toLowerCase()}',
-                            style: const TextStyle(fontSize: 12.5, color: OC.muted)),
+                            style: const TextStyle(fontSize: 12, color: OC.muted)),
                       ],
                     ),
                   ),
                 ],
               ),
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 10),
                 child: Divider(height: 1, color: OC.line),
               ),
               Row(
@@ -265,11 +267,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                       children: [
                         const Text('Total Pembayaran',
                             style: TextStyle(fontSize: 12, color: OC.muted)),
-                        Text(rupiah(o.total),
-                            style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: OC.primary)),
+                        Text(rupiah(o.total), style: OT.moneyLarge),
                         Text(fmtDateComma(o.createdAt),
                             style: const TextStyle(fontSize: 11.5, color: OC.faint)),
                       ],
@@ -279,8 +277,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     FilledButton(
                       style: FilledButton.styleFrom(
                         backgroundColor: OC.primary,
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(11)),
                       ),
                       onPressed: () => Navigator.push(
                         context,
@@ -294,19 +294,23 @@ class _OrderListScreenState extends State<OrderListScreen> {
                           o.paymentMethod == PaymentMethod.cod
                               ? 'Konfirmasi'
                               : 'Bayar',
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700)),
                     )
                   else
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: OC.primary,
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         side: const BorderSide(color: OC.primary),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(11)),
                       ),
                       onPressed: () => _openDetail(o),
                       child: const Text('Lihat Detail',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700)),
                     ),
                 ],
               ),

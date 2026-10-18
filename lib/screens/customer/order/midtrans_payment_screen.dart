@@ -291,7 +291,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 10),
-            const Icon(Icons.check_circle, color: Colors.green, size: 64),
+            const Icon(Icons.check_circle, color: AppConfig.primaryColor, size: 64),
             const SizedBox(height: 20),
             const Text(
               'Pembayaran Berhasil!',

@@ -55,9 +55,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Pilih Bukti Transfer',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700, color: OC.ink)),
+              const Text('Pilih Bukti Transfer', style: OT.sectionTitle),
               const SizedBox(height: 8),
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -217,7 +215,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
         Container(
           width: 10,
           height: 10,
-          decoration: const BoxDecoration(color: Color(0xFF1B8A2E), shape: BoxShape.circle),
+          decoration: const BoxDecoration(color: OC.primary, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Text(
@@ -225,7 +223,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                 ? 'Menunggu Konfirmasi'
                 : 'Menunggu Pembayaran',
             style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0B6A1F))),
+                fontSize: 15, fontWeight: FontWeight.w700, color: OC.mintText)),
         const Spacer(),
         InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -393,9 +391,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4),
-          child: Text(title,
-              style: const TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.w700, color: OC.ink)),
+          child: Text(title, style: OT.sectionTitle),
         ),
         const Spacer(),
         if (chip != null)
@@ -422,22 +418,20 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                 height: 56,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                    color: const Color(0xFFDDE3FA),
+                    color: OC.box,
                     borderRadius: BorderRadius.circular(14)),
                 child: Text(a.bank,
                     style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A4BA0))),
+                        color: OC.primary)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Bank ${a.bank}',
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w700, color: OC.ink)),
+                    Text('Bank ${a.bank}', style: OT.cardTitle),
                     Text(a.bankFullName,
                         style: const TextStyle(
                             fontSize: 12.5,
@@ -450,7 +444,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFA6F2B4),
+                    color: OC.mint,
                     borderRadius: BorderRadius.circular(8)),
                 child: const Text('Terverifikasi',
                     style: TextStyle(
@@ -482,7 +476,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(a.number,
                             style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1,
                                 color: OC.ink)),
@@ -615,7 +609,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                     style: TextStyle(fontSize: 12.5, color: OC.muted)),
                 Text(rupiah(o.total),
                     style: const TextStyle(
-                        fontSize: 26,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: OC.ink)),
                 const SizedBox(height: 8),
@@ -681,9 +675,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
           ),
           const SizedBox(height: 14),
           const Text('Ketuk untuk Mengunggah Foto',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 19, fontWeight: FontWeight.w700, color: OC.ink)),
+              textAlign: TextAlign.center, style: OT.cardTitle),
           const SizedBox(height: 8),
           const Text(
               'Pilih foto struk ATM, bukti m-Banking, atau screenshot transfer. Mendukung format JPG/PNG (Maks. 5MB).',
@@ -693,7 +685,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             decoration: BoxDecoration(
-                color: const Color(0xFFDDE1F5),
+                color: OC.box,
                 borderRadius: BorderRadius.circular(12)),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -791,10 +783,10 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                 height: 34,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
-                    color: Color(0xFFDDE3FA), shape: BoxShape.circle),
+                    color: OC.box, shape: BoxShape.circle),
                 child: Text('$n',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, color: Color(0xFF1A4BA0))),
+                        fontWeight: FontWeight.w800, color: OC.primary)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -826,9 +818,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                 const Icon(Icons.help_outline, color: OC.primary),
                 const SizedBox(width: 8),
                 const Expanded(
-                  child: Text('Panduan Pembayaran',
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w700, color: OC.ink)),
+                  child: Text('Panduan Pembayaran', style: OT.sectionTitle),
                 ),
                 Icon(_guideOpen
                     ? Icons.keyboard_arrow_up_rounded
@@ -861,12 +851,10 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
   Widget _bottomBar(Order o) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, 12, 20, MediaQuery.of(context).padding.bottom + 10),
+          14, 10, 14, MediaQuery.of(context).padding.bottom + 10),
       decoration: const BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Color(0x14000000), blurRadius: 14, offset: Offset(0, -3)),
-        ],
+        border: Border(top: BorderSide(color: OC.line)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -889,7 +877,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                       alignment: Alignment.centerLeft,
                       child: Text(rupiah(o.total),
                           style: const TextStyle(
-                              fontSize: 24,
+                              fontSize: 20,
                               fontWeight: FontWeight.w800,
                               color: OC.primary)),
                     ),
@@ -898,13 +886,13 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
               ),
               const SizedBox(width: 10),
               SizedBox(
-                height: 56,
+                height: 48,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: OC.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: _submitting ? null : _confirm,
                   icon: _submitting

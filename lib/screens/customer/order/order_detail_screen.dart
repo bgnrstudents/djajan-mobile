@@ -6,7 +6,16 @@ import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
 
-/// Tahap 3 alur pesanan: Status Pesanan (timeline, rincian, aksi).
+/// Tahap 3 alur pesanan: Status Pesanan.
+///
+/// Susunan halaman:
+///   1. satu blok status  -> banner (tag, chip, headline, aksi) menyatu dengan
+///      tahapan pesanan, supaya informasi status tidak diulang dua kali;
+///   2. satu kartu per UMKM -> produk + pengantaran digabung, tidak lagi
+///      dipisah menjadi dua daftar yang saling menyilang;
+///   3. bukti bayar (jika ada);
+///   4. rincian pembayaran;
+///   5. aksi (hubungi UMKM, struk, batalkan/hapus).
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
 
@@ -114,7 +123,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       b.writeln(v.umkmName.toUpperCase());
       for (final i in v.items) {
         final name = i.productName.length > 20
-             ? '${i.productName.substring(0, 17)}...'
+            ? '${i.productName.substring(0, 17)}...'
             : i.productName.padRight(20);
         b.writeln('$name ${i.quantity}x ${rupiah(i.price)}');
         b.writeln('                     = ${rupiah(i.subtotal)}');
@@ -172,26 +181,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                   const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long, color: OC.primary, size: 22),
-                      SizedBox(width: 8),
-                      Text('Struk Digital',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w700, color: OC.ink)),
-                    ],
-                  ),
-               const SizedBox(height: 12),
-               Center(
-                 child: Image.asset(
-                   'assets/images/logoNoBg.png',
-                   height: 50,
-                   fit: BoxFit.contain,
-                 ),
-               ),
-               const SizedBox(height: 16),
-               Flexible(
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.receipt_long, color: OC.primary, size: 22),
+                  SizedBox(width: 8),
+                  Text('Struk Digital',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: OC.ink)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: Image.asset(
+                  'assets/images/logoNoBg.png',
+                  height: 50,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
                 child: SingleChildScrollView(
                   child: Container(
                     width: double.infinity,
@@ -211,6 +222,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: OC.primary,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
@@ -252,7 +264,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
               const SizedBox(height: 8),
               TextButton(
-                  onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Tutup')),
             ],
           ),
         ),
@@ -276,31 +289,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           backgroundColor: OC.bg,
           body: Column(
             children: [
-              const OrderHeader(title: 'Status Pesanan'),
+              OrderHeader(
+                title: 'Status Pesanan',
+                trailing: IconButton(
+                  tooltip: 'Bagikan tautan pesanan',
+                  icon: const Icon(Icons.share_outlined, color: OC.ink, size: 22),
+                  onPressed: () => _share(order),
+                ),
+              ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
                   children: [
-                    _titleRow(order),
-                    const SizedBox(height: 14),
-                    _banner(order),
-                    const SizedBox(height: 16),
-                    _timelineCard(order),
+                    _statusCard(order),
                     for (final v in order.vendors) ...[
-                      const SizedBox(height: 16),
-                      _vendorCard(v),
-                    ],
-                    for (final v in order.vendors) ...[
-                      const SizedBox(height: 16),
-                      _deliveryCard(order, v),
+                      const SizedBox(height: 10),
+                      _vendorCard(order, v),
                     ],
                     if (order.hasProof) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _proofCard(order),
                     ],
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     _paymentCard(order),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                     _actions(order),
                   ],
                 ),
@@ -312,52 +324,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Widget _circleButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      customBorder: const CircleBorder(),
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: const BoxDecoration(color: OC.box, shape: BoxShape.circle),
-        child: Icon(icon, size: 21, color: OC.ink),
-      ),
-    );
-  }
+  // -------------------------------------------------------- blok status
 
-  Widget _titleRow(Order o) {
-    return Row(
-      children: [
-        const IconBadge(icon: Icons.receipt_long_outlined, bg: OC.box, fg: OC.ink),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Detail Pesanan',
-                  style: TextStyle(
-                      fontSize: 21, fontWeight: FontWeight.w700, color: OC.ink)),
-              Text('Ref ID: ${o.refId}',
-                  style: const TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.w600, color: OC.muted)),
-            ],
-          ),
-        ),
-        _circleButton(Icons.share_outlined, () => _share(o)),
-        const SizedBox(width: 8),
-        _circleButton(Icons.file_download_outlined, () => _showReceipt(o)),
-      ],
-    );
-  }
-
-  // --------------------------------------------------------------- banner
-
-  Widget _banner(Order o) {
+  /// Banner status + tahapan pesanan dalam SATU kartu.
+  Widget _statusCard(Order o) {
     final main = o.mainVendor;
     final short = _shortName(main.umkmName);
-    late String tag, chip, headline, body;
-    Color bg = OC.peach;
-    Color fg = OC.amber;
+    final prog = _progress(o);
+    final cancelled = o.status == OrderStatus.cancelled;
+    final stage = (prog.active ?? prog.done).clamp(1, 5).toInt();
+
+    late String tag;
+    late String chip;
+    late String headline;
+    late String body;
+    Color toneBg = OC.peach;
+    Color toneFg = OC.amber;
     IconData icon = Icons.hourglass_top_rounded;
     Widget? action;
 
@@ -376,7 +358,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         action = FilledButton.icon(
           style: FilledButton.styleFrom(
             backgroundColor: OC.primary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            foregroundColor: Colors.white,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onPressed: () {
             if (o.paymentMethod == PaymentMethod.midtrans) {
@@ -427,8 +411,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         chip = 'Pesanan Selesai';
         headline = 'Terima kasih sudah jajan di desa!';
         body = 'Pesanan Anda sudah diterima. Semoga suka dengan hidangannya.';
-        bg = OC.mint;
-        fg = OC.mintText;
+        toneBg = OC.mint;
+        toneFg = OC.mintText;
         icon = Icons.check_circle_outline;
         break;
       case OrderStatus.cancelled:
@@ -436,120 +420,166 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         chip = 'Pesanan Dibatalkan';
         headline = 'Pesanan ini sudah dibatalkan';
         body = 'Anda dapat menghapus riwayat ini atau membuat pesanan baru.';
-        bg = OC.dangerSoft;
-        fg = OC.danger;
+        toneBg = OC.dangerSoft;
+        toneFg = OC.danger;
         icon = Icons.cancel_outlined;
         break;
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: double.infinity,
-        color: bg,
-        child: Stack(
-          children: [
-            Positioned(
-              top: -30,
-              left: -30,
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: const BoxDecoration(
-                    color: Color(0x22FFFFFF), shape: BoxShape.circle),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(tag,
+    final steps = _steps(o);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: OC.line),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 2)),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // ---- kepala: banner status
+          Container(
+            width: double.infinity,
+            color: toneBg,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                          color: Colors.white, shape: BoxShape.circle),
+                      child: Icon(icon, size: 19, color: toneFg),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(tag,
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: toneFg)),
+                          const SizedBox(height: 1),
+                          Text(o.refId,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: toneFg.withValues(alpha: 0.7))),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                                color: toneFg, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(chip,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: fg)),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20)),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                        color: fg, shape: BoxShape.circle),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(chip,
-                                        style: TextStyle(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: fg)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                                    color: toneFg)),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Container(
-                        width: 62,
-                        height: 62,
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
-                        child: Icon(icon, size: 30, color: fg),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(headline,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800, color: OC.ink)),
-                  const SizedBox(height: 4),
-                  Text(body,
-                      style: const TextStyle(
-                          fontSize: 14, color: OC.muted, height: 1.35)),
-                  if (action != null) ...[
-                    const SizedBox(height: 12),
-                    action,
+                    ),
                   ],
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Icon(Icons.schedule, size: 16, color: fg),
-                      const SizedBox(width: 6),
-                      Text('Dibuat: ${fmtDateComma(o.createdAt)}',
-                          style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: fg)),
-                    ],
-                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(headline,
+                    style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: OC.ink,
+                        height: 1.25)),
+                const SizedBox(height: 3),
+                Text(body,
+                    style: const TextStyle(
+                        fontSize: 12.5, color: OC.muted, height: 1.35)),
+                if (action != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(width: double.infinity, height: 44, child: action),
                 ],
-              ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Icon(Icons.schedule, size: 14, color: toneFg),
+                    const SizedBox(width: 5),
+                    Text('Dibuat ${fmtDateComma(o.createdAt)}',
+                        style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: toneFg)),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // ---- badan: tahapan pesanan
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                        child: Text('Tahapan Pesanan', style: OT.label)),
+                    Pill(
+                      text: cancelled ? 'Dibatalkan' : 'Tahap $stage dari 5',
+                      bg: cancelled ? OC.dangerSoft : OC.mint,
+                      fg: cancelled ? OC.danger : OC.mintText,
+                      fontSize: 10.5,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                for (var i = 0; i < steps.length; i++)
+                  _stepRow(
+                    steps[i],
+                    isLast: i == steps.length - 1,
+                    state: cancelled
+                        ? _StepState.pending
+                        : (i + 1 <= prog.done
+                            ? _StepState.done
+                            : (prog.active == i + 1
+                                ? _StepState.active
+                                : _StepState.pending)),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // ------------------------------------------------------------- timeline
+  // ------------------------------------------------------------- tahapan
 
   String _shortName(String n) {
     for (final p in ['Dapur ', 'Toko ', 'Warung ']) {
@@ -560,17 +590,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   String _dayMonth(DateTime d) => '${d.day} ${fmtDate(d).split(' ')[1]}';
 
-  /// Menghasilkan (jumlah langkah selesai, langkah aktif atau null).
-  ({int done, int? active}) _progress(OrderStatus s) {
-    switch (s) {
+  /// (jumlah langkah selesai, langkah yang sedang aktif).
+  ///
+  /// Untuk COD, langkah "Pembayaran" baru selesai saat pesanan diterima —
+  /// jadi tidak ikut dicentang saat pesanan sedang dimasak/diantar.
+  ({int done, int? active}) _progress(Order o) {
+    final cod = o.paymentMethod == PaymentMethod.cod;
+    switch (o.status) {
       case OrderStatus.waitingPayment:
         return (done: 1, active: null);
       case OrderStatus.reviewing:
         return (done: 1, active: 2);
       case OrderStatus.processing:
-        return (done: 3, active: 4);
+        return cod ? (done: 2, active: 4) : (done: 3, active: 4);
       case OrderStatus.delivering:
-        return (done: 4, active: 5);
+        return cod ? (done: 2, active: 5) : (done: 4, active: 5);
       case OrderStatus.completed:
         return (done: 5, active: null);
       case OrderStatus.cancelled:
@@ -578,11 +612,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  Widget _timelineCard(Order o) {
+  List<_Step> _steps(Order o) {
     final main = o.mainVendor;
     final first = main.items.first;
-    final prog = _progress(o.status);
-    final cancelled = o.status == OrderStatus.cancelled;
+    final prog = _progress(o);
     final isGeprek = first.productName.toLowerCase().contains('geprek');
 
     final s2 = 'Memastikan kesiapan ${main.totalQty} ${first.unit.toLowerCase()} '
@@ -607,9 +640,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     final courier = main.delivery == DeliveryMethod.courier;
-    final steps = <_Step>[
+    return <_Step>[
       _Step(
-        'Ajukan PO Terkirim',
+        o.hasPreOrder ? 'Pengajuan PO Terkirim' : 'Pesanan Terkirim',
         o.hasPreOrder
             ? 'Rincian menu & jadwal katering sukses diajukan ke dapur mitra.'
             : 'Rincian pesanan sukses diajukan ke UMKM.',
@@ -618,7 +651,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       ),
       _Step('Sedang Ditinjau ${_shortName(main.umkmName)}', s2,
           Icons.fact_check_outlined),
-      _Step('Pembayaran Tagihan', s3, Icons.account_balance_wallet_outlined),
+      _Step(
+        o.paymentMethod == PaymentMethod.cod
+            ? 'Pembayaran Tunai (COD)'
+            : 'Pembayaran Tagihan',
+        s3,
+        Icons.account_balance_wallet_outlined,
+      ),
       _Step(
         'Diproses & Dimasak Dapur',
         isGeprek
@@ -634,90 +673,53 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   : 'Diantar langsung dalam kondisi hangat ke alamat penerima.',
               Icons.two_wheeler)
           : _Step('Siap Diambil Sendiri',
-              'Ambil pesanan Anda di ${main.pickupLocation}.', Icons.storefront_outlined),
+              'Ambil pesanan Anda di ${main.pickupLocation}.',
+              Icons.storefront_outlined),
     ];
-
-    final int stage = (prog.active ?? prog.done).clamp(1, 5).toInt();
-
-    return OrderCard(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.local_shipping_outlined, color: OC.primary),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text('Status Pesanan',
-                    style: TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w700, color: OC.ink)),
-              ),
-              Pill(
-                text: cancelled ? 'Dibatalkan' : 'Tahap $stage dari 5',
-                bg: cancelled ? OC.dangerSoft : const Color(0xFFA6F2B4),
-                fg: cancelled ? OC.danger : OC.mintText,
-                fontSize: 12,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          for (var i = 0; i < steps.length; i++)
-            _stepRow(
-              steps[i],
-              isLast: i == steps.length - 1,
-              state: cancelled
-                  ? _StepState.pending
-                  : (i + 1 <= prog.done
-                      ? _StepState.done
-                      : (prog.active == i + 1
-                          ? _StepState.active
-                          : _StepState.pending)),
-            ),
-        ],
-      ),
-    );
   }
 
   Widget _stepRow(_Step s, {required bool isLast, required _StepState state}) {
+    const double dot = 30;
     final Color titleColor;
     final Color bodyColor;
     Widget circle;
+
     switch (state) {
       case _StepState.done:
         titleColor = OC.ink;
         bodyColor = OC.muted;
         circle = Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(color: OC.primary, shape: BoxShape.circle),
-          child: const Icon(Icons.check_rounded, color: Colors.white),
+          width: dot,
+          height: dot,
+          decoration:
+              const BoxDecoration(color: OC.primary, shape: BoxShape.circle),
+          child: const Icon(Icons.check_rounded, color: Colors.white, size: 17),
         );
         break;
       case _StepState.active:
         titleColor = OC.amber;
         bodyColor = OC.ink;
         circle = SizedBox(
-          width: 40,
-          height: 40,
+          width: dot,
+          height: dot,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 40,
-                height: 40,
-                decoration:
-                    const BoxDecoration(color: OC.peach, shape: BoxShape.circle),
-                child: Icon(s.icon, color: OC.amber, size: 22),
+                width: dot,
+                height: dot,
+                decoration: const BoxDecoration(
+                    color: OC.peach, shape: BoxShape.circle),
+                child: Icon(s.icon, color: OC.amber, size: 16),
               ),
               Positioned(
                 top: -1,
-                right: -2,
+                right: -1,
                 child: Container(
-                  width: 12,
-                  height: 12,
+                  width: 10,
+                  height: 10,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF34C759),
+                    color: OC.primary,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
@@ -731,12 +733,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         titleColor = OC.faint;
         bodyColor = OC.faint;
         circle = Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-              color: Color(0xFFE9EAF6), shape: BoxShape.circle),
-          child: Icon(s.icon == Icons.check_rounded ? Icons.check_rounded : s.icon,
-              color: OC.faint, size: 21),
+          width: dot,
+          height: dot,
+          decoration:
+              const BoxDecoration(color: OC.box, shape: BoxShape.circle),
+          child: Icon(s.icon, color: OC.faint, size: 15),
         );
         break;
     }
@@ -746,19 +747,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: 40,
+            width: dot,
             child: Column(
               children: [
                 circle,
                 if (!isLast)
                   Expanded(
                     child: Container(
-                      width: 3,
+                      width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 2),
                       decoration: BoxDecoration(
                         color: state == _StepState.done
                             ? OC.primary.withValues(alpha: 0.35)
-                            : const Color(0xFFDDE0F0),
+                            : OC.line,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -766,10 +767,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 10 : 18),
+              padding: EdgeInsets.only(bottom: isLast ? 8 : 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -779,25 +780,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       Expanded(
                         child: Text(s.title,
                             style: TextStyle(
-                                fontSize: state == _StepState.active ? 19 : 16,
+                                fontSize: state == _StepState.active ? 14 : 13,
                                 fontWeight: FontWeight.w700,
                                 color: titleColor)),
                       ),
                       if (state == _StepState.active)
                         const Padding(
-                          padding: EdgeInsets.only(top: 4),
+                          padding: EdgeInsets.only(top: 2),
                           child: Text('Aktif',
                               style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: OC.amber)),
                         )
-                      else if (s.trailing != null && state == _StepState.done)
+                      else if (s.trailing != null &&
+                          state == _StepState.done)
                         Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.only(top: 1),
                           child: Text(s.trailing!,
                               style: const TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
                                   color: OC.muted)),
                         ),
@@ -805,7 +807,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(s.body,
-                      style: TextStyle(fontSize: 14, color: bodyColor, height: 1.35)),
+                      style: TextStyle(
+                          fontSize: 12.5, color: bodyColor, height: 1.35)),
                 ],
               ),
             ),
@@ -815,209 +818,162 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  // --------------------------------------------------------------- vendor
+  // ------------------------------------------- kartu per UMKM (produk + kirim)
 
-  Widget _vendorCard(OrderVendor v) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F1A2340), blurRadius: 14, offset: Offset(0, 3)),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+  Widget _vendorCard(Order o, OrderVendor v) {
+    return OrderCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            color: const Color(0xFFF3F4FD),
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                const IconBadge(
-                    icon: Icons.storefront_outlined,
-                    bg: OC.primary,
-                    fg: Colors.white,
-                    size: 52),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(v.umkmName,
-                          style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: OC.ink)),
-                      const Row(
-                        children: [
-                          Icon(Icons.verified_outlined, size: 15, color: OC.primary),
-                          SizedBox(width: 4),
-                          Flexible(
-                            child: Text('Mitra Kuliner Kreyongan',
-                                style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: OC.primary)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Pill(
-                    text: v.umkmType,
-                    bg: const Color(0xFFA6F2B4),
-                    fg: OC.mintText,
-                    fontSize: 11,
-                    shrink: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              children: [
-                for (final i in v.items) ...[
-                  _itemRow(v, i),
-                  const SizedBox(height: 12),
-                ],
-                if (v.isPreOrder) _poInfoBox(v),
-                if (!v.isPreOrder && v.note != null) _noteBox(v.note!),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _itemRow(OrderVendor v, OrderItem i) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          children: [
-            NetImage(url: i.imageUrl, width: 88, height: 88, radius: 12),
-            Positioned(
-              right: 6,
-              bottom: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(8)),
-                child: Text('${i.quantity}x',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(i.productName,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700, color: OC.ink)),
-                  if (v.isPreOrder)
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFA6F2B4),
-                          borderRadius: BorderRadius.circular(6)),
-                      child: const Text('Pre-Order',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: OC.mintText)),
-                    ),
-                ],
+              const IconBadge(
+                  icon: Icons.storefront_outlined,
+                  bg: OC.primarySoft,
+                  fg: OC.primary,
+                  size: 38),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(v.umkmName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: OT.cardTitle),
+                    Text(v.umkmType,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: OT.caption),
+                  ],
+                ),
               ),
-              const SizedBox(height: 2),
-              Text(i.variant,
-                  style: const TextStyle(fontSize: 13.5, color: OC.muted, height: 1.3)),
-              const SizedBox(height: 6),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(rupiah(i.subtotal),
-                      style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: OC.primary)),
-                  const Spacer(),
-                  Text('@ ${rupiah(i.price)}/${i.unit.toLowerCase()}',
-                      style: const TextStyle(fontSize: 12.5, color: OC.muted)),
-                ],
+              const SizedBox(width: 8),
+              Pill(
+                text: v.isPreOrder ? 'PRE-ORDER' : 'PESAN SEKARANG',
+                bg: v.isPreOrder ? OC.peach : OC.mint,
+                fg: v.isPreOrder ? OC.amber : OC.mintText,
+                icon: v.isPreOrder
+                    ? Icons.hourglass_top_rounded
+                    : Icons.bolt_rounded,
+                fontSize: 10,
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: OC.line),
+          const SizedBox(height: 12),
+          for (final i in v.items) _itemRow(i),
+          if (v.isPreOrder) _poInfoBox(v),
+          if (!v.isPreOrder && v.note != null) _noteBox(v.note!),
+          const SizedBox(height: 10),
+          _deliveryBlock(o, v),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: OC.line),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Text('Subtotal (${v.totalQty} porsi)',
+                    style: OT.secondary),
+              ),
+              const SizedBox(width: 8),
+              Text(rupiah(v.subtotal), style: OT.money),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _itemRow(OrderItem i) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          NetImage(url: i.imageUrl, width: 52, height: 52, radius: 10),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(i.productName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: OT.item),
+                const SizedBox(height: 2),
+                Text(i.variant,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12, color: OC.muted, height: 1.3)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                          '${i.quantity}x @ ${rupiah(i.price)}/${i.unit.toLowerCase()}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: OT.secondary),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(rupiah(i.subtotal), style: OT.money),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _poInfoBox(OrderVendor v) {
-    Widget row(IconData icon, String label, String value) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
+    Widget field(IconData icon, String label, String value) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 19, color: OC.primary),
-              const SizedBox(width: 8),
-              Text(label,
-                  style: const TextStyle(fontSize: 14, color: OC.muted)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(value,
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700, color: OC.ink)),
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: OC.amber),
+                  const SizedBox(width: 5),
+                  Text(label,
+                      style: OT.label.copyWith(color: OC.amber)),
+                ],
               ),
+              const SizedBox(height: 3),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: OC.ink,
+                      height: 1.3)),
             ],
           ),
         );
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
       decoration: BoxDecoration(
-          color: OC.box, borderRadius: BorderRadius.circular(14)),
+        color: OC.peachSoft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: OC.peach),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (v.requiredAt != null)
-            row(Icons.calendar_month_outlined, 'Waktu Diperlukan:',
+            field(Icons.calendar_month_outlined, 'WAKTU DIBUTUHKAN',
                 fmtDateTime(v.requiredAt!)),
           if (v.purpose != null)
-            row(Icons.groups_outlined, 'Keperluan:', v.purpose!),
-          if (v.note != null) ...[
-            const Row(
-              children: [
-                Icon(Icons.edit_note_rounded, size: 20, color: OC.primary),
-                SizedBox(width: 8),
-                Text('Catatan Khusus:',
-                    style: TextStyle(fontSize: 14, color: OC.muted)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            _quote(v.note!),
-          ],
+            field(Icons.groups_outlined, 'KEPERLUAN', v.purpose!),
+          if (v.note != null)
+            field(Icons.edit_note_outlined, 'CATATAN KHUSUS', v.note!),
         ],
       ),
     );
@@ -1026,158 +982,127 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Widget _noteBox(String note) {
     return Container(
       width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: OC.box, borderRadius: BorderRadius.circular(14)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.edit_note_rounded, size: 20, color: OC.primary),
-              SizedBox(width: 8),
-              Text('Catatan Khusus:',
-                  style: TextStyle(fontSize: 14, color: OC.muted)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          _quote(note),
-        ],
-      ),
-    );
-  }
-
-  Widget _quote(String text) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(8)),
-      child: Text('“$text”',
-          style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w700, color: OC.ink, height: 1.3)),
-    );
-  }
-
-  // ------------------------------------------------------------- delivery
-
-  Widget _deliveryCard(Order o, OrderVendor v) {
-    final courier = v.delivery == DeliveryMethod.courier;
-    final r = o.recipient;
-    return OrderCard(
+          color: OC.box, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              IconBadge(
-                  icon: courier ? Icons.two_wheeler : Icons.storefront_outlined,
-                  bg: OC.mint,
-                  fg: OC.mintText),
-              const SizedBox(width: 12),
+              const Icon(Icons.edit_note_rounded, size: 15, color: OC.muted),
+              const SizedBox(width: 6),
+              Text('CATATAN KHUSUS', style: OT.label),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(note, style: OT.body),
+        ],
+      ),
+    );
+  }
+
+  /// Metode pengantaran milik satu UMKM (kurir warga atau ambil sendiri).
+  Widget _deliveryBlock(Order o, OrderVendor v) {
+    final courier = v.delivery == DeliveryMethod.courier;
+    final r = o.recipient;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+          color: OC.box, borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(courier ? Icons.two_wheeler_outlined : Icons.storefront_outlined,
+                  size: 17, color: OC.primary),
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Metode Pengiriman',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: OC.ink,
-                            height: 1.15)),
-                    if (o.vendors.length > 1)
-                      Text(v.umkmName,
-                          style: const TextStyle(fontSize: 12.5, color: OC.muted)),
-                  ],
-                ),
+                child: Text(
+                    courier
+                        ? 'Diantar Kurir Warga / UMKM'
+                        : 'Ambil Sendiri (Pickup)',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: OC.ink)),
               ),
               const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  courier
-                      ? '${rupiah(v.deliveryFee)} (Kurir Warga)'
-                      : 'Ambil Sendiri (Gratis)',
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: OC.primary),
-                ),
+              Text(
+                courier ? (v.deliveryFee == 0 ? 'Gratis' : rupiah(v.deliveryFee)) : 'Gratis',
+                style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: OC.primary),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: OC.box, borderRadius: BorderRadius.circular(14)),
-            child: courier
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text('Penerima: ${r.name}',
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: OC.ink)),
-                          ),
-                          const Icon(Icons.phone_outlined,
-                              size: 16, color: OC.primary),
-                          const SizedBox(width: 4),
-                          Text(r.phone,
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: OC.primary)),
-                          if (o.status.canEdit)
-                            InkWell(
-                              onTap: () => _editRecipient(o),
-                              child: const Padding(
-                                padding: EdgeInsets.only(left: 10),
-                                child: Icon(Icons.edit_outlined,
-                                    size: 18, color: OC.muted),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.location_on_outlined,
-                              size: 18, color: OC.muted),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              r.addressNote == null
-                                  ? r.address
-                                  : '${r.address} (${r.addressNote}).',
-                              style: const TextStyle(
-                                  fontSize: 14, color: OC.ink, height: 1.35),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 18, color: OC.muted),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text('Ambil pesanan di ${v.pickupLocation}.',
-                            style: const TextStyle(
-                                fontSize: 14, color: OC.ink, height: 1.35)),
-                      ),
-                    ],
+          const SizedBox(height: 8),
+          if (courier) ...[
+            Row(
+              children: [
+                const Icon(Icons.person_outline, size: 15, color: OC.muted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text('${r.name} · ${r.phone}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: OC.ink)),
+                ),
+                if (o.status.canEdit)
+                  InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: () => _editRecipient(o),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Text('Ubah',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: OC.primary)),
+                    ),
                   ),
-          ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.location_on_outlined,
+                    size: 15, color: OC.muted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    r.addressNote == null
+                        ? r.address
+                        : '${r.address} (${r.addressNote})',
+                    style: const TextStyle(
+                        fontSize: 12.5, color: OC.muted, height: 1.35),
+                  ),
+                ),
+              ],
+            ),
+          ] else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.location_on_outlined,
+                    size: 15, color: OC.muted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text('Ambil pesanan di ${v.pickupLocation}.',
+                      style: const TextStyle(
+                          fontSize: 12.5, color: OC.muted, height: 1.35)),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -1192,9 +1117,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           InkWell(
             onTap: () => _showProof(o),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               child: Image.memory(o.proofBytes!,
-                  width: 64, height: 64, fit: BoxFit.cover),
+                  width: 56, height: 56, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 12),
@@ -1202,26 +1127,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Bukti Transfer',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700, color: OC.ink)),
+                const Text('Bukti Transfer', style: OT.cardTitle),
                 Text(
                   'Diunggah ${o.proofUploadedAt != null ? fmtDateComma(o.proofUploadedAt!) : ''}',
-                  style: const TextStyle(fontSize: 12.5, color: OC.muted),
+                  style: OT.secondary,
                 ),
               ],
             ),
           ),
           TextButton(
             onPressed: () => _showProof(o),
+            style: TextButton.styleFrom(
+              foregroundColor: OC.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(40, 34),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: const Text('Lihat',
-                style: TextStyle(fontWeight: FontWeight.w700, color: OC.primary)),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
           ),
           if (o.status == OrderStatus.reviewing &&
               o.paymentMethod == PaymentMethod.qris)
             IconButton(
               tooltip: 'Ganti bukti',
-              icon: const Icon(Icons.edit_outlined, color: OC.muted),
+              icon: const Icon(Icons.edit_outlined, size: 20, color: OC.muted),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -1252,59 +1181,46 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     return OrderCard(
-      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Rincian Pembayaran',
-              style: TextStyle(
-                  fontSize: 21, fontWeight: FontWeight.w700, color: OC.ink)),
-          const SizedBox(height: 8),
+          const TitleRow(
+              icon: Icons.receipt_long_outlined,
+              title: 'Rincian Pembayaran'),
+          const SizedBox(height: 6),
           MoneyRow(
-              label: 'Subtotal Menu (${o.totalQty} Porsi)',
+              label: 'Subtotal menu (${o.totalQty} porsi)',
               value: rupiah(o.subtotal)),
-          MoneyRow(label: 'Ongkir Kurir Antar Desa', value: rupiah(o.shippingTotal)),
           MoneyRow(
-              label: 'Biaya Layanan Koperasi',
+              label: 'Ongkir kurir',
+              value: o.shippingTotal == 0 ? 'Gratis' : rupiah(o.shippingTotal)),
+          MoneyRow(
+              label: 'Biaya layanan',
               value: o.serviceFee == 0 ? 'Gratis' : rupiah(o.serviceFee)),
           if (o.discount > 0)
             MoneyRow(
-                label: 'Diskon Promo Gotong Royong',
+                label: 'Diskon',
                 value: '-${rupiah(o.discount)}',
                 color: OC.primary),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-                color: OC.box, borderRadius: BorderRadius.circular(14)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          o.hasPreOrder
-                              ? 'Total Pembayaran PO'
-                              : 'Total Pembayaran',
-                          style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: OC.ink)),
-                      Text(note,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600, color: OC.muted)),
-                    ],
-                  ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Divider(height: 1, color: OC.line),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(o.hasPreOrder ? 'Total Pembayaran PO' : 'Total Pembayaran',
+                        style: OT.cardTitle),
+                    Text(note, style: OT.caption),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(rupiah(o.total),
-                    style: const TextStyle(
-                        fontSize: 27,
-                        fontWeight: FontWeight.w800,
-                        color: OC.primary)),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Text(rupiah(o.total), style: OT.moneyLarge),
+            ],
           ),
         ],
       ),
@@ -1319,11 +1235,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 50,
           child: FilledButton.icon(
             style: FilledButton.styleFrom(
               backgroundColor: OC.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
             onPressed: () => openWhatsApp(
               context,
@@ -1331,9 +1249,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               message:
                   'Halo ${main.umkmName}, saya ingin menanyakan pesanan ${o.refId}.',
             ),
-            icon: const Icon(Icons.chat_outlined),
+            icon: const Icon(Icons.chat_outlined, size: 20),
             label: Text('Hubungi ${_shortName(main.umkmName)} via WhatsApp',
-                style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700)),
+                style: const TextStyle(
+                    fontSize: 14.5, fontWeight: FontWeight.w700)),
           ),
         ),
         const SizedBox(height: 10),
@@ -1372,22 +1291,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
           ],
         ),
-        if (o.status.isActive && o.status != OrderStatus.waitingPayment) ...[
-          const SizedBox(height: 14),
-          TextButton.icon(
-            onPressed: _busy
-                ? null
-                : () => _run(() async {
-                      final u = await _service.advanceStatus(o.id);
-                      if (mounted) {
-                        showToast(context, 'Simulasi: ${u.status.label}');
-                      }
-                    }),
-            icon: const Icon(Icons.fast_forward_rounded, size: 18),
-            label: const Text('Simulasi: lanjutkan ke tahap berikutnya (demo)'),
-            style: TextButton.styleFrom(foregroundColor: OC.muted),
-          ),
-        ],
       ],
     );
   }
@@ -1399,23 +1302,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     required VoidCallback? onTap,
   }) {
     return SizedBox(
-      height: 52,
+      height: 46,
       child: Material(
         color: OC.box,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: color),
-              const SizedBox(width: 8),
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 7),
               Flexible(
                 child: Text(label,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 14.5, fontWeight: FontWeight.w700, color: color)),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: color)),
               ),
             ],
           ),
