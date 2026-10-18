@@ -156,7 +156,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     
     final order = _service.findById(widget.orderId);
     if (order != null) {
-      await _service.updateStatus(widget.orderId, OrderStatus.processing);
+      await _service.markAsPaidViaMidtrans(widget.orderId);
       if (!mounted) return;
       Navigator.pop(context);
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => OrderConfirmationScreen(order: order, orderService: _service)));
