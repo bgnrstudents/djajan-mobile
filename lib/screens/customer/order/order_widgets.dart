@@ -111,6 +111,72 @@ class OT {
   );
 }
 
+// ------------------------------------------------------------ Header Reusable
+
+/// Header standar untuk halaman utama Djajan.
+/// Digunakan di Home, Pesanan, Keranjang, Profil untuk konsistensi.
+class DjajanPageHeader extends StatelessWidget {
+  final String? title;
+  final String? subtitle;
+  final Widget? leftWidget; // Custom widget (mis. location picker di Home)
+  final Widget? rightAction; // Notification badge, settings icon, etc.
+  final EdgeInsets padding;
+
+  const DjajanPageHeader({
+    super.key,
+    this.title,
+    this.subtitle,
+    this.leftWidget,
+    this.rightAction,
+    this.padding = const EdgeInsets.fromLTRB(16, 12, 16, 8),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left side: title+subtitle atau custom widget
+          Expanded(
+            child: leftWidget ??
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (title != null)
+                      Text(
+                        title!,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: OC.ink,
+                        ),
+                      ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: OC.muted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+          ),
+          // Right action
+          if (rightAction != null) ...[
+            const SizedBox(width: 12),
+            rightAction!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 // ------------------------------------------------------------ formatters
 
 String rupiah(num v) {

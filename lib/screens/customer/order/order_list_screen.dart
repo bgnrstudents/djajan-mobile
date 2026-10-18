@@ -64,9 +64,11 @@ class _OrderListScreenState extends State<OrderListScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
             children: [
-              const Text('Pesanan Saya', style: OT.pageTitle),
-              const Text('Pantau pesanan jajan & katering dari UMKM desa',
-                  style: OT.secondary),
+              const DjajanPageHeader(
+                title: 'Pesanan Saya',
+                subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
+                padding: EdgeInsets.zero,
+              ),
               const SizedBox(height: 12),
               _checkoutPromo(),
               const SizedBox(height: 10),

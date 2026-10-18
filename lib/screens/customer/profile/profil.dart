@@ -5,6 +5,7 @@ import '../../../config/app_config.dart';
 import '../../../routes/app_routes.dart';
 import '../favorite/favorite_screen.dart';
 import '../favorite/favorite_service.dart';
+import '../order/order_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';
 
@@ -307,14 +308,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Profil Saya',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Kelola akun dan preferensi belanja lokal Anda',
-              style: TextStyle(color: AppConfig.secondaryTextColor),
+            const DjajanPageHeader(
+              title: 'Profil Saya',
+              subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
+              rightAction: Icon(Icons.settings_outlined, color: OC.muted, size: 24),
+              padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 16),
             _ProfileHeader(

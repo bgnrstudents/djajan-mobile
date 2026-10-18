@@ -249,7 +249,7 @@ class _CartScreenState extends State<CartScreen> {
               ? AppBar(
                   backgroundColor: OC.bg,
                   elevation: 0,
-                  centerTitle: true,
+                  centerTitle: false,
                   leading: widget.onBack != null
                       ? IconButton(
                           icon: const Icon(Icons.arrow_back, color: OC.ink),
@@ -261,12 +261,29 @@ class _CartScreenState extends State<CartScreen> {
                               onPressed: () => Navigator.pop(context),
                             )
                           : null),
-                  title: const Text(
-                    'Keranjang',
-                    style: TextStyle(
-                      color: OC.ink,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                  titleSpacing: 0,
+                  title: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Keranjang Belanja',
+                          style: TextStyle(
+                            color: OC.ink,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Cek kembali item jajan & katering pilihanmu',
+                          style: TextStyle(
+                            color: OC.muted,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )

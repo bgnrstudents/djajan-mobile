@@ -10,6 +10,7 @@ import '../catalog/catalog_list_screen.dart';
 import '../notification/notification_screen.dart';
 import '../notification/notification_service.dart';
 import '../order/order_list_screen.dart';
+import '../order/order_widgets.dart';
 import '../profile/profil.dart';
 import '../cart/cart.dart';
 import '../cart/cart_service.dart';
@@ -178,104 +179,90 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildHeader() {
-    return Padding(
+    return DjajanPageHeader(
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
-      child: Row(
+      leftWidget: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Lokasi Anda',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-
-                const SizedBox(height: 4),
-
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-
-                    const SizedBox(width: 4),
-
-                    const Flexible(
-                      child: Text(
-                        'Desa Kreyongan Atas',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 2),
-
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: Colors.grey,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          const Text(
+            'Lokasi Anda',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
-
-          AnimatedBuilder(
-            animation: NotificationService(),
-            builder: (context, _) {
-              final unread = NotificationService().unreadCount;
-              return IconButton(
-                tooltip: 'Notifikasi',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationScreen(),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                Icons.location_on,
+                size: 20,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 4),
+              const Flexible(
+                child: Text(
+                  'Desa Kreyongan Atas',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                icon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const Icon(Icons.notifications_none, size: 27),
-
-                    if (unread > 0)
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1,
-                          ),
-                          constraints: const BoxConstraints(minWidth: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(9),
-                            border: Border.all(color: Colors.white, width: 1.2),
-                          ),
-                          child: Text(
-                            unread > 9 ? '9+' : '$unread',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
-                              height: 1.3,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
+              ),
+              const SizedBox(width: 2),
+              const Icon(
+                Icons.keyboard_arrow_down,
+                size: 18,
+                color: Colors.grey,
+              ),
+            ],
           ),
         ],
+      ),
+      rightAction: AnimatedBuilder(
+        animation: NotificationService(),
+        builder: (context, _) {
+          final unread = NotificationService().unreadCount;
+          return IconButton(
+            tooltip: 'Notifikasi',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const NotificationScreen(),
+              ),
+            ),
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_none, size: 27),
+                if (unread > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(color: Colors.white, width: 1.2),
+                      ),
+                      child: Text(
+                        unread > 9 ? '9+' : '$unread',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
