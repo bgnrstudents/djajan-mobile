@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'order_model.dart';
 import 'order_service.dart';
-import 'order_checkout_screen.dart';
 import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
@@ -44,15 +43,6 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  void _startCheckout() {
-    // Nanti diganti dengan isi keranjang asli dari halaman Keranjang.
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (_) => const OrderCheckoutScreen(cartLines: SampleData.cart)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -70,59 +60,12 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 padding: EdgeInsets.zero,
               ),
               const SizedBox(height: 12),
-              _checkoutPromo(),
-              const SizedBox(height: 10),
               _filters(),
               const SizedBox(height: 12),
               if (list.isEmpty) _empty() else ...list.map(_orderCard),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _checkoutPromo() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: OC.primary, borderRadius: BorderRadius.circular(14)),
-      child: Row(
-        children: [
-          const IconBadge(
-              icon: Icons.shopping_bag_outlined,
-              bg: Color(0x33FFFFFF),
-              fg: Colors.white,
-              size: 38),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Coba alur pesanan',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800)),
-                Text('Checkout contoh dari 2 UMKM (Bu Minten & Pak Budi)',
-                    style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 12)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: OC.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              minimumSize: const Size(0, 38),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: _startCheckout,
-            child: const Text('Checkout',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-          ),
-        ],
       ),
     );
   }
