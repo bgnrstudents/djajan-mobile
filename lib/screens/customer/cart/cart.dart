@@ -243,92 +243,82 @@ class _CartScreenState extends State<CartScreen> {
 
         final int totalPembayaran = subtotalProduk + totalOngkir;
 
+        final needsBackButton = widget.onBack != null || Navigator.canPop(context);
+
         return Scaffold(
           backgroundColor: OC.bg,
-          appBar: widget.showAppBar
-              ? AppBar(
-                  backgroundColor: OC.bg,
-                  elevation: 0,
-                  centerTitle: false,
-                  leading: widget.onBack != null
-                      ? IconButton(
-                          icon: const Icon(Icons.arrow_back, color: OC.ink),
-                          onPressed: widget.onBack,
-                        )
-                      : (Navigator.canPop(context)
-                          ? IconButton(
-                              icon: const Icon(Icons.arrow_back, color: OC.ink),
-                              onPressed: () => Navigator.pop(context),
-                            )
-                          : null),
-                  titleSpacing: 0,
-                  title: Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Keranjang Belanja',
-                          style: TextStyle(
-                            color: OC.ink,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Cek kembali item jajan & katering pilihanmu',
-                          style: TextStyle(
-                            color: OC.muted,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : null,
-          body: isEmpty
-              ? _buildEmptyCart()
-              : ListView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          body: Column(
+            children: [
+              // Header dengan back button jika diperlukan
+              if (needsBackButton)
+                Row(
                   children: [
-                    // 1. Notice banner
-                    _buildNoticeBanner(grouped.length),
-                    const SizedBox(height: 10),
-
-                    // 2. Receiver info
-                    _buildReceiverCard(),
-                    const SizedBox(height: 10),
-
-                    // 3. Vendor Cards (per UMKM)
-                    for (final entry in grouped.entries) ...[
-                      _buildUmkmCard(entry.key, entry.value),
-                      const SizedBox(height: 10),
-                    ],
-
-                    // 4. Payment method
-                    _buildPaymentMethodCard(),
-                    const SizedBox(height: 10),
-
-                    // 5. Payment summary
-                    _buildPaymentSummaryCard(
-                      subtotalProduk: subtotalProduk,
-                      totalOngkir: totalOngkir,
-                      totalPembayaran: totalPembayaran,
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: OC.ink),
+                      onPressed: widget.onBack ?? () => Navigator.pop(context),
                     ),
-                    const SizedBox(height: 14),
-
-                    // 6. Trust footer
-                    _buildTrustFooter(),
-                    const SizedBox(height: 12),
-
-                    // 7. Action button
-                    _buildCheckoutButton(totalPembayaran),
-                    const SizedBox(height: 20),
+                    Expanded(
+                      child: DjajanPageHeader(
+                        title: 'Keranjang Belanja',
+                        subtitle: 'Cek kembali item jajan & katering pilihanmu',
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
                   ],
+                )
+              else
+                const DjajanPageHeader(
+                  title: 'Keranjang Belanja',
+                  subtitle: 'Cek kembali item jajan & katering pilihanmu',
+                  padding: EdgeInsets.fromLTRB(14, 14, 14, 8),
                 ),
+              // Content
+              Expanded(
+                child: isEmpty
+                    ? _buildEmptyCart()
+                    : ListView(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        children: [
+                          // 1. Notice banner
+                          _buildNoticeBanner(grouped.length),
+                          const SizedBox(height: 10),
+
+                          // 2. Receiver info
+                          _buildReceiverCard(),
+                          const SizedBox(height: 10),
+
+                          // 3. Vendor Cards (per UMKM)
+                          for (final entry in grouped.entries) ...[
+                            _buildUmkmCard(entry.key, entry.value),
+                            const SizedBox(height: 10),
+                          ],
+
+                          // 4. Payment method
+                          _buildPaymentMethodCard(),
+                          const SizedBox(height: 10),
+
+                          // 5. Payment summary
+                          _buildPaymentSummaryCard(
+                            subtotalProduk: subtotalProduk,
+                            totalOngkir: totalOngkir,
+                            totalPembayaran: totalPembayaran,
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 6. Trust footer
+                          _buildTrustFooter(),
+                          const SizedBox(height: 12),
+
+                          // 7. Action button
+                          _buildCheckoutButton(totalPembayaran),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+              ),
+            ],
+          ),
         );
       },
     );
