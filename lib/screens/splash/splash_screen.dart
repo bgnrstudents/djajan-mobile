@@ -85,10 +85,8 @@ class _SplashScreenState extends State<SplashScreen>
       () {
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(
-          context,
-          AppRoutes.login,
-        );
+        // Untuk testing: langsung ke login UMKM
+        Navigator.pushReplacementNamed(context, AppRoutes.umkmLogin);
       },
     );
   }

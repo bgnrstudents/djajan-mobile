@@ -3,6 +3,13 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String customerHome = '/customer/home';
-  static const String umkmHome = '/umkm/home';
   static const String cart = '/cart';
+
+  // --- ROUTES UMKM (owner/seller) ---
+  static const String umkmLogin = '/umkm/login';
+  static const String umkmRegistrasi = '/umkm/registrasi';
+  static const String umkmDashboard = '/umkm/dashboard';
+  static const String umkmTambahProduk = '/umkm/tambah-produk';
+  static const String umkmDetailPesanan = '/umkm/detail-pesanan';
+  static const String umkmPengaturan = '/umkm/pengaturan';
 }
