@@ -778,7 +778,7 @@ class _InfoPage extends StatelessWidget {
         children: [
           DjajanPageHeader(
             title: title,
-            rightAction: IconButton(
+            leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: inkColor),
               onPressed: () => Navigator.pop(context),
             ),
@@ -899,7 +899,7 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
             DjajanPageHeader(
               title: widget.title,
               subtitle: widget.subtitle,
-              rightAction: IconButton(
+              leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: inkColor),
                 onPressed: () => Navigator.pop(context),
               ),

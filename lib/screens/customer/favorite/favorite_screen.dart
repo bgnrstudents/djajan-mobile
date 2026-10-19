@@ -66,7 +66,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           children: [
             DjajanPageHeader(
               title: 'Favorit Saya',
-              rightAction: IconButton(
+              leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: textDark),
                 onPressed: () => Navigator.pop(context),
               ),

@@ -119,6 +119,7 @@ class DjajanPageHeader extends StatelessWidget {
   final String? title;
   final String? subtitle;
   final Widget? leftWidget; // Custom widget (mis. location picker di Home)
+  final Widget? leading; // Back button di kiri (untuk halaman detail/modal)
   final Widget? rightAction; // Notification badge, settings icon, etc.
   final EdgeInsets padding;
 
@@ -127,6 +128,7 @@ class DjajanPageHeader extends StatelessWidget {
     this.title,
     this.subtitle,
     this.leftWidget,
+    this.leading,
     this.rightAction,
     this.padding = const EdgeInsets.fromLTRB(16, 12, 16, 8),
   });
@@ -138,6 +140,11 @@ class DjajanPageHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Leading (back button)
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: 8),
+          ],
           // Left side: title+subtitle atau custom widget
           Expanded(
             child: leftWidget ??
