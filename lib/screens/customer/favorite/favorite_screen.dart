@@ -6,7 +6,6 @@ import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../widgets/favorite_button.dart';
 import '../../../widgets/product_card.dart';
-import '../order/order_widgets.dart';
 import '../cart/cart.dart';
 import '../cart/cart_service.dart';
 import '../product/product_detail_screen.dart';
@@ -61,18 +60,25 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       length: 2,
       child: Scaffold(
         backgroundColor: background,
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DjajanPageHeader(
-              title: 'Favorit Saya',
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: textDark),
-                onPressed: () => Navigator.pop(context),
-              ),
+        appBar: AppBar(
+          backgroundColor: background,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: textDark),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Favorit Saya',
+            style: TextStyle(
+              color: textDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
             ),
-            const SizedBox(height: 8),
-            AnimatedBuilder(
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(52),
+            child: AnimatedBuilder(
               animation: _favorites,
               builder: (context, _) => Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -102,18 +108,16 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 ),
               ),
             ),
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _favorites,
-                builder: (context, _) => TabBarView(
-                  children: [
-                    _buildProductsTab(),
-                    _buildUmkmTab(),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
+        ),
+        body: AnimatedBuilder(
+          animation: _favorites,
+          builder: (context, _) => TabBarView(
+            children: [
+              _buildProductsTab(),
+              _buildUmkmTab(),
+            ],
+          ),
         ),
       ),
     );
@@ -133,13 +137,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       itemCount: products.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
+        mainAxisExtent: 235,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
@@ -172,7 +176,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       itemCount: umkms.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
