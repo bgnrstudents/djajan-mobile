@@ -6,6 +6,7 @@ import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../widgets/favorite_button.dart';
 import '../../../widgets/product_card.dart';
+import '../order/order_widgets.dart';
 import '../cart/cart.dart';
 import '../cart/cart_service.dart';
 import '../product/product_detail_screen.dart';
@@ -60,25 +61,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       length: 2,
       child: Scaffold(
         backgroundColor: background,
-        appBar: AppBar(
-          backgroundColor: background,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: textDark),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Favorit Saya',
-            style: TextStyle(
-              color: textDark,
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DjajanPageHeader(
+              title: 'Favorit Saya',
+              rightAction: IconButton(
+                icon: const Icon(Icons.arrow_back, color: textDark),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(52),
-            child: AnimatedBuilder(
+            const SizedBox(height: 8),
+            AnimatedBuilder(
               animation: _favorites,
               builder: (context, _) => Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -108,16 +102,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 ),
               ),
             ),
-          ),
-        ),
-        body: AnimatedBuilder(
-          animation: _favorites,
-          builder: (context, _) => TabBarView(
-            children: [
-              _buildProductsTab(),
-              _buildUmkmTab(),
-            ],
-          ),
+            Expanded(
+              child: AnimatedBuilder(
+                animation: _favorites,
+                builder: (context, _) => TabBarView(
+                  children: [
+                    _buildProductsTab(),
+                    _buildUmkmTab(),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -137,13 +133,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: products.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        mainAxisExtent: 235,
+        childAspectRatio: 0.72,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
@@ -175,20 +171,26 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: umkms.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) => _umkmTile(umkms[index]),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemBuilder: (context, index) => _umkmCard(umkms[index]),
     );
   }
 
-  Widget _umkmTile(Umkm umkm) {
+  Widget _umkmCard(Umkm umkm) {
     final productCount = SampleCatalog.productsOf(umkm.id).length;
 
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
+      elevation: 0,
       child: InkWell(
         onTap: () => _openStorefront(umkm),
         borderRadius: BorderRadius.circular(16),
@@ -198,91 +200,96 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE4E9EF)),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF175D2B), Color(0xFF22915D)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text(
-                    umkm.initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
+              // Top row: Avatar + Favorite
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF175D2B), Color(0xFF22915D)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            umkm.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: textDark,
-                            ),
-                          ),
+                    child: Center(
+                      child: Text(
+                        umkm.initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        if (umkm.isVerified) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.verified,
-                              size: 14, color: Color(0xFF16A34A)),
-                        ],
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      umkm.type,
-                      maxLines: 1,
+                  ),
+                  const Spacer(),
+                  FavoriteButton(
+                    umkmId: umkm.id,
+                    backgroundColor: Colors.transparent,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Name + Verified Badge
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      umkm.name,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: textMuted),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: textDark,
+                        height: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.star,
-                            size: 13, color: Color(0xFFF29B00)),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${umkm.rating}',
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: textDark,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          '$productCount produk',
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
+                  ),
+                  if (umkm.isVerified) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.verified,
+                        size: 14, color: Color(0xFF16A34A)),
                   ],
-                ),
+                ],
               ),
-              FavoriteButton(umkmId: umkm.id, backgroundColor: Colors.transparent),
+              const SizedBox(height: 4),
+              Text(
+                umkm.type,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11.5, color: textMuted),
+              ),
+              const Spacer(),
+              // Rating + Product Count
+              Row(
+                children: [
+                  const Icon(Icons.star, size: 13, color: Color(0xFFF29B00)),
+                  const SizedBox(width: 3),
+                  Text(
+                    '${umkm.rating}',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: textDark,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$productCount produk',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
