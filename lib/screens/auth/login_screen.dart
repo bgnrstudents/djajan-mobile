@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../routes/app_routes.dart';
 import 'auth_widgets.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import '../../services/umkm_data_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,16 +36,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
 
-    // Catatan: belum ada endpoint login pelanggan di backend,
-    // jadi proses masuk masih disimulasikan di sisi aplikasi.
+    // Simulasi: berdasarkan nomor telepon yang dimasukkan,
+    // kita tentukan role pengguna (UMKM atau Pelanggan).
+    // - Jika 081234567890 → dianggap Owner UMKM
+    // - Nomor lain → dianggap Pelanggan
+    String identifier = _phoneOrEmailController.text.trim();
+    bool isUmkm = identifier == '081234567890';
+
     await Future<void>.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
 
     setState(() => _loading = false);
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    if (isUmkm) {
+      // Untung UMKM: inisialisasi data demo dan arahkan ke dashboard UMKM
+      final service = context.read<UmkmDataService>();
+      service.mulaiDemo();
+      Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
+    } else {
+      // Pelanggan: arahkan ke halaman utama belanja
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Berhasil masuk! Selamat datang di Djajan.'),
           backgroundColor: AuthStyle.primary,
@@ -51,8 +64,8 @@ class _LoginScreenState extends State<LoginScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
-
-    Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+      Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+    }
   }
 
   void _openRegister() {
@@ -178,7 +191,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     visualDensity: VisualDensity.compact,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
                                 const Expanded(
                                   child: Text(
                                     'Ingat saya',

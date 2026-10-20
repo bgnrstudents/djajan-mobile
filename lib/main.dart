@@ -2,23 +2,29 @@ import 'package:djajan_mobile/config/app_config.dart';
 import 'package:djajan_mobile/models/umkm_models.dart';
 import 'package:djajan_mobile/provider/umkm_provider.dart';
 import 'package:djajan_mobile/routes/app_routes.dart';
-import 'package:djajan_mobile/services/umkm_data_service.dart'; // <--- BARIS INI DIAMBILKAN
+import 'package:djajan_mobile/services/umkm_data_service.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/auth/register_screen.dart';
-import 'screens/auth/login_screen.dart' show LoginScreen;
+import 'screens/auth/login_screen.dart';
 import 'screens/customer/home/customer_home_screen.dart';
 import 'screens/customer/cart/cart.dart';
 import 'screens/splash/splash_screen.dart';
-import 'screens/umkm/login_screen.dart' as umkm_login_screen;
-import 'screens/umkm/registrasi_umkm_screen.dart';
 import 'screens/umkm/dashboard_umkm_screen.dart';
+import 'screens/umkm/registrasi_umkm_screen.dart';
 import 'screens/umkm/pengaturan_screen.dart';
 import 'screens/umkm/tambah_produk_screen.dart';
 import 'screens/umkm/detail_pesanan_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Inisialisasi data locale untuk Intl (Indonesia)
+  await initializeDateFormatting('id_ID', null);
+  Intl.defaultLocale = 'id_ID';
+
   runApp(const DjajanApp());
 }
 
@@ -41,7 +47,7 @@ class DjajanApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(centerTitle: true),
         ),
 
-        initialRoute: AppRoutes.umkmLogin,
+        initialRoute: AppRoutes.login,
 
         routes: {
           AppRoutes.splash: (context) => const SplashScreen(),
@@ -51,8 +57,6 @@ class DjajanApp extends StatelessWidget {
           AppRoutes.cart: (context) => const CartScreen(),
 
           // --- ROUTES UMKM (owner/seller) ---
-          AppRoutes.umkmLogin: (context) => const umkm_login_screen.LoginScreen(),
-          AppRoutes.umkmRegistrasi: (context) => RegistrasiUmkmScreen(),
           AppRoutes.umkmDashboard: (context) => DashboardUmkmScreen(),
           AppRoutes.umkmTambahProduk: (context) => TambahProdukScreen(),
           AppRoutes.umkmDetailPesanan: (context) => DetailPesananScreen(idPesanan: ''),
