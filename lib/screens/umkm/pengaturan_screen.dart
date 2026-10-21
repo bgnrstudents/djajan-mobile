@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/umkm_models.dart';
@@ -73,8 +72,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     _tokoAktif = p.tokoAktif;
     _transferAktif = p.transferBankAktif;
     _codAktif = p.codAktif;
-    _skemaPO =
-        _skemaOptions.contains(p.skemaPO) ? p.skemaPO : _skemaOptions.first;
+    _skemaPO = _skemaOptions.contains(p.skemaPO) ? p.skemaPO : _skemaOptions.first;
     _pickupAktif = p.pickupAktif;
     _kurirAktif = p.kurirWargaAktif;
 
@@ -111,8 +109,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final batasTerakhir = _zonaBaris.isEmpty
         ? (double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0)
         : (double.tryParse(
-                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.')) ??
-            0);
+                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.')) ?? 0);
     setState(() {
       _zonaBaris.add(_ZonaBaris(sampai: _fmtKm(batasTerakhir + 5), tarif: '0'));
     });
@@ -167,8 +164,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: spesialisCtrl,
-                decoration:
-                    const InputDecoration(labelText: 'Spesialis / Slogan'),
+                decoration: const InputDecoration(labelText: 'Spesialis / Slogan'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -179,8 +175,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               TextField(
                 controller: telpCtrl,
                 keyboardType: TextInputType.phone,
-                decoration:
-                    const InputDecoration(labelText: 'Nomor WhatsApp Usaha'),
+                decoration: const InputDecoration(labelText: 'Nomor WhatsApp Usaha'),
               ),
             ],
           ),
@@ -217,7 +212,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     }
   }
 
-  // ------------------------------------------------------ ubah rekening
+  // ---------------------------------------------------- ubah rekening
   Future<void> _editRekening() async {
     final service = context.read<UmkmDataService>();
     final p = service.profile;
@@ -238,14 +233,12 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               TextField(
                 controller: bankKodeCtrl,
                 textCapitalization: TextCapitalization.characters,
-                decoration:
-                    const InputDecoration(labelText: 'Kode Bank (mis. BRI)'),
+                decoration: const InputDecoration(labelText: 'Kode Bank (mis. BRI)'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: bankNamaCtrl,
-                decoration:
-                    const InputDecoration(labelText: 'Nama Bank Lengkap'),
+                decoration: const InputDecoration(labelText: 'Nama Bank Lengkap'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -361,6 +354,157 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       if (mounted) setState(() => _menyimpan = false);
     }
   }
+
+  Widget _judulSeksi(IconData ikon, String judul, String subjudul) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+              color: AppColors.krem, borderRadius: BorderRadius.circular(10)),
+          child: Icon(ikon, color: AppColors.hijauTua, size: 20),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(judul,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800, fontSize: 16.5)),
+              Text(subjudul,
+                  style: const TextStyle(
+                      color: AppColors.textGrey, fontSize: 12.5)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _toggleTile({
+    required String judul,
+    String? badge,
+    required String subjudul,
+    required bool nilai,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.garis),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(judul,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                    if (badge != null) ...[
+                      const SizedBox(width: 6),
+                      MiniBadge(badge,
+                          bg: AppColors.chipOrange,
+                          fg: AppColors.chipOrangeText),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(subjudul,
+                    style: const TextStyle(
+                        color: AppColors.textGrey, fontSize: 12)),
+              ],
+            ),
+          ),
+          Switch(
+              value: nilai,
+              activeThumbColor: AppColors.hijauTua,
+              onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------ kartu ongkir berzona
+  Widget _kartuOngkirZona() {
+    // Jarak maksimal pengantaran SELALA mengikuti akhir zona terakhir (atau
+    // radius gratis kalau belum ada zona sama sekali) — lihat poin 12 & 33:
+    // supaya tidak mungkin ada rentang jarak yang "kelewati" tanpa tarif.
+    final radiusGratis =
+        double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0;
+    final jarakMaksimal = _zonaBaris.isEmpty
+        ? radiusGratis
+        : (double.tryParse(
+                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.')) ??
+            radiusGratis);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(10)),
+            child: const Row(
+              children: [
+                Icon(Icons.location_on_outlined,
+                    size: 18, color: AppColors.hijauTua),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Lokasi pengantara: Desa Kreongan Atas, Jember. Ongkir dihitung otomatis dari alamat pembeli.',
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textGrey),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 26),
+
+          // ---------- Jarak maksimal (otomatis) ----------
+          Row(
+            children: [
+              const Expanded(
+                child: Text('Jarak Maksimal Pengantaran',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Text('${_fmtKm(jarakMaksimal)} KM',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, color: AppColors.hijauTua)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Otomatis mengikuti batas akhir zona ongkir terakhir. Pelanggan di luar jarak '
+            'ini akan melihat "di luar jangkauan pengantaran".',
+            style: TextStyle(color: AppColors.textGrey, fontSize: 11.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------ helper
+  // Widget _barisForm dihapus karena tidak digunakan
 
   @override
   Widget build(BuildContext context) {
@@ -499,7 +643,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           _toggleTile(
             judul: 'Transfer Bank Manual',
             badge: 'Utama',
-            subjudul: 'Pelanggan mengunggah bukti transfer ke rekening mitra',
+            subjudul:
+                'Pelanggan mengunggah bukti transfer ke rekening mitra',
             nilai: _transferAktif,
             onChanged: (v) => setState(() => _transferAktif = v),
           ),
@@ -552,43 +697,25 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Row(
+                        borderRadius: BorderRadius.circular(14)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('NOMOR REKENING',
-                                  style: TextStyle(
-                                      fontSize: 10.5,
-                                      color: AppColors.textGrey,
-                                      fontWeight: FontWeight.w700)),
-                              Text(
-                                profile.noRekening.isEmpty
-                                    ? 'Belum diisi'
-                                    : profile.noRekening,
-                                style: const TextStyle(
-                                    fontSize: 15.5,
-                                    fontWeight: FontWeight.w800),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: profile.noRekening.isEmpty
-                              ? null
-                              : () {
-                                  Clipboard.setData(
-                                      ClipboardData(text: profile.noRekening));
-                                  pesanSukses(
-                                      context, 'Nomor rekening disalin.');
-                                },
-                          icon: const Icon(Icons.copy, size: 16),
-                          label: const Text('Salin'),
+                        const Text('NOMOR REKENING',
+                            style: TextStyle(
+                                fontSize: 10.5,
+                                color: AppColors.textGrey,
+                                fontWeight: FontWeight.w700)),
+                        Text(
+                          profile.noRekening.isEmpty
+                              ? 'Belum diisi'
+                              : profile.noRekening,
+                          style: const TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
@@ -607,8 +734,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 14),
           ],
-          const SizedBox(height: 14),
           _toggleTile(
             judul: 'COD (Bayar di Tempat)',
             subjudul:
@@ -631,8 +758,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700)),
                 const Text(
                     'Aturan uang muka saat warga pesan katering atau tumpeng porsi besar',
-                    style:
-                        TextStyle(color: AppColors.textGrey, fontSize: 12.5)),
+                    style: TextStyle(color: AppColors.textGrey, fontSize: 12.5)),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: _skemaPO,
@@ -678,7 +804,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           const SizedBox(height: 10),
           _toggleTile(
             judul: 'Pickup / Ambil Sendiri di Dapur',
-            subjudul: 'Pelanggan mengambil langsung ke alamat dapur Anda',
+            subjudul:
+                'Pelanggan mengambil langsung ke alamat dapur Anda',
             nilai: _pickupAktif,
             onChanged: (v) => setState(() => _pickupAktif = v),
           ),
@@ -730,207 +857,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
             label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),
           ),
         ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------ helper
-  Widget _judulSeksi(IconData ikon, String judul, String subjudul) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-              color: AppColors.krem, borderRadius: BorderRadius.circular(10)),
-          child: Icon(ikon, color: AppColors.hijauTua, size: 20),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(judul,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 16.5)),
-              Text(subjudul,
-                  style: const TextStyle(
-                      color: AppColors.textGrey, fontSize: 12.5)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _toggleTile({
-    required String judul,
-    String? badge,
-    required String subjudul,
-    required bool nilai,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.garis),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(judul,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
-                    ),
-                    if (badge != null) ...[
-                      const SizedBox(width: 6),
-                      MiniBadge(badge,
-                          bg: AppColors.chipOrange,
-                          fg: AppColors.chipOrangeText),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(subjudul,
-                    style: const TextStyle(
-                        color: AppColors.textGrey, fontSize: 12)),
-              ],
-            ),
-          ),
-          Switch(
-              value: nilai,
-              activeThumbColor: AppColors.hijauTua,
-              onChanged: onChanged),
-        ],
-      ),
-    );
-  }
-
-  // ------------------------------------------------ kartu ongkir berzona
-  Widget _kartuOngkirZona() {
-    // Jarak maksimal pengantaran SELALU mengikuti akhir zona terakhir (atau
-    // radius gratis kalau belum ada zona sama sekali) — lihat poin 12 & 33:
-    // supaya tidak mungkin ada rentang jarak yang "kelewati" tanpa tarif.
-    final radiusGratis =
-        double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0;
-    final jarakMaksimal = _zonaBaris.isEmpty
-        ? radiusGratis
-        : (double.tryParse(
-                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.')) ??
-            radiusGratis);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.bgLavender,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(10)),
-            child: const Row(
-              children: [
-                Icon(Icons.location_on_outlined,
-                    size: 18, color: AppColors.hijauTua),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Lokasi pengantaran: Desa Kreongan Atas, Jember. Ongkir dihitung otomatis dari alamat pembeli.',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.textGrey),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 26),
-
-          // ---------- Jarak maksimal (otomatis) ----------
-          Row(
-            children: [
-              const Expanded(
-                child: Text('Jarak Maksimal Pengantaran',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Text('${_fmtKm(jarakMaksimal)} KM',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.hijauTua)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Otomatis mengikuti batas akhir zona ongkir terakhir. Pelanggan di luar jarak '
-            'ini akan melihat "di luar jangkauan pengantaran".',
-            style: TextStyle(color: AppColors.textGrey, fontSize: 11.5),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _barisZona(int index) {
-    final mulai = _mulaiZona(index);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 58,
-            child: Text('>${_fmtKm(mulai)} km',
-                style:
-                    const TextStyle(fontSize: 12, color: AppColors.textGrey)),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            flex: 5,
-            child: TextField(
-              controller: _zonaBaris[index].sampaiCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-              ],
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                  labelText: 'Sampai', suffixText: 'KM', isDense: true),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 5,
-            child: TextField(
-              controller: _zonaBaris[index].tarifCtrl,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                  labelText: 'Tarif', prefixText: 'Rp ', isDense: true),
-            ),
-          ),
-          IconButton(
-            onPressed: () => _hapusZona(index),
-            icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-            tooltip: 'Hapus zona',
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
       ),
     );
   }

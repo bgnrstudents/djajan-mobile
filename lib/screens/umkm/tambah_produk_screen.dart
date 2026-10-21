@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -39,8 +38,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   // seluruh file. Tujuannya mencegah human error saat mengisi form, mis.
   // harga kepencet angka nol kelebihan (Rp999.999.999) atau nama produk
   // yang isinya cuma angka/simbol.
-  static const int _hargaMinimal =
-      100; // Rp100 — di bawah ini kemungkinan salah ketik
+  static const int _hargaMinimal = 100; // Rp100 — di bawah ini kemungkinan salah ketik
   static const int _hargaMaksimal = 1000000; // Rp1.000.000 / porsi
   static const int _namaMinPanjang = 3;
   static const int _namaMaksPanjang = 80;
@@ -49,9 +47,9 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   static const int _minOrderMaksimal = 9999;
 
   // Huruf (termasuk huruf beraksen), spasi, dan tanda baca umum pada nama
-  // makanan: & - ' ( ) , .  — TIDAK boleh angka maupun simbol @#$%^*_+=<>
+  // makanan: & - ' ( ) , .  — TIDAK boleh angka maupun simbol @#$%^*_+=<>\n
   static final RegExp _polaKarakterNamaValid =
-      RegExp(r"^[A-Za-zÀ-ÖØ-öø-ÿ .,'&()\/-]+$");
+      RegExp(r'^[A-Za-zÀ-ÖØ-öø-ÿ .,&()\-]+$');
   static final RegExp _polaAdaAngka = RegExp(r'[0-9]');
   // Minimal ada satu huruf, supaya nama tidak bisa diisi angka/simbol saja
   // (mis. "999999999" atau "!!!!!").
@@ -84,55 +82,6 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   /// Foto baru yang dipilih pengguna (belum diunggah).
   XFile? _fotoBaru;
   Uint8List? _fotoBaruBytes;
-
-  bool get _isEdit => widget.isEditMode;
-
-  @override
-  void initState() {
-    super.initState();
-    final p = widget.produkToEdit;
-    _namaCtrl = TextEditingController(text: p?.namaProduk ?? '');
-    _hargaCtrl =
-        TextEditingController(text: p != null ? p.harga.toString() : '');
-    _deskripsiCtrl = TextEditingController(text: p?.deskripsi ?? '');
-    _minOrderCtrl =
-        TextEditingController(text: (p?.minOrderPO ?? 20).toString());
-    _stokCtrl = TextEditingController(text: (p?.stok ?? 15).toString());
-    _kategori = p?.kategori ?? 'Makanan & Catering';
-    if (!_kategoriOptions.contains(_kategori))
-      _kategori = _kategoriOptions.first;
-    _mode = p?.modePenjualan ?? ModePenjualan.keduanya;
-    _waktuMasak = p?.waktuMasakPO ?? 'H-2 Hari';
-    if (!_waktuMasakOptions.contains(_waktuMasak)) _waktuMasak = 'H-2 Hari';
-    _tampilkanDiWarung = p?.tampilkanDiWarung ?? true;
-  }
-
-  @override
-  void dispose() {
-    _namaCtrl.dispose();
-    _hargaCtrl.dispose();
-    _deskripsiCtrl.dispose();
-    _minOrderCtrl.dispose();
-    _stokCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pilihFoto() async {
-    final file = await pilihGambar(context);
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    if (!mounted) return;
-
-    if (bytes.lengthInBytes > 5 * 1024 * 1024) {
-      pesanGagal(context, 'Ukuran gambar melebihi 5 MB. Silakan pilih gambar lain.');
-      return;
-    }
-
-    setState(() {
-      _fotoBaru = file;
-      _fotoBaruBytes = bytes;
-    });
-  }
 
   bool get _adaFoto =>
       _fotoBaruBytes != null ||
@@ -214,8 +163,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                   top: 10,
                   left: 10,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: AppColors.hijauTua,
                       borderRadius: BorderRadius.circular(20),
@@ -241,7 +189,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
     setState(() => _stokCtrl.text = baru.toString());
   }
 
-  Future<void> _simpan({required bool tayangkan}) async {
+  Future<void> _simpan({required bool tayangan}) async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
@@ -252,8 +200,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
     final service = context.read<UmkmDataService>();
 
     try {
-      final harga =
-          int.parse(_hargaCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''));
+      final harga = int.parse(_hargaCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''));
       final String pesan;
 
       if (_isEdit) {
@@ -280,7 +227,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
           stok: _mode == ModePenjualan.preOrder ? 0 : _stok,
           minOrderPO: int.tryParse(_minOrderCtrl.text) ?? 0,
           waktuMasakPO: _waktuMasak,
-          tampilkanDiWarung: tayangkan && _tampilkanDiWarung,
+          tampilkanDiWarung: tayangan && _tampilkanDiWarung,
           gambar: _fotoBaru,
         );
       }
@@ -302,6 +249,54 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
       if (mounted) setState(() => _menyimpan = false);
     }
   }
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.produkToEdit;
+    _namaCtrl = TextEditingController(text: p?.namaProduk ?? '');
+    _hargaCtrl =
+        TextEditingController(text: p != null ? p.harga.toString() : '');
+    _deskripsiCtrl = TextEditingController(text: p?.deskripsi ?? '');
+    _minOrderCtrl =
+        TextEditingController(text: (p?.minOrderPO ?? 20).toString());
+    _stokCtrl = TextEditingController(text: (p?.stok ?? 15).toString());
+    _kategori = p?.kategori ?? 'Makanan & Catering';
+    if (!_kategoriOptions.contains(_kategori)) _kategori = _kategoriOptions.first;
+    _mode = p?.modePenjualan ?? ModePenjualan.keduanya;
+    _waktuMasak = p?.waktuMasakPO ?? 'H-2 Hari';
+    if (!_waktuMasakOptions.contains(_waktuMasak)) _waktuMasak = 'H-2 Hari';
+    _tampilkanDiWarung = p?.tampilkanDiWarung ?? true;
+  }
+
+  @override
+  void dispose() {
+    _namaCtrl.dispose();
+    _hargaCtrl.dispose();
+    _deskripsiCtrl.dispose();
+    _minOrderCtrl.dispose();
+    _stokCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pilihFoto() async {
+    final file = await pilihGambar(context);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+
+    if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+      pesanGagal(context, 'Ukuran gambar melebihi 5 MB. Silakan pilih gambar lain.');
+      return;
+    }
+
+    setState(() {
+      _fotoBaru = file;
+      _fotoBaruBytes = bytes;
+    });
+  }
+
+  bool get _isEdit => widget.isEditMode;
 
   @override
   Widget build(BuildContext context) {
@@ -379,16 +374,15 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                         fontSize: 12,
                         fontWeight: _fotoBaru != null
                             ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
+                            : FontWeight.w400),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-              // ===================== INFORMASI PRODUK =====================
-              _kartuSeksi(
+              // ===================== INFORMASI PRODUK ====================
+              _kartuSessi(
                 ikon: Icons.restaurant_menu,
                 judul: 'Informasi Produk',
                 children: [
@@ -398,14 +392,34 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                     textCapitalization: TextCapitalization.words,
                     maxLength: _namaMaksPanjang,
                     inputFormatters: [
-                      // Memblokir simbol aneh (@#$%^*_+=<>[]{}|\~`!?;:") saat
+                      // Memblokir simbol aneh (@#$%^*_+=<>[]{}|\\~`!?;:) saat
                       // diketik, bukan cuma ditolak belakangan saat submit.
                       FilteringTextInputFormatter.allow(_polaKarakterNamaValid),
                       LengthLimitingTextInputFormatter(_namaMaksPanjang),
                     ],
-                    decoration: const InputDecoration(
-                        hintText: 'Contoh: Nasi Kotak Ayam Geprek Spesial',
-                        counterText: ''),
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: Nasi Kotak Ayam Geprek Spesial',
+                      counterText: '',
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.danger),
+                      ),
+                    ),
                     onChanged: (_) {
                       if (_errNamaServer != null) {
                         setState(() => _errNamaServer = null);
@@ -439,6 +453,23 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                         .map((k) => DropdownMenuItem(value: k, child: Text(k)))
                         .toList(),
                     onChanged: (v) => setState(() => _kategori = v!),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _label('Harga Satuan', wajib: true),
@@ -451,8 +482,27 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       LengthLimitingTextInputFormatter(7),
                       _PemformatRibuan(),
                     ],
-                    decoration: const InputDecoration(
-                        prefixText: 'Rp  ', suffixText: '/ porsi'),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.danger),
+                      ),
+                    ),
                     validator: (v) {
                       final bersih = (v ?? '').replaceAll('.', '');
                       if (bersih.isEmpty) return 'Harga wajib diisi';
@@ -477,19 +527,33 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                     inputFormatters: [
                       LengthLimitingTextInputFormatter(_deskripsiMaksPanjang),
                     ],
-                    decoration: const InputDecoration(
-                        hintText: 'Ceritakan bahan & keunggulan produk...'),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      hintText: 'Ceritakan bahan & keunggulan produk...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // ==================== MODE PENJUALAN ====================
-              _kartuSeksi(
+              _kartuSessi(
                 ikon: Icons.tune,
                 judul: 'Mode Penjualan Warung',
-                trailing: const MiniBadge('Fleksibel',
-                    bg: AppColors.chipGreenBg, fg: AppColors.hijauTua),
                 children: [
                   const Text(
                       'Sesuaikan kesiapan dapur & kapasitas produksi Anda',
@@ -498,18 +562,17 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(
-                          child: _tombolMode(
-                              'Ready', Icons.bolt, ModePenjualan.ready)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: _tombolMode('Pre-Order', Icons.event_note,
-                              ModePenjualan.preOrder)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: _tombolMode('Keduanya', Icons.done_all,
-                              ModePenjualan.keduanya)),
-                    ],
+      Expanded(
+          child: _tombolMode('Ready', Icons.bolt, ModePenjualan.ready)),
+      const SizedBox(width: 8),
+      Expanded(
+          child: _tombolMode('Pre-Order', Icons.event_note,
+              ModePenjualan.preOrder)),
+      const SizedBox(width: 8),
+      Expanded(
+          child: _tombolMode('Keduanya', Icons.done_all,
+              ModePenjualan.keduanya)),
+    ],
                   ),
                   const SizedBox(height: 14),
                   if (_mode != ModePenjualan.preOrder) ...[
@@ -540,15 +603,9 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                                 LengthLimitingTextInputFormatter(
                                     _stokMaksimal.toString().length),
                               ],
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w800),
+                              style: const TextStyle(fontWeight: FontWeight.w800),
                               decoration: const InputDecoration(
-                                  contentPadding:
-                                      EdgeInsets.symmetric(vertical: 10)),
-                              // Kotak ini sempit (62px) sehingga tidak muat menampilkan
-                              // teks error — jadi nilai yang melebihi batas langsung
-                              // "dirapikan" otomatis begitu pengguna selesai mengetik,
-                              // bukan ditolak lewat validator.
+                                  contentPadding: EdgeInsets.symmetric(vertical: 10)),
                               onChanged: (v) {
                                 final n = int.tryParse(v);
                                 if (n != null && n > _stokMaksimal) {
@@ -578,7 +635,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
                               Expanded(
                                 child: Text('Ketentuan Pre-Order (PO Acara)',
@@ -592,63 +649,63 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                           ),
                           const SizedBox(height: 10),
                           Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Min. Order',
-                                        style: TextStyle(fontSize: 12)),
-                                    const SizedBox(height: 4),
-                                    TextFormField(
-                                      controller: _minOrderCtrl,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(
-                                            _minOrderMaksimal
-                                                .toString()
-                                                .length),
-                                      ],
-                                      decoration: const InputDecoration(
-                                          suffixText: 'Porsi'),
-                                      validator: (v) {
-                                        if (_mode == ModePenjualan.ready)
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Min. Order',
+                                          style: TextStyle(fontSize: 12)),
+                                      const SizedBox(height: 4),
+                                      TextFormField(
+                                        controller: _minOrderCtrl,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly,
+                                          LengthLimitingTextInputFormatter(
+                                              _minOrderMaksimal
+                                                  .toString()
+                                                  .length),
+                                        ],
+                                        decoration: const InputDecoration(
+                                            suffixText: 'Porsi'),
+                                        validator: (v) {
+                                          if (_mode == ModePenjualan.ready) {
+                                            return null;
+                                          }
+                                          final n = int.tryParse(v ?? '');
+                                          if (n == null || n < 1) {
+                                            return 'Minimal order harus 1 porsi atau lebih';
+                                          }
                                           return null;
-                                        final n = int.tryParse(v ?? '');
-                                        if (n == null || n < 1) {
-                                          return 'Minimal order harus 1 porsi atau lebih';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ],
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Waktu Masak',
-                                        style: TextStyle(fontSize: 12)),
-                                    const SizedBox(height: 4),
-                                    DropdownButtonFormField<String>(
-                                      initialValue: _waktuMasak,
-                                      isExpanded: true,
-                                      items: _waktuMasakOptions
-                                          .map((w) => DropdownMenuItem(
-                                              value: w, child: Text(w)))
-                                          .toList(),
-                                      onChanged: (v) =>
-                                          setState(() => _waktuMasak = v!),
-                                    ),
-                                  ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Waktu Masak',
+                                          style: TextStyle(fontSize: 12)),
+                                      const SizedBox(height: 4),
+                                      DropdownButtonFormField<String>(
+                                        initialValue: _waktuMasak,
+                                        isExpanded: true,
+                                        items: _waktuMasakOptions
+                                            .map((w) => DropdownMenuItem(
+                                                value: w, child: Text(w)))
+                                            .toList(),
+                                        onChanged: (v) => setState(() => _waktuMasak = v!),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
                         ],
                       ),
                     ),
@@ -719,7 +776,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                   ),
                   child: IconButton(
                     onPressed:
-                        _menyimpan ? null : () => _simpan(tayangkan: false),
+                        _menyimpan ? null : () => _simpan(tayangan: false),
                     icon: const Icon(Icons.bookmark_border,
                         color: AppColors.hijauTua),
                     tooltip: 'Simpan sebagai draft (belum tayang)',
@@ -729,7 +786,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
               ],
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: _menyimpan ? null : () => _simpan(tayangkan: true),
+                  onPressed: _menyimpan ? null : () => _simpan(tayangan: true),
                   icon: _menyimpan
                       ? const SizedBox(
                           width: 18,
@@ -778,10 +835,9 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
     );
   }
 
-  Widget _kartuSeksi({
+  Widget _kartuSessi({
     required IconData ikon,
     required String judul,
-    Widget? trailing,
     required List<Widget> children,
   }) {
     return KartuPutih(
@@ -797,7 +853,6 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                     style: const TextStyle(
                         fontWeight: FontWeight.w800, fontSize: 16.5)),
               ),
-              if (trailing != null) trailing,
             ],
           ),
           const SizedBox(height: 14),
