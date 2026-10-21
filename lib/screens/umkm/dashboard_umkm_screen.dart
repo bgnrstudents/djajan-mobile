@@ -9,7 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import 'detail_pesanan_screen.dart';
 import '../../screens/auth/login_screen.dart';
-import 'registrasi_umkm_screen.dart';
+import '../../screens/customer/order/order_widgets.dart';
 import 'tambah_produk_screen.dart';
 import 'pengaturan_screen.dart';
 
@@ -79,66 +79,53 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
     final profile = service.profile;
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            GambarJaringan(
-              url: profile.fotoProfilUrl,
-              width: 36,
-              height: 36,
-              radius: 10,
-              ikonKosong: Icons.storefront,
-              cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(profile.namaUsaha,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 16)),
-                  Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: profile.tokoAktif
-                              ? AppColors.hijauMuda
-                              : AppColors.textGrey,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
-                          style: const TextStyle(
-                              fontSize: 11.5, color: AppColors.textGrey)),
-                    ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DjajanPageHeader(
+          title: profile.namaUsaha,
+          subtitle: profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
+          leading: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
                   ),
                 ],
               ),
+              child: GambarJaringan(
+                url: profile.fotoProfilUrl,
+                width: 32,
+                height: 32,
+                radius: 10,
+                ikonKosong: Icons.storefront,
+                cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
+              ),
             ),
-          ],
+          ),
+          rightAction: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                tooltip: 'Pengaturan Usaha',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PengaturanScreen())),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.logout_rounded),
+                tooltip: 'Keluar',
+                onPressed: _keluar,
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Pengaturan Usaha',
-            onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PengaturanScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Keluar',
-            onPressed: _keluar,
-          ),
-          const SizedBox(width: 4),
-        ],
       ),
       body: service.memuat &&
               service.produkList.isEmpty &&
@@ -174,31 +161,43 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                 label: const Text('Tambah Produk'),
               )
             : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        backgroundColor: Colors.white,
-        indicatorColor: AppColors.chipGreenBg,
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront, color: AppColors.hijauTua),
-            label: 'Produk',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              label: Text('${service.jumlahPoBaru}'),
-              isLabelVisible: service.jumlahPoBaru > 0,
-              child: const Icon(Icons.receipt_long_outlined),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
             ),
-            selectedIcon: Badge(
-              label: Text('${service.jumlahPoBaru}'),
-              isLabelVisible: service.jumlahPoBaru > 0,
-              child: const Icon(Icons.receipt_long, color: AppColors.hijauTua),
+          ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _tab,
+          onDestinationSelected: (i) => setState(() => _tab = i),
+          backgroundColor: Colors.white,
+          indicatorColor: AppColors.hijauTua,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.storefront_outlined, color: _tab == 0 ? AppColors.hijauTua : AppColors.textGrey),
+              selectedIcon: Icon(Icons.storefront, color: AppColors.hijauTua),
+              label: 'Produk',
             ),
-            label: 'Pesanan',
-          ),
-        ],
+            NavigationDestination(
+              icon: Badge(
+                label: Text('${service.jumlahPoBaru}'),
+                isLabelVisible: service.jumlahPoBaru > 0,
+                child: const Icon(Icons.receipt_long_outlined, color: AppColors.textGrey),
+              ),
+              selectedIcon: Badge(
+                label: Text('${service.jumlahPoBaru}'),
+                isLabelVisible: service.jumlahPoBaru > 0,
+                child: const Icon(Icons.receipt_long, color: AppColors.hijauTua),
+              ),
+              label: 'Pesanan',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -652,7 +651,7 @@ class _TabPesanan extends StatelessWidget {
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: pesananList.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, i) {
                 final p = pesananList[i];
                 final (bg, fg) = _warnaStatus(p.status);
