@@ -6,6 +6,7 @@ import '../../services/api_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../customer/order/order_widgets.dart';
 
 /// Satu baris form zona ongkir yang sedang diedit di layar ini.
 /// "Mulai" tidak disimpan di sini karena selalu dihitung otomatis dari
@@ -92,45 +93,18 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     super.dispose();
   }
 
-  // --------------------------------------------------------- zona ongkir
-  /// Jarak "mulai" zona ke-[index], selalu mengikuti radius gratis (zona
-  /// pertama) atau batas akhir zona sebelumnya — tidak pernah diketik manual,
-  /// supaya tidak mungkin ada celah/tumpang tindih antar zona (poin 12).
-  double _mulaiZona(int index) {
-    if (index == 0) {
-      return double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0;
-    }
-    return double.tryParse(
-            _zonaBaris[index - 1].sampaiCtrl.text.replaceAll(',', '.')) ??
-        0;
-  }
-
-  void _tambahZona() {
-    final batasTerakhir = _zonaBaris.isEmpty
-        ? (double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0)
-        : (double.tryParse(
-                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.')) ?? 0);
-    setState(() {
-      _zonaBaris.add(_ZonaBaris(sampai: _fmtKm(batasTerakhir + 5), tarif: '0'));
-    });
-  }
-
-  void _hapusZona(int index) {
-    setState(() {
-      _zonaBaris[index].dispose();
-      _zonaBaris.removeAt(index);
-    });
-  }
-
   // ------------------------------------------------ ganti foto profil
   Future<void> _gantiFoto() async {
     final file = await pilihGambar(context);
     if (file == null) return;
+    if (!mounted) return;
 
     setState(() => _mengunggahFoto = true);
     try {
-      final pesan = await context.read<UmkmDataService>().gantiFotoProfil(file);
-      if (mounted) pesanSukses(context, pesan);
+      final service = context.read<UmkmDataService>();
+      final pesan = await service.gantiFotoProfil(file);
+      if (!mounted) return;
+      pesanSukses(context, pesan);
     } on ApiException catch (e) {
       if (mounted) pesanGagal(context, e.pesan);
     } finally {
@@ -288,8 +262,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     // Lokasi pengantaran tetap berada di Desa Kreongan Atas, Jember.
     final radiusGratis = double.tryParse(_radiusCtrl.text.replaceAll(',', '.'));
     if (radiusGratis == null || radiusGratis < 0) {
-      pesanGagal(context,
-          'Radius gratis ongkir harus berupa angka dan tidak boleh negatif.');
+      if (mounted) pesanGagal(context, 'Radius gratis ongkir harus berupa angka dan tidak boleh negatif.');
       return;
     }
 
@@ -300,17 +273,15 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           double.tryParse(_zonaBaris[i].sampaiCtrl.text.replaceAll(',', '.'));
       final tarif = int.tryParse(_zonaBaris[i].tarifCtrl.text);
       if (sampai == null || tarif == null) {
-        pesanGagal(context,
-            'Isi jarak & tarif zona ke-${i + 1} dengan angka yang benar.');
+        if (mounted) pesanGagal(context, 'Isi jarak & tarif zona ke-${i + 1} dengan angka yang benar.');
         return;
       }
       if (sampai <= batas) {
-        pesanGagal(context,
-            'Jarak akhir zona ke-${i + 1} harus lebih besar dari ${_fmtKm(batas)} KM (batas zona sebelumnya).');
+        if (mounted) pesanGagal(context, 'Jarak akhir zona ke-${i + 1} harus lebih besar dari ${_fmtKm(batas)} KM (batas zona sebelumnya).');
         return;
       }
       if (tarif < 0) {
-        pesanGagal(context, 'Tarif zona ke-${i + 1} tidak boleh negatif.');
+        if (mounted) pesanGagal(context, 'Tarif zona ke-${i + 1} tidak boleh negatif.');
         return;
       }
       zonaBaru.add(ZonaOngkir(jarakMin: batas, jarakMax: sampai, biaya: tarif));
@@ -511,9 +482,15 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final profile = context.watch<UmkmDataService>().profile;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Pengaturan Usaha'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DjajanPageHeader(
+          title: 'Pengaturan Usaha',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),

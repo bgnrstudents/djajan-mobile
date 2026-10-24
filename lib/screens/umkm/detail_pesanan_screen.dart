@@ -9,6 +9,7 @@ import '../../services/api_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../customer/order/order_widgets.dart';
 
 /// HALAMAN 5 — Detail Pesanan.
 /// Menampilkan isi tabel `pesanan` + `detail_pesanan`. Tombol Terima/Tolak
@@ -92,14 +93,30 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
       ),
     );
     if (yakin != true) return;
+    if (!mounted) return;
 
     setState(() => _memproses = true);
+    final nav = Navigator.of(context);
     try {
       final pesan =
           await context.read<UmkmDataService>().tolakPesanan(p.idPesanan);
       if (!mounted) return;
       pesanSukses(context, pesan);
-      Navigator.of(context).pop();
+      nav.pop();
+    } on ApiException catch (e) {
+      if (mounted) pesanGagal(context, e.pesan);
+    } finally {
+      if (mounted) setState(() => _memproses = false);
+    }
+  }
+
+  Future<void> _selesaikan(Pesanan p) async {
+    setState(() => _memproses = true);
+    try {
+      final service = context.read<UmkmDataService>();
+      final pesan = await service.selesaikanPesanan(p.idPesanan);
+      if (!mounted) return;
+      pesanSukses(context, pesan);
     } on ApiException catch (e) {
       if (mounted) pesanGagal(context, e.pesan);
     } finally {
@@ -114,8 +131,16 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
 
     if (pesanan == null) {
       return Scaffold(
-        appBar: AppBar(
-            leading: const BackButton(), title: const Text('Detail Pesanan')),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: DjajanPageHeader(
+            title: 'Detail Pesanan',
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => Navigator.maybePop(context),
+            ),
+          ),
+        ),
         body: const TampilanKosong(
           ikon: Icons.receipt_long_outlined,
           judul: 'Pesanan Tidak Ditemukan',
@@ -129,8 +154,17 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     final sisa = pesanan.sisaWaktuKonfirmasi;
 
     return Scaffold(
-      appBar: AppBar(
-          leading: const BackButton(), title: const Text('Detail Pesanan')),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DjajanPageHeader(
+          title: 'Detail Pesanan',
+          subtitle: '#${pesanan.idPesanan}',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+        ),
+      ),
       body: AbsorbPointer(
         absorbing: _memproses,
         child: ListView(
@@ -502,21 +536,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                   side: const BorderSide(color: AppColors.hijauTua),
                   minimumSize: const Size.fromHeight(50),
                 ),
-                onPressed: _memproses
-                    ? null
-                    : () async {
-                        setState(() => _memproses = true);
-                        try {
-                          final pesan = await context
-                              .read<UmkmDataService>()
-                              .selesaikanPesanan(pesanan.idPesanan);
-                          if (mounted) pesanSukses(context, pesan);
-                        } on ApiException catch (e) {
-                          if (mounted) pesanGagal(context, e.pesan);
-                        } finally {
-                          if (mounted) setState(() => _memproses = false);
-                        }
-                      },
+                onPressed:
+                    _memproses ? null : () => _selesaikan(pesanan),
                 icon: const Icon(Icons.task_alt),
                 label: const Text('Tandai Pesanan Selesai'),
               ),

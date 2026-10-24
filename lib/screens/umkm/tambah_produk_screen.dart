@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +8,7 @@ import '../../services/api_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../customer/order/order_widgets.dart';
 
 /// HALAMAN 3 — Tambah / Edit Produk.
 /// Data disimpan ke tabel `produk`, sedangkan foto diunggah ke folder
@@ -107,7 +107,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => const Center(
+        errorBuilder: (_, _, _) => const Center(
           child: Icon(Icons.broken_image_outlined,
               color: AppColors.textGrey, size: 40),
         ),
@@ -300,12 +300,16 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final produkLama = widget.produkToEdit;
-
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: Text(_isEdit ? 'Edit Produk' : 'Tambah Produk Baru'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DjajanPageHeader(
+          title: _isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+        ),
       ),
       body: AbsorbPointer(
         absorbing: _menyimpan,
