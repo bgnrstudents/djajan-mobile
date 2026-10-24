@@ -301,6 +301,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: OC.bg,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: DjajanPageHeader(

@@ -154,6 +154,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     final sisa = pesanan.sisaWaktuKonfirmasi;
 
     return Scaffold(
+      backgroundColor: OC.bg,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: DjajanPageHeader(
@@ -177,13 +178,10 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pesanan #${pesanan.idPesanan}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 19)),
+                      Text('Pesanan #${pesanan.idPesanan}', style: OT.pageTitle),
                       Text(
                           'Diajukan ${tanggalFmt.format(pesanan.tanggalPesan)}',
-                          style: const TextStyle(
-                              color: AppColors.textGrey, fontSize: 12.5)),
+                          style: OT.caption),
                     ],
                   ),
                 ),
@@ -198,8 +196,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: sisa == Duration.zero
-                      ? AppColors.dangerBg
-                      : AppColors.bgLavender,
+                      ? OC.dangerSoft
+                      : OC.box,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
@@ -228,15 +226,13 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                           else
                             RichText(
                               text: TextSpan(
-                                style: const TextStyle(
-                                    color: AppColors.textDark, fontSize: 13),
+                                style: OT.body,
                                 children: [
                                   const TextSpan(text: 'Tersisa '),
                                   TextSpan(
                                     text: _formatDurasi(sisa),
-                                    style: const TextStyle(
-                                        color: AppColors.danger,
-                                        fontWeight: FontWeight.w800),
+                                    style: OT.caption
+                                        .copyWith(color: OC.danger, fontWeight: FontWeight.w800),
                                   ),
                                   const TextSpan(
                                       text:
@@ -260,11 +256,11 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: AppColors.chipGreenBg,
+                        backgroundColor: OC.mintSoft,
                         child: Text(
                           _inisial(pesanan.namaPembeli),
                           style: const TextStyle(
-                              color: AppColors.hijauTua,
+                              color: OC.primary,
                               fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -615,7 +611,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.bgLavender,
+        color: OC.box,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -678,23 +674,23 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
   Widget _badgeStatus(StatusPesanan status) {
     final (bg, fg, ikon) = switch (status) {
       StatusPesanan.poBaru => (
-          AppColors.chipOrange,
-          AppColors.chipOrangeText,
+          OC.peach,
+          OC.amber,
           Icons.schedule
         ),
       StatusPesanan.diterima => (
-          AppColors.chipGreenBg,
-          AppColors.hijauTua,
+          OC.mint,
+          OC.mintText,
           Icons.check_circle
         ),
       StatusPesanan.selesai => (
-          AppColors.chipGreenBg,
-          AppColors.hijauTua,
+          OC.mintSoft,
+          OC.primary,
           Icons.task_alt
         ),
       StatusPesanan.ditolak => (
-          AppColors.dangerBg,
-          AppColors.danger,
+          OC.dangerSoft,
+          OC.danger,
           Icons.cancel
         ),
     };

@@ -80,6 +80,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
     final profile = service.profile;
 
     return Scaffold(
+      backgroundColor: OC.bg,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: DjajanPageHeader(
@@ -109,21 +110,10 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
               ),
             ),
           ),
-          rightAction: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                tooltip: 'Pengaturan Usaha',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PengaturanScreen())),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.logout_rounded),
-                tooltip: 'Keluar',
-                onPressed: _keluar,
-              ),
-            ],
+          rightAction: IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Keluar',
+            onPressed: _keluar,
           ),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         ),
@@ -147,6 +137,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                       onRefresh: _refresh,
                     ),
                     _TabPesanan(service: service, onRefresh: _refresh),
+                    const PengaturanScreen(isTab: true),
                   ],
                 ),
       floatingActionButton: _tab == 0
@@ -258,21 +249,20 @@ class _TabProduk extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.chipOrange,
+                      color: OC.peachSoft,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: OC.peach),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.warning_amber_rounded,
-                            color: AppColors.chipOrangeText, size: 20),
+                            color: OC.amber, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             '$stokHabis produk stoknya habis. Segera isi ulang '
                             'agar tetap tampil menarik di etalase.',
-                            style: const TextStyle(
-                                fontSize: 12.5,
-                                color: AppColors.chipOrangeText),
+                            style: OT.caption.copyWith(color: OC.amber),
                           ),
                         ),
                       ],
@@ -327,25 +317,18 @@ class _KartuStatistik extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final warnaIkon = soroti ? AppColors.chipOrangeText : AppColors.hijauTua;
-    final latarIkon = soroti ? AppColors.chipOrange : AppColors.chipGreenBg;
-
-    return Container(
+    return KartuPutih(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.garis),
-      ),
+      radius: 16,
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: latarIkon,
+              color: soroti ? OC.peachSoft : OC.primarySoft,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(ikon, color: warnaIkon, size: 20),
+            child: Icon(ikon, color: soroti ? OC.amber : OC.primary, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -353,16 +336,9 @@ class _KartuStatistik extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(nilai,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                        height: 1.15,
-                        color: AppColors.textDark)),
+                    style: OT.moneyLarge.copyWith(color: soroti ? OC.amber : OC.primary)),
                 Text(label,
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textGrey)),
+                    style: OT.caption),
               ],
             ),
           ),
@@ -462,31 +438,32 @@ class _KartuProdukState extends State<_KartuProduk> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(p.namaProduk,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 14.5),
+                          style: OT.item,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 2),
-                      Text(formatRupiah(p.harga),
-                          style: const TextStyle(
-                              color: AppColors.hijauTua,
-                              fontWeight: FontWeight.w800)),
+                      Text(rupiah(p.harga),
+                          style: OT.money.copyWith(color: OC.primary)),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
                         children: [
-                          MiniBadge(p.modePenjualan.label),
-                          MiniBadge(p.kategori),
+                          MiniBadge(p.modePenjualan.label,
+                              bg: OC.mintSoft,
+                              fg: OC.primary),
+                          MiniBadge(p.kategori,
+                              bg: OC.box,
+                              fg: OC.muted),
                           if (p.tampilkanDiWarung)
                             const MiniBadge('Tayang',
-                                bg: AppColors.chipGreenBg,
-                                fg: AppColors.hijauTua,
+                                bg: OC.mint,
+                                fg: OC.mintText,
                                 ikon: Icons.visibility)
                           else
                             const MiniBadge('Draft',
-                                bg: AppColors.bgLavender,
-                                fg: AppColors.textGrey,
+                                bg: OC.box,
+                                fg: OC.muted,
                                 ikon: Icons.visibility_off),
                         ],
                       ),

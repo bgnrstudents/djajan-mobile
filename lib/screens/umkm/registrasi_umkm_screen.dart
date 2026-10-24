@@ -34,6 +34,7 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: OC.bg,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: DjajanPageHeader(
@@ -53,7 +54,7 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
             children: [
               const Text(
                 'Daftar sebagai UMKM untuk mendapatkan akses penuh ke fitur penjualan di ekosistem Djajan.',
-                style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                style: OT.secondary,
               ),
               const SizedBox(height: 24),
               _buildInput(

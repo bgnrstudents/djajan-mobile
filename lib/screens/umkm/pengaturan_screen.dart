@@ -34,7 +34,8 @@ String _fmtKm(double v) =>
 /// Foto profil diunggah ke server, dan seluruh toggle/rekening/ongkir
 /// disimpan ke tabel `umkm` di MySQL.
 class PengaturanScreen extends StatefulWidget {
-  const PengaturanScreen({super.key});
+  final bool isTab;
+  const PengaturanScreen({super.key, this.isTab = false});
 
   @override
   State<PengaturanScreen> createState() => _PengaturanScreenState();
@@ -318,7 +319,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
       if (!mounted) return;
       pesanSukses(context, pesan);
-      Navigator.of(context).pop();
+      if (!widget.isTab) {
+        Navigator.of(context).pop();
+      }
     } on ApiException catch (e) {
       if (mounted) pesanGagal(context, e.pesan);
     } finally {
@@ -482,18 +485,20 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final profile = context.watch<UmkmDataService>().profile;
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: DjajanPageHeader(
-          title: 'Pengaturan Usaha',
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-        ),
-      ),
+      appBar: widget.isTab
+          ? null
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: DjajanPageHeader(
+                title: 'Pengaturan Usaha',
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () => Navigator.maybePop(context),
+                ),
+              ),
+            ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
+        padding: EdgeInsets.fromLTRB(16, widget.isTab ? 16 : 0, 16, widget.isTab ? 100 : 30),
         children: [
           // ==================== PROFIL USAHA + FOTO ====================
           KartuPutih(
