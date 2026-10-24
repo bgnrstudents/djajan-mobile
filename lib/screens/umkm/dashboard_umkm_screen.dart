@@ -82,36 +82,51 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
     return Scaffold(
       backgroundColor: OC.bg,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(80),
         child: DjajanPageHeader(
-          title: profile.namaUsaha,
-          subtitle: profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
-          leading: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                shape: BoxShape.circle,
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                  ),
-                ],
+          leftWidget: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: GambarJaringan(
+                  url: profile.fotoProfilUrl,
+                  width: 48,
+                  height: 48,
+                  radius: 24,
+                  ikonKosong: Icons.storefront,
+                  cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
+                ),
               ),
-              child: GambarJaringan(
-                url: profile.fotoProfilUrl,
-                width: 32,
-                height: 32,
-                radius: 10,
-                ikonKosong: Icons.storefront,
-                cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(profile.namaUsaha, style: OT.pageTitle),
+                    const SizedBox(height: 4),
+                    MiniBadge(
+                      profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
+                      bg: profile.tokoAktif ? OC.mint : OC.box,
+                      fg: profile.tokoAktif ? OC.mintText : OC.muted,
+                      ikon: profile.tokoAktif ? Icons.check_circle : Icons.do_not_disturb_on,
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
           rightAction: IconButton(
-            icon: const Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout_rounded, color: OC.muted),
             tooltip: 'Keluar',
             onPressed: _keluar,
           ),
@@ -142,7 +157,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                 ),
       floatingActionButton: _tab == 0
             ? FloatingActionButton.extended(
-                backgroundColor: AppColors.hijauTua,
+                backgroundColor: OC.primary,
                 foregroundColor: Colors.white,
                 onPressed: () async {
                   await Navigator.of(context).push(MaterialPageRoute(
@@ -194,7 +209,7 @@ class _TabProduk extends StatelessWidget {
         .length;
 
     return RefreshIndicator(
-      color: AppColors.hijauTua,
+      color: OC.primary,
       onRefresh: onRefresh,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 110),
@@ -234,7 +249,7 @@ class _TabProduk extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: 'Cari produk atau kategori...',
                     prefixIcon:
-                        const Icon(Icons.search, color: AppColors.textGrey),
+                        const Icon(Icons.search, color: OC.muted),
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     border: OutlineInputBorder(
@@ -476,7 +491,7 @@ class _KartuProdukState extends State<_KartuProduk> {
                     IconButton(
                       visualDensity: VisualDensity.compact,
                       icon: const Icon(Icons.edit_outlined,
-                          color: AppColors.hijauTua),
+                          color: OC.primary),
                       tooltip: 'Edit produk',
                       onPressed: _sibuk
                           ? null
@@ -543,15 +558,15 @@ class _KartuProdukState extends State<_KartuProduk> {
                   const Flexible(
                     child: Text('Jumlah pesanan ditentukan pelanggan',
                         style: TextStyle(
-                            fontSize: 12.5, color: AppColors.textGrey)),
+                            fontSize: 12.5, color: OC.muted)),
                   ),
                 const Spacer(),
                 const Text('Tayang',
                     style:
-                        TextStyle(fontSize: 12.5, color: AppColors.textGrey)),
+                        TextStyle(fontSize: 12.5, color: OC.muted)),
                 Switch(
                   value: p.tampilkanDiWarung,
-                  activeThumbColor: AppColors.hijauTua,
+                  activeThumbColor: OC.primary,
                   onChanged: _sibuk
                       ? null
                       : (v) => _jalankan(
@@ -579,7 +594,7 @@ class _TabPesanan extends StatelessWidget {
     final tanggalFmt = DateFormat('d MMM yyyy, HH:mm', 'id_ID');
 
     return RefreshIndicator(
-      color: AppColors.hijauTua,
+      color: OC.primary,
       onRefresh: onRefresh,
       child: pesananList.isEmpty
           ? ListView(
@@ -628,12 +643,12 @@ class _TabPesanan extends StatelessWidget {
                                   Text(
                                       '${p.namaPembeli} • ${p.totalPorsi} porsi',
                                       style: const TextStyle(
-                                          color: AppColors.textGrey,
+                                          color: OC.muted,
                                           fontSize: 12.5)),
                                   const SizedBox(height: 4),
                                   Text(formatRupiah(p.totalDiterimaMitra),
                                       style: const TextStyle(
-                                          color: AppColors.hijauTua,
+                                          color: OC.primary,
                                           fontWeight: FontWeight.w800,
                                           fontSize: 15)),
                                 ],
@@ -645,7 +660,7 @@ class _TabPesanan extends StatelessWidget {
                                 MiniBadge(p.status.label, bg: bg, fg: fg),
                                 const SizedBox(height: 8),
                                 const Icon(Icons.chevron_right,
-                                    color: AppColors.textGrey),
+                                    color: OC.muted),
                               ],
                             ),
                           ],
@@ -654,13 +669,13 @@ class _TabPesanan extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(Icons.schedule,
-                                size: 14, color: AppColors.textGrey),
+                                size: 14, color: OC.muted),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 'Masuk ${tanggalFmt.format(p.tanggalPesan)} WIB',
                                 style: const TextStyle(
-                                    fontSize: 11.5, color: AppColors.textGrey),
+                                    fontSize: 11.5, color: OC.muted),
                               ),
                             ),
                             if (p.status == StatusPesanan.poBaru)
@@ -681,11 +696,11 @@ class _TabPesanan extends StatelessWidget {
 
   (Color, Color) _warnaStatus(StatusPesanan s) => switch (s) {
         StatusPesanan.poBaru => (
-            AppColors.chipOrange,
-            AppColors.chipOrangeText
+            OC.peach,
+            OC.amber
           ),
-        StatusPesanan.diterima => (AppColors.chipGreenBg, AppColors.hijauTua),
-        StatusPesanan.selesai => (AppColors.chipGreenBg, AppColors.hijauTua),
+        StatusPesanan.diterima => (OC.mint, OC.primary),
+        StatusPesanan.selesai => (OC.mint, OC.primary),
         StatusPesanan.ditolak => (AppColors.dangerBg, AppColors.danger),
       };
 }

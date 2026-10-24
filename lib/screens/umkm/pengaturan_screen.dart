@@ -335,8 +335,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-              color: AppColors.krem, borderRadius: BorderRadius.circular(10)),
-          child: Icon(ikon, color: AppColors.hijauTua, size: 20),
+              color: OC.box, borderRadius: BorderRadius.circular(10)),
+          child: Icon(ikon, color: OC.primary, size: 20),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -348,7 +348,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       fontWeight: FontWeight.w800, fontSize: 16.5)),
               Text(subjudul,
                   style: const TextStyle(
-                      color: AppColors.textGrey, fontSize: 12.5)),
+                      color: OC.muted, fontSize: 12.5)),
             ],
           ),
         ),
@@ -385,21 +385,21 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     if (badge != null) ...[
                       const SizedBox(width: 6),
                       MiniBadge(badge,
-                          bg: AppColors.chipOrange,
-                          fg: AppColors.chipOrangeText),
+                          bg: OC.peach,
+                          fg: OC.amber),
                     ],
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(subjudul,
                     style: const TextStyle(
-                        color: AppColors.textGrey, fontSize: 12)),
+                        color: OC.muted, fontSize: 12)),
               ],
             ),
           ),
           Switch(
               value: nilai,
-              activeThumbColor: AppColors.hijauTua,
+              activeThumbColor: OC.primary,
               onChanged: onChanged),
         ],
       ),
@@ -435,12 +435,12 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
             child: const Row(
               children: [
                 Icon(Icons.location_on_outlined,
-                    size: 18, color: AppColors.hijauTua),
+                    size: 18, color: OC.primary),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Lokasi pengantara: Desa Kreongan Atas, Jember. Ongkir dihitung otomatis dari alamat pembeli.',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 11.5, color: OC.muted),
                   ),
                 ),
               ],
@@ -462,7 +462,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     borderRadius: BorderRadius.circular(10)),
                 child: Text('${_fmtKm(jarakMaksimal)} KM',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, color: AppColors.hijauTua)),
+                        fontWeight: FontWeight.w800, color: OC.primary)),
               ),
             ],
           ),
@@ -470,7 +470,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           const Text(
             'Otomatis mengikuti batas akhir zona ongkir terakhir. Pelanggan di luar jarak '
             'ini akan melihat "di luar jangkauan pengantaran".',
-            style: TextStyle(color: AppColors.textGrey, fontSize: 11.5),
+            style: TextStyle(color: OC.muted, fontSize: 11.5),
           ),
         ],
       ),
@@ -485,6 +485,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final profile = context.watch<UmkmDataService>().profile;
 
     return Scaffold(
+      backgroundColor: OC.bg,
       appBar: widget.isTab
           ? null
           : PreferredSize(
@@ -523,7 +524,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppColors.hijauTua,
+                              color: OC.primary,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
                             ),
@@ -551,24 +552,24 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                           const SizedBox(height: 4),
                           if (profile.terverifikasi)
                             const MiniBadge('Mitra Terverifikasi',
-                                bg: AppColors.chipGreenBg,
-                                fg: AppColors.hijauTua,
+                                bg: OC.mint,
+                                fg: OC.primary,
                                 ikon: Icons.verified)
                           else
                             const MiniBadge('Menunggu Verifikasi',
-                                bg: AppColors.chipOrange,
-                                fg: AppColors.chipOrangeText),
+                                bg: OC.peach,
+                                fg: OC.amber),
                           const SizedBox(height: 4),
                           Text(profile.spesialis,
                               style: const TextStyle(
-                                  color: AppColors.textGrey, fontSize: 12.5)),
+                                  color: OC.muted, fontSize: 12.5)),
                         ],
                       ),
                     ),
                     IconButton(
                       onPressed: _editIdentitas,
                       icon: const Icon(Icons.edit_outlined,
-                          color: AppColors.hijauTua),
+                          color: OC.primary),
                       tooltip: 'Ubah identitas usaha',
                     ),
                   ],
@@ -585,13 +586,13 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                           Text(
                               'Matikan bila dapur sedang libur / tidak menerima pesanan',
                               style: TextStyle(
-                                  color: AppColors.textGrey, fontSize: 12)),
+                                  color: OC.muted, fontSize: 12)),
                         ],
                       ),
                     ),
                     Switch(
                       value: _tokoAktif,
-                      activeThumbColor: AppColors.hijauTua,
+                      activeThumbColor: OC.primary,
                       onChanged: (v) => setState(() => _tokoAktif = v),
                     ),
                   ],
@@ -601,12 +602,12 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                   Row(
                     children: [
                       const Icon(Icons.place_outlined,
-                          size: 16, color: AppColors.textGrey),
+                          size: 16, color: OC.muted),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(profile.alamat,
                             style: const TextStyle(
-                                fontSize: 12.5, color: AppColors.textGrey)),
+                                fontSize: 12.5, color: OC.muted)),
                       ),
                     ],
                   ),
@@ -635,7 +636,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.bgLavender,
+                color: OC.box,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Column(
@@ -651,7 +652,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                             borderRadius: BorderRadius.circular(6)),
                         child: Text(profile.bankKode,
                             style: const TextStyle(
-                                color: AppColors.hijauTua,
+                                color: OC.primary,
                                 fontWeight: FontWeight.w800)),
                       ),
                       const SizedBox(width: 10),
@@ -666,7 +667,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                    color: AppColors.textGrey, fontSize: 12)),
+                                    color: OC.muted, fontSize: 12)),
                           ],
                         ),
                       ),
@@ -689,7 +690,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                         const Text('NOMOR REKENING',
                             style: TextStyle(
                                 fontSize: 10.5,
-                                color: AppColors.textGrey,
+                                color: OC.muted,
                                 fontWeight: FontWeight.w700)),
                         Text(
                           profile.noRekening.isEmpty
@@ -707,7 +708,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     const TextSpan(
                         text: 'Atas Nama (A.N): ',
                         style: TextStyle(
-                            color: AppColors.textGrey, fontSize: 12.5)),
+                            color: OC.muted, fontSize: 12.5)),
                     TextSpan(
                         text: profile.atasNama.isEmpty ? '-' : profile.atasNama,
                         style: const TextStyle(
@@ -740,7 +741,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700)),
                 const Text(
                     'Aturan uang muka saat warga pesan katering atau tumpeng porsi besar',
-                    style: TextStyle(color: AppColors.textGrey, fontSize: 12.5)),
+                    style: TextStyle(color: OC.muted, fontSize: 12.5)),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: _skemaPO,
@@ -756,18 +757,18 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                      color: AppColors.bgLavender,
+                      color: OC.box,
                       borderRadius: BorderRadius.circular(10)),
                   child: const Row(
                     children: [
                       Icon(Icons.info_outline,
-                          size: 16, color: AppColors.textGrey),
+                          size: 16, color: OC.muted),
                       SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Pesanan otomatis masuk jadwal dapur setelah DP terverifikasi',
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.textGrey),
+                              fontSize: 12, color: OC.muted),
                         ),
                       ),
                     ],
@@ -810,12 +811,12 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 color: Colors.white, borderRadius: BorderRadius.circular(12)),
             child: const Row(
               children: [
-                Icon(Icons.shield_outlined, color: AppColors.hijauTua),
+                Icon(Icons.shield_outlined, color: OC.primary),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Semua perubahan disimpan ke database dan langsung sinkron ke halaman etalase pembeli.',
-                    style: TextStyle(fontSize: 12.5, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 12.5, color: OC.muted),
                   ),
                 ),
               ],

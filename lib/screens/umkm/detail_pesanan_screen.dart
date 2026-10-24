@@ -272,15 +272,13 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                             Text(pesanan.namaPembeli,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w800, fontSize: 15)),
-                            Text(pesanan.noTelp,
-                                style: const TextStyle(
-                                    color: AppColors.textGrey, fontSize: 12.5)),
+                            Text(pesanan.noTelp, style: OT.caption),
                           ],
                         ),
                       ),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.hijauTua,
+                          backgroundColor: OC.primary,
                           minimumSize: const Size(0, 38),
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                         ),
@@ -334,7 +332,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.krem,
+                  color: OC.box,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
@@ -343,13 +341,13 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                     const Row(
                       children: [
                         Icon(Icons.edit_note,
-                            color: AppColors.chipOrangeText, size: 18),
+                            color: OC.amber, size: 18),
                         SizedBox(width: 6),
                         Text('CATATAN KHUSUS PEMESAN',
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.chipOrangeText)),
+                                color: OC.amber)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -369,7 +367,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                   const Row(
                     children: [
                       Icon(Icons.receipt_long_outlined,
-                          color: AppColors.hijauTua),
+                          color: OC.primary),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text('Rincian Menu & Tagihan',
@@ -423,7 +421,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                        color: AppColors.bgLavender,
+                        color: OC.box,
                         borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
@@ -656,7 +654,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 Flexible(
                     child: Text(label,
                         style: const TextStyle(
-                            color: AppColors.textGrey, fontSize: 13))),
+                            color: OC.muted, fontSize: 13))),
                 if (badge != null) ...[
                   const SizedBox(width: 6),
                   MiniBadge(badge,
