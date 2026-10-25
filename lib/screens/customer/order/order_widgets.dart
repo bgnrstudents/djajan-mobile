@@ -154,11 +154,7 @@ class DjajanPageHeader extends StatelessWidget {
                     if (title != null)
                       Text(
                         title!,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: OC.ink,
-                        ),
+                        style: OT.pageTitle,
                       ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 4),

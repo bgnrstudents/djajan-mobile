@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../customer/order/order_widgets.dart';
 
@@ -46,17 +45,20 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Daftar sebagai UMKM untuk mendapatkan akses penuh ke fitur penjualan di ekosistem Djajan.',
-                style: OT.secondary,
-              ),
-              const SizedBox(height: 24),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        child: KartuPutih(
+          radius: 16,
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Daftar sebagai UMKM untuk mendapatkan akses penuh ke fitur penjualan di ekosistem Djajan.',
+                  style: OT.secondary,
+                ),
+                const SizedBox(height: 24),
               _buildInput(
                 controller: _namaCtrl,
                 label: 'Nama Lengkap Pemilik',
@@ -98,8 +100,10 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
               const SizedBox(height: 32),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: OC.primary,
+                  foregroundColor: Colors.white,
                   minimumSize: const Size.fromHeight(54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
@@ -107,13 +111,14 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
                     Navigator.pop(context);
                   }
                 },
-                child: const Text('Daftar Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text('Daftar Sekarang', style: OT.cardTitle.copyWith(color: Colors.white)),
               ),
             ],
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildInput({
@@ -131,14 +136,18 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.hijauTua),
+        prefixIcon: Icon(icon, color: OC.primary),
         prefix: prefix,
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: OC.line)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: OC.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: OC.primary, width: 1.5),
         ),
       ),
       validator: validator,

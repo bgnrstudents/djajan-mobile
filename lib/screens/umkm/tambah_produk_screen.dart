@@ -109,7 +109,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         height: double.infinity,
         errorBuilder: (_, _, _) => const Center(
           child: Icon(Icons.broken_image_outlined,
-              color: AppColors.textGrey, size: 40),
+              color: OC.muted, size: 40),
         ),
       );
     } else if (urlLama != null && urlLama.isNotEmpty) {
@@ -128,14 +128,14 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.add_photo_alternate_outlined,
-                size: 44, color: AppColors.hijauTua),
+                size: 44, color: OC.primary),
             SizedBox(height: 8),
             Text('Ketuk untuk memilih foto',
                 style: TextStyle(
-                    color: AppColors.hijauTua, fontWeight: FontWeight.w600)),
+                    color: OC.primary, fontWeight: FontWeight.w600)),
             SizedBox(height: 2),
             Text('dari galeri atau kamera',
-                style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                style: TextStyle(color: OC.muted, fontSize: 12)),
           ],
         ),
       );
@@ -149,7 +149,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         aspectRatio: 16 / 10,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.bgLavender,
+            color: OC.box,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.garis),
           ),
@@ -165,7 +165,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.hijauTua,
+                      color: OC.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text('Foto baru',
@@ -336,8 +336,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                           child: OutlinedButton.icon(
                             onPressed: _pilihFoto,
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.hijauTua,
-                              side: const BorderSide(color: AppColors.hijauTua),
+                              foregroundColor: OC.primary,
+                              side: const BorderSide(color: OC.primary),
                               minimumSize: const Size.fromHeight(44),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -374,8 +374,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                           : 'Format JPG, PNG, atau WEBP, maksimal 5 MB',
                       style: TextStyle(
                         color: _fotoBaru != null
-                            ? AppColors.hijauTua
-                            : AppColors.textGrey,
+                            ? OC.primary
+                            : OC.muted,
                         fontSize: 12,
                         fontWeight: _fotoBaru != null
                             ? FontWeight.w600
@@ -418,7 +418,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                        borderSide: BorderSide(color: OC.primary, width: 1.6),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -472,7 +472,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                        borderSide: BorderSide(color: OC.primary, width: 1.6),
                       ),
                     ),
                   ),
@@ -501,7 +501,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                        borderSide: BorderSide(color: OC.primary, width: 1.6),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -547,7 +547,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.hijauTua, width: 1.6),
+                        borderSide: BorderSide(color: OC.primary, width: 1.6),
                       ),
                     ),
                   ),
@@ -563,7 +563,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                   const Text(
                       'Sesuaikan kesiapan dapur & kapasitas produksi Anda',
                       style:
-                          TextStyle(color: AppColors.textGrey, fontSize: 13)),
+                          TextStyle(color: OC.muted, fontSize: 13)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -584,7 +584,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                     Container(
                       padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
                       decoration: BoxDecoration(
-                        color: AppColors.bgLavender,
+                        color: OC.box,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -634,7 +634,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.bgLavender,
+                        color: OC.box,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -648,8 +648,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                                         TextStyle(fontWeight: FontWeight.w700)),
                               ),
                               MiniBadge('Catering',
-                                  bg: AppColors.chipOrange,
-                                  fg: AppColors.chipOrangeText),
+                                  bg: OC.peach,
+                                  fg: OC.amber),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -722,7 +722,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                 radius: 16,
                 child: Row(
                   children: [
-                    const Icon(Icons.storefront, color: AppColors.hijauTua),
+                    const Icon(Icons.storefront, color: OC.primary),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Column(
@@ -732,13 +732,13 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                               style: TextStyle(fontWeight: FontWeight.w700)),
                           Text('Produk langsung terlihat oleh pembeli sekitar',
                               style: TextStyle(
-                                  color: AppColors.textGrey, fontSize: 12)),
+                                  color: OC.muted, fontSize: 12)),
                         ],
                       ),
                     ),
                     Switch(
                       value: _tampilkanDiWarung,
-                      activeThumbColor: AppColors.hijauTua,
+                      activeThumbColor: OC.primary,
                       onChanged: (v) => setState(() => _tampilkanDiWarung = v),
                     ),
                   ],
@@ -748,12 +748,12 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.chipGreenBg,
+                  color: OC.mint,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.eco, color: AppColors.hijauTua, size: 18),
+                    Icon(Icons.eco, color: OC.primary, size: 18),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -776,14 +776,14 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
               if (!_isEdit) ...[
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.bgLavender,
+                    color: OC.box,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: IconButton(
                     onPressed:
                         _menyimpan ? null : () => _simpan(tayangan: false),
                     icon: const Icon(Icons.bookmark_border,
-                        color: AppColors.hijauTua),
+                        color: OC.primary),
                     tooltip: 'Simpan sebagai draft (belum tayang)',
                   ),
                 ),
@@ -821,17 +821,17 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: terpilih ? AppColors.hijauTua : AppColors.bgLavender,
+          color: terpilih ? OC.primary : OC.box,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
             Icon(ikon,
-                color: terpilih ? Colors.white : AppColors.textGrey, size: 20),
+                color: terpilih ? Colors.white : OC.muted, size: 20),
             const SizedBox(height: 4),
             Text(label,
                 style: TextStyle(
-                    color: terpilih ? Colors.white : AppColors.textGrey,
+                    color: terpilih ? Colors.white : OC.muted,
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5)),
           ],
@@ -851,7 +851,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         children: [
           Row(
             children: [
-              Icon(ikon, color: AppColors.hijauTua),
+              Icon(ikon, color: OC.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(judul,
