@@ -145,6 +145,11 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
               : IndexedStack(
                   index: _tab,
                   children: [
+                    _TabBeranda(
+                      service: service,
+                      onPindahTab: (i) => setState(() => _tab = i),
+                      onRefresh: _refresh,
+                    ),
                     _TabProduk(
                       service: service,
                       kataKunci: _kataKunci,
@@ -155,7 +160,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                     const PengaturanScreen(isTab: true),
                   ],
                 ),
-      floatingActionButton: _tab == 0
+      floatingActionButton: _tab == 1
             ? FloatingActionButton.extended(
                 backgroundColor: OC.primary,
                 foregroundColor: Colors.white,
@@ -172,6 +177,300 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
         currentIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
         pesananBaru: service.jumlahPoBaru,
+      ),
+    );
+  }
+}
+
+// ======================================================== TAB BERANDA ===
+class _TabBeranda extends StatelessWidget {
+  final UmkmDataService service;
+  final ValueChanged<int> onPindahTab;
+  final Future<void> Function() onRefresh;
+
+  const _TabBeranda({
+    required this.service,
+    required this.onPindahTab,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final r = service.ringkasan;
+    final pesananTerbaru = service.pesananList.take(3).toList();
+    final semuaProduk = service.produkList;
+    final stokHabis = semuaProduk
+        .where((p) => p.modePenjualan != ModePenjualan.preOrder && p.stok == 0)
+        .length;
+
+    return RefreshIndicator(
+      color: OC.primary,
+      onRefresh: onRefresh,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
+        children: [
+          // 1. HERO CARD OMZET / TOTAL PENDAPATAN
+          KartuPutih(
+            radius: 18,
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: OC.mintSoft,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.account_balance_wallet_outlined,
+                              size: 16, color: OC.primary),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('TOTAL PENDAPATAN',
+                            style: OT.label.copyWith(letterSpacing: 0.8)),
+                      ],
+                    ),
+                    MiniBadge(
+                      '${r.pesananDiterima} Selesai',
+                      bg: OC.mintSoft,
+                      fg: OC.primary,
+                      ikon: Icons.verified_outlined,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  rupiah(r.omzetDiterima),
+                  style: OT.moneyLarge.copyWith(
+                    fontSize: 26,
+                    color: OC.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Akumulasi omzet bersih dari pesanan yang telah selesai.',
+                  style: OT.caption,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 2. TIGA KARTU METRIK CEPAT
+          Row(
+            children: [
+              Expanded(
+                child: _KartuStatistik(
+                  ikon: Icons.notifications_active_outlined,
+                  nilai: '${r.pesananBaru}',
+                  label: 'PO Baru',
+                  soroti: r.pesananBaru > 0,
+                  onTap: () => onPindahTab(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _KartuStatistik(
+                  ikon: Icons.task_alt,
+                  nilai: '${r.pesananDiterima}',
+                  label: 'Selesai',
+                  onTap: () => onPindahTab(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _KartuStatistik(
+                  ikon: Icons.inventory_2_outlined,
+                  nilai: '${r.produkTayang}',
+                  label: 'Tayang',
+                  onTap: () => onPindahTab(1),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // 3. PERINGATAN STOK HABIS (JIKA ADA)
+          if (stokHabis > 0) ...[
+            InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => onPindahTab(1),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: OC.peachSoft,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: OC.peach),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: OC.amber, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Peringatan Stok Habis',
+                              style: OT.item.copyWith(color: OC.amber)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$stokHabis produk butuh restock agar tetap tayang di etalase.',
+                            style: OT.caption.copyWith(color: OC.amber),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: OC.amber),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // 4. SHORTCUT / AKSI CEPAT
+          Row(
+            children: [
+              Expanded(
+                child: _TombolShortcut(
+                  ikon: Icons.add_circle_outline,
+                  label: 'Tambah Produk',
+                  warnaIkon: OC.primary,
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const TambahProdukScreen()));
+                    onRefresh();
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _TombolShortcut(
+                  ikon: Icons.format_list_bulleted,
+                  label: 'Katalog Produk',
+                  warnaIkon: OC.primary,
+                  onTap: () => onPindahTab(1),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _TombolShortcut(
+                  ikon: Icons.receipt_long_outlined,
+                  label: 'Semua PO',
+                  warnaIkon: OC.primary,
+                  onTap: () => onPindahTab(2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // 5. PESANAN TERBARU
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Pesanan Terbaru', style: OT.cardTitle),
+              if (service.pesananList.isNotEmpty)
+                TextButton(
+                  onPressed: () => onPindahTab(2),
+                  child: Text('Lihat Semua',
+                      style: OT.caption.copyWith(
+                        color: OC.primary,
+                        fontWeight: FontWeight.w700,
+                      )),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          if (pesananTerbaru.isEmpty)
+            const KartuPutih(
+              radius: 16,
+              padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 36, color: OC.faint),
+                    SizedBox(height: 8),
+                    Text('Belum ada pesanan masuk', style: OT.secondary),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...pesananTerbaru.map((p) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () async {
+                      await Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) =>
+                              DetailPesananScreen(idPesanan: p.idPesanan)));
+                      await onRefresh();
+                    },
+                    child: KartuPutih(
+                      radius: 16,
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(
+                              color: OC.box,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.receipt_outlined,
+                                size: 20, color: OC.muted),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text('#${p.idPesanan}', style: OT.item),
+                                    const Spacer(),
+                                    Text(rupiah(p.totalDiterimaMitra),
+                                        style: OT.money
+                                            .copyWith(color: OC.primary)),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                        '${p.namaPembeli} • ${p.totalPorsi} porsi',
+                                        style: OT.caption),
+                                    const Spacer(),
+                                    MiniBadge(
+                                      p.status.label,
+                                      bg: p.status == StatusPesanan.poBaru
+                                          ? OC.peach
+                                          : OC.mintSoft,
+                                      fg: p.status == StatusPesanan.poBaru
+                                          ? OC.amber
+                                          : OC.primary,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )),
+        ],
       ),
     );
   }
@@ -202,7 +501,6 @@ class _TabProduk extends StatelessWidget {
                 p.kategori.toLowerCase().contains(kataKunci.toLowerCase()))
             .toList();
 
-    final r = service.ringkasan;
     // Pre-Order tidak punya stok, jadi tidak ikut dihitung sebagai "stok habis".
     final stokHabis = semua
         .where((p) => p.modePenjualan != ModePenjualan.preOrder && p.stok == 0)
@@ -212,34 +510,8 @@ class _TabProduk extends StatelessWidget {
       color: OC.primary,
       onRefresh: onRefresh,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 110),
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 110),
         children: [
-          // ------- ringkasan singkat (bersih, tanpa banner & sapaan) -------
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _KartuStatistik(
-                    ikon: Icons.inventory_2_outlined,
-                    nilai: '${r.totalProduk}',
-                    label: 'Produk',
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _KartuStatistik(
-                    ikon: Icons.notifications_active_outlined,
-                    nilai: '${r.pesananBaru}',
-                    label: 'PO Baru',
-                    soroti: r.pesananBaru > 0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -322,42 +594,85 @@ class _KartuStatistik extends StatelessWidget {
   final String nilai;
   final String label;
   final bool soroti;
+  final VoidCallback? onTap;
 
   const _KartuStatistik({
     required this.ikon,
     required this.nilai,
     required this.label,
     this.soroti = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return KartuPutih(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      radius: 16,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: soroti ? OC.peachSoft : OC.primarySoft,
-              borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: KartuPutih(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        radius: 16,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: soroti ? OC.peachSoft : OC.primarySoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(ikon,
+                  color: soroti ? OC.amber : OC.primary, size: 18),
             ),
-            child: Icon(ikon, color: soroti ? OC.amber : OC.primary, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(nilai,
-                    style: OT.moneyLarge.copyWith(color: soroti ? OC.amber : OC.primary)),
-                Text(label,
-                    style: OT.caption),
-              ],
-            ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(nilai,
+                style: OT.cardTitle.copyWith(
+                  color: soroti ? OC.amber : OC.primary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                )),
+            const SizedBox(height: 2),
+            Text(label,
+                style: OT.caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TombolShortcut extends StatelessWidget {
+  final IconData ikon;
+  final String label;
+  final Color warnaIkon;
+  final VoidCallback onTap;
+
+  const _TombolShortcut({
+    required this.ikon,
+    required this.label,
+    required this.warnaIkon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: KartuPutih(
+        radius: 14,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Column(
+          children: [
+            Icon(ikon, color: warnaIkon, size: 22),
+            const SizedBox(height: 6),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: OT.caption.copyWith(fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }

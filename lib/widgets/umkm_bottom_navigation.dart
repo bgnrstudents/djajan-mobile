@@ -30,6 +30,11 @@ class UmkmBottomNavigation extends StatelessWidget {
         badge: 0,
       ),
       _NavItem(
+        icon: Icons.inventory_2_outlined,
+        activeIcon: Icons.inventory_2,
+        badge: 0,
+      ),
+      _NavItem(
         icon: Icons.receipt_long_outlined,
         activeIcon: Icons.receipt_long,
         badge: pesananBaru,
