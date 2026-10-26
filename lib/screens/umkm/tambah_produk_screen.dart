@@ -302,23 +302,24 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: OC.bg,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: DjajanPageHeader(
-          title: _isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-        ),
-      ),
-      body: AbsorbPointer(
-        absorbing: _menyimpan,
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-            children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            DjajanPageHeader(
+              title: _isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
+                onPressed: () => Navigator.maybePop(context),
+              ),
+            ),
+            Expanded(
+              child: AbsorbPointer(
+                absorbing: _menyimpan,
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+                    children: [
               // =================== FOTO PRODUK (UPLOAD ASLI) ===================
               KartuPutih(
                 child: Column(
@@ -768,6 +769,10 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
           ),
         ),
       ),
+    ),
+  ],
+),
+),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),

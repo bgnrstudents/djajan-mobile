@@ -484,25 +484,11 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   Widget build(BuildContext context) {
     final profile = context.watch<UmkmDataService>().profile;
 
-    return Scaffold(
-      backgroundColor: OC.bg,
-      appBar: widget.isTab
-          ? null
-          : PreferredSize(
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-              child: DjajanPageHeader(
-                title: 'Pengaturan Usaha',
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  onPressed: () => Navigator.maybePop(context),
-                ),
-              ),
-            ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, widget.isTab ? 16 : 0, 16, widget.isTab ? 100 : 30),
-        children: [
-          // ==================== PROFIL USAHA + FOTO ====================
-          KartuPutih(
+    final bodyContent = ListView(
+      padding: EdgeInsets.fromLTRB(16, widget.isTab ? 8 : 4, 16, widget.isTab ? 110 : 30),
+      children: [
+        // ==================== PROFIL USAHA + FOTO ====================
+        KartuPutih(
             child: Column(
               children: [
                 Row(
@@ -822,7 +808,47 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               ],
             ),
           ),
+          if (widget.isTab) ...[
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: _menyimpan ? null : _simpanPengaturan,
+              icon: _menyimpan
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.check_circle_outline),
+              label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),
+            ),
+          ],
         ],
+      );
+
+    if (widget.isTab) {
+      return Scaffold(
+        backgroundColor: OC.bg,
+        body: bodyContent,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: OC.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            DjajanPageHeader(
+              title: 'Pengaturan Usaha',
+              subtitle: 'Profil, operasional, & ongkir warung',
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
+                onPressed: () => Navigator.maybePop(context),
+              ),
+            ),
+            Expanded(child: bodyContent),
+          ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

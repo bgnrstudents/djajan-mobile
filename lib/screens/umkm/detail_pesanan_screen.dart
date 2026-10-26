@@ -131,20 +131,26 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
 
     if (pesanan == null) {
       return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: DjajanPageHeader(
-            title: 'Detail Pesanan',
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => Navigator.maybePop(context),
-            ),
+        backgroundColor: OC.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              DjajanPageHeader(
+                title: 'Detail Pesanan',
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
+                  onPressed: () => Navigator.maybePop(context),
+                ),
+              ),
+              const Expanded(
+                child: TampilanKosong(
+                  ikon: Icons.receipt_long_outlined,
+                  judul: 'Pesanan Tidak Ditemukan',
+                  pesan: 'Data pesanan mungkin sudah dihapus dari database.',
+                ),
+              ),
+            ],
           ),
-        ),
-        body: const TampilanKosong(
-          ikon: Icons.receipt_long_outlined,
-          judul: 'Pesanan Tidak Ditemukan',
-          pesan: 'Data pesanan mungkin sudah dihapus dari database.',
         ),
       );
     }
@@ -155,40 +161,46 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
 
     return Scaffold(
       backgroundColor: OC.bg,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: DjajanPageHeader(
-          title: 'Detail Pesanan',
-          subtitle: '#${pesanan.idPesanan}',
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.maybePop(context),
-          ),
-        ),
-      ),
-      body: AbsorbPointer(
-        absorbing: _memproses,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
+      body: SafeArea(
+        child: Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Pesanan #${pesanan.idPesanan}', style: OT.pageTitle),
-                      Text(
-                          'Diajukan ${tanggalFmt.format(pesanan.tanggalPesan)}',
-                          style: OT.caption),
-                    ],
-                  ),
-                ),
-                _badgeStatus(pesanan.status),
-              ],
+            DjajanPageHeader(
+              title: 'Detail Pesanan',
+              subtitle: '#${pesanan.idPesanan}',
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
+                onPressed: () => Navigator.maybePop(context),
+              ),
             ),
-            const SizedBox(height: 14),
+            Expanded(
+              child: AbsorbPointer(
+                absorbing: _memproses,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
+                  children: [
+            KartuPutih(
+              radius: 16,
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Status Pesanan', style: OT.caption),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Diajukan ${tanggalFmt.format(pesanan.tanggalPesan)}',
+                          style: OT.item,
+                        ),
+                      ],
+                    ),
+                  ),
+                  _badgeStatus(pesanan.status),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
 
             // --------------- countdown konfirmasi ---------------
             if (!sudahDiputuskan)
@@ -539,6 +551,10 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
           ],
         ),
       ),
+    ),
+  ],
+),
+),
       bottomNavigationBar: sudahDiputuskan
           ? null
           : SafeArea(

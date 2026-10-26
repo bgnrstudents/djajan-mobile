@@ -34,91 +34,97 @@ class _RegistrasiUmkmScreenState extends State<RegistrasiUmkmScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: OC.bg,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: DjajanPageHeader(
-          title: 'Registrasi UMKM',
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.maybePop(context),
-          ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            DjajanPageHeader(
+              title: 'Registrasi UMKM',
+              subtitle: 'Mulai kelola jajan & katering desa',
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
+                onPressed: () => Navigator.maybePop(context),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                child: KartuPutih(
+                  radius: 16,
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Daftar sebagai UMKM untuk mendapatkan akses penuh ke fitur penjualan di ekosistem Djajan.',
+                          style: OT.secondary,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildInput(
+                          controller: _namaCtrl,
+                          label: 'Nama Lengkap Pemilik',
+                          icon: Icons.person_outline,
+                          validator: (v) => v!.isEmpty ? 'Nama wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInput(
+                          controller: _namaTokoCtrl,
+                          label: 'Nama Warung / Usaha',
+                          icon: Icons.storefront,
+                          validator: (v) => v!.isEmpty ? 'Nama toko wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInput(
+                          controller: _noTelpCtrl,
+                          label: 'Nomor WhatsApp',
+                          icon: Icons.phone_android,
+                          keyboard: TextInputType.phone,
+                          prefix: const Text('+62 ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          validator: (v) => v!.isEmpty ? 'Nomor WA wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInput(
+                          controller: _emailCtrl,
+                          label: 'Alamat Email',
+                          icon: Icons.email_outlined,
+                          keyboard: TextInputType.emailAddress,
+                          validator: (v) => !v!.contains('@') ? 'Email tidak valid' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInput(
+                          controller: _alamatCtrl,
+                          label: 'Alamat Lengkap Dapur',
+                          icon: Icons.location_on_outlined,
+                          maxLines: 3,
+                          validator: (v) => v!.isEmpty ? 'Alamat wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: OC.primary,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(54),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              pesanSukses(context, 'Permintaan registrasi terkirim! Tim Djajan akan segera menghubungi Anda.');
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: Text('Daftar Sekarang', style: OT.cardTitle.copyWith(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        child: KartuPutih(
-          radius: 16,
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Daftar sebagai UMKM untuk mendapatkan akses penuh ke fitur penjualan di ekosistem Djajan.',
-                  style: OT.secondary,
-                ),
-                const SizedBox(height: 24),
-              _buildInput(
-                controller: _namaCtrl,
-                label: 'Nama Lengkap Pemilik',
-                icon: Icons.person_outline,
-                validator: (v) => v!.isEmpty ? 'Nama wajib diisi' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildInput(
-                controller: _namaTokoCtrl,
-                label: 'Nama Warung / Usaha',
-                icon: Icons.storefront,
-                validator: (v) => v!.isEmpty ? 'Nama toko wajib diisi' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildInput(
-                controller: _noTelpCtrl,
-                label: 'Nomor WhatsApp',
-                icon: Icons.phone_android,
-                keyboard: TextInputType.phone,
-                prefix: const Text('+62 ', style: TextStyle(fontWeight: FontWeight.bold)),
-                validator: (v) => v!.isEmpty ? 'Nomor WA wajib diisi' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildInput(
-                controller: _emailCtrl,
-                label: 'Alamat Email',
-                icon: Icons.email_outlined,
-                keyboard: TextInputType.emailAddress,
-                validator: (v) => !v!.contains('@') ? 'Email tidak valid' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildInput(
-                controller: _alamatCtrl,
-                label: 'Alamat Lengkap Dapur',
-                icon: Icons.location_on_outlined,
-                maxLines: 3,
-                validator: (v) => v!.isEmpty ? 'Alamat wajib diisi' : null,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: OC.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    pesanSukses(context, 'Permintaan registrasi terkirim! Tim Djajan akan segera menghubungi Anda.');
-                    Navigator.pop(context);
-                  }
-                },
-                child: Text('Daftar Sekarang', style: OT.cardTitle.copyWith(color: Colors.white)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+    );
   }
 
   Widget _buildInput({

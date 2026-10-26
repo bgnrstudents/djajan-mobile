@@ -69,21 +69,11 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final service = context.watch<UmkmDataService>();
-
-    if (!service.sudahLogin) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    final profile = service.profile;
-
-    return Scaffold(
-      backgroundColor: OC.bg,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
-        child: DjajanPageHeader(
+  Widget _buildDynamicHeader(UmkmProfile profile, UmkmDataService service) {
+    switch (_tab) {
+      case 0:
+        return DjajanPageHeader(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           leftWidget: Row(
             children: [
               Container(
@@ -99,9 +89,9 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                 ),
                 child: GambarJaringan(
                   url: profile.fotoProfilUrl,
-                  width: 48,
-                  height: 48,
-                  radius: 24,
+                  width: 44,
+                  height: 44,
+                  radius: 22,
                   ikonKosong: Icons.storefront,
                   cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
                 ),
@@ -113,7 +103,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(profile.namaUsaha, style: OT.pageTitle),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     MiniBadge(
                       profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
                       bg: profile.tokoAktif ? OC.mint : OC.box,
@@ -130,36 +120,77 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
             tooltip: 'Keluar',
             onPressed: _keluar,
           ),
+        );
+      case 1:
+        return DjajanPageHeader(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          title: 'Katalog Produk',
+          subtitle: '${service.produkList.length} produk terdaftar',
+        );
+      case 2:
+        return DjajanPageHeader(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          title: 'Pesanan Masuk',
+          subtitle: '${service.pesananList.length} total pesanan pelanggan',
+        );
+      case 3:
+      default:
+        return const DjajanPageHeader(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+          title: 'Pengaturan Usaha',
+          subtitle: 'Kelola profil, operasional, & ongkir',
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<UmkmDataService>();
+
+    if (!service.sudahLogin) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final profile = service.profile;
+
+    return Scaffold(
+      backgroundColor: OC.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildDynamicHeader(profile, service),
+            Expanded(
+              child: service.memuat &&
+                      service.produkList.isEmpty &&
+                      service.pesananList.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : service.pesanError != null && service.produkList.isEmpty
+                      ? TampilanError(
+                          pesan: service.pesanError!,
+                          onCobaLagi: () => service.muatSemua(),
+                        )
+                      : IndexedStack(
+                          index: _tab,
+                          children: [
+                            _TabBeranda(
+                              service: service,
+                              onPindahTab: (i) => setState(() => _tab = i),
+                              onRefresh: _refresh,
+                            ),
+                            _TabProduk(
+                              service: service,
+                              kataKunci: _kataKunci,
+                              onCari: (v) => setState(() => _kataKunci = v),
+                              onRefresh: _refresh,
+                            ),
+                            _TabPesanan(service: service, onRefresh: _refresh),
+                            const PengaturanScreen(isTab: true),
+                          ],
+                        ),
+            ),
+          ],
         ),
       ),
-      body: service.memuat &&
-              service.produkList.isEmpty &&
-              service.pesananList.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : service.pesanError != null && service.produkList.isEmpty
-              ? TampilanError(
-                  pesan: service.pesanError!,
-                  onCobaLagi: () => service.muatSemua(),
-                )
-              : IndexedStack(
-                  index: _tab,
-                  children: [
-                    _TabBeranda(
-                      service: service,
-                      onPindahTab: (i) => setState(() => _tab = i),
-                      onRefresh: _refresh,
-                    ),
-                    _TabProduk(
-                      service: service,
-                      kataKunci: _kataKunci,
-                      onCari: (v) => setState(() => _kataKunci = v),
-                      onRefresh: _refresh,
-                    ),
-                    _TabPesanan(service: service, onRefresh: _refresh),
-                    const PengaturanScreen(isTab: true),
-                  ],
-                ),
       floatingActionButton: _tab == 1
             ? FloatingActionButton.extended(
                 backgroundColor: OC.primary,
