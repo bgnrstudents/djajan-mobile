@@ -367,8 +367,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.garis),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: OC.line),
       ),
       child: Row(
         children: [
@@ -379,28 +379,36 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(judul,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text(
+                        judul,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: OC.ink),
+                      ),
                     ),
                     if (badge != null) ...[
                       const SizedBox(width: 6),
-                      MiniBadge(badge,
-                          bg: OC.peach,
-                          fg: OC.amber),
+                      MiniBadge(badge, bg: OC.peach, fg: OC.amber),
                     ],
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(subjudul,
-                    style: const TextStyle(
-                        color: OC.muted, fontSize: 12)),
+                Text(
+                  subjudul,
+                  style: const TextStyle(color: OC.muted, fontSize: 12),
+                ),
               ],
             ),
           ),
-          Switch(
+          Transform.scale(
+            scale: 0.85,
+            child: Switch.adaptive(
               value: nilai,
               activeThumbColor: OC.primary,
-              onChanged: onChanged),
+              onChanged: onChanged,
+            ),
+          ),
         ],
       ),
     );
