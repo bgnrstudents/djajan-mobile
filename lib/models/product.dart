@@ -1,4 +1,4 @@
-import '../screens/customer/order/order_model.dart';
+import 'order.dart';
 
 class Product {
   final String id;

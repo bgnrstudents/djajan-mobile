@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/customer/cart/cart_service.dart';
+import '../services/cart_service.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;

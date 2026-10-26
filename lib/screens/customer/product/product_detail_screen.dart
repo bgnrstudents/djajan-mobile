@@ -5,7 +5,7 @@ import '../../../data/sample_catalog.dart';
 import '../../../models/product.dart';
 import '../../../widgets/favorite_button.dart';
 import '../cart/cart.dart';
-import '../cart/cart_service.dart';
+import '../../../services/cart_service.dart';
 import '../order/order_widgets.dart';
 import '../umkm/umkm_storefront_screen.dart';
 

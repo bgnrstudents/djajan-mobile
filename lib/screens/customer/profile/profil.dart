@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../config/app_config.dart';
 import '../../../routes/app_routes.dart';
 import '../favorite/favorite_screen.dart';
-import '../favorite/favorite_service.dart';
+import '../../../services/favorite_service.dart';
 import '../order/order_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';

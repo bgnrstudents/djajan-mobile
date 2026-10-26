@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'order_model.dart';
-import 'order_service.dart';
+import '../../../models/order.dart';
+import '../../../services/order_service.dart';
 import 'order_widgets.dart';
 import 'order_confirmation_screen.dart';
 

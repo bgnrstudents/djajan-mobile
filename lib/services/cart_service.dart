@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../models/product.dart';
-import '../order/order_model.dart';
-import '../order/order_service.dart';
+import '../models/order.dart';
+import 'order_service.dart';
 
 class CartService extends ChangeNotifier {
   CartService._internal() {

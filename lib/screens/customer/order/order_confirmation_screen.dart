@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../config/app_config.dart';
-import 'order_model.dart';
-import 'order_service.dart';
+import '../../../models/order.dart';
+import '../../../services/order_service.dart';
 import 'order_widgets.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {

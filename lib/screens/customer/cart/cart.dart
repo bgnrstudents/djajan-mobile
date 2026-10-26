@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../order/midtrans_payment_screen.dart';
 import '../order/order_detail_screen.dart';
-import '../order/order_model.dart';
-import '../order/order_service.dart';
+import '../../../models/order.dart';
+import '../../../services/order_service.dart';
 import '../order/order_widgets.dart';
-import 'cart_service.dart';
+import '../../../services/cart_service.dart';
 
 class CartScreen extends StatefulWidget {
   final bool showAppBar;

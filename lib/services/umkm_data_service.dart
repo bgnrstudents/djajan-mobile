@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../models/umkm_models.dart';
+import '../models/umkm_seller_models.dart';
 import 'api_service.dart';
 
 /// Sumber data tunggal untuk role UMKM.

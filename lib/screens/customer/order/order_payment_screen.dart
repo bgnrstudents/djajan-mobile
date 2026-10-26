@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'order_model.dart';
-import 'order_service.dart';
+import '../../../models/order.dart';
+import '../../../services/order_service.dart';
 import 'order_detail_screen.dart';
 import 'order_widgets.dart';
 

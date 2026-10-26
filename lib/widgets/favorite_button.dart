@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/customer/favorite/favorite_service.dart';
+import '../services/favorite_service.dart';
 
 /// Tombol hati (favorit) yang otomatis memperbarui diri saat status berubah.
 ///

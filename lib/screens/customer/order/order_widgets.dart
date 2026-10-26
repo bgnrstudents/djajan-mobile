@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/app_config.dart';
-import 'order_model.dart';
+import '../../../models/order.dart';
 
 /// Palet tunggal untuk seluruh halaman pesanan.
 ///

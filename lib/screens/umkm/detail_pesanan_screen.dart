@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/umkm_models.dart';
+import '../../models/umkm_seller_models.dart';
 import '../../services/api_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../notification/notification_service.dart';
-import 'order_model.dart';
+import 'notification_service.dart';
+import '../models/order.dart';
 
 class OrderService extends ChangeNotifier {
   OrderService._internal() {
