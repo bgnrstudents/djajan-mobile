@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'auth_widgets.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
+import '../../routes/app_routes.dart';
+import '../../services/umkm_data_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -37,28 +42,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _loading = true);
-
-    // Catatan: belum ada endpoint registrasi pelanggan di backend,
-    // jadi pendaftaran masih disimulasikan di sisi aplikasi.
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-
-    setState(() => _loading = false);
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Pendaftaran berhasil! Silakan masuk dengan akun kamu.',
-          ),
-          backgroundColor: AuthStyle.primary,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
+    try {
+      await context.read<AuthService>().register(
+            nama: _fullNameController.text,
+            noTelp: _phoneController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
+            passwordConfirmation: _confirmPasswordController.text,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Akun berhasil dibuat.')),
       );
+      Navigator.pop(context);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.pesan)),
+        );
+      }
 
-    Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _continueWithGoogle() async {
+    setState(() => _loading = true);
+    try {
+      final session = await context.read<AuthService>().loginWithGoogle();
+      if (!mounted) return;
+      if (session.role == AuthRole.umkm) {
+        context.read<UmkmDataService>().loadProfileFromLogin(session.data);
+        Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+      }
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.pesan)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -98,6 +126,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               icon: Icons.storefront_outlined,
                               text:
                                   'Punya usaha? Buat akun pembeli dulu, lalu daftarkan usahamu lewat menu "Toko Saya" di halaman profil.',
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                  onPressed:
+                                      _loading ? null : _continueWithGoogle,
+                                  icon: const Icon(Icons.login),
+                                  label: const Text('Lanjutkan dengan Google'),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Row(
+                              children: [
+                                  Expanded(child: Divider()),
+                                  Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 12),
+                                    child: Text('atau daftar manual'),
+                                  ),
+                                  Expanded(child: Divider()),
+                              ],
                             ),
                             const SizedBox(height: 20),
 

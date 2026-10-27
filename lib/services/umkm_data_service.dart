@@ -47,6 +47,12 @@ class UmkmDataService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void loadProfileFromLogin(Map<String, dynamic> data) {
+    _profile = UmkmProfile.fromJson(data);
+    _pesanError = null;
+    notifyListeners();
+  }
+
   // -------------------------------------------------------- REGISTRASI
   Future<String> register({
     required String namaUsaha,

@@ -6,6 +6,8 @@ import 'auth_widgets.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 import '../../services/umkm_data_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,35 +38,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
 
-    // Simulasi: berdasarkan nomor telepon yang dimasukkan,
-    // kita tentukan role pengguna (UMKM atau Pelanggan).
-    // - Jika 081234567890 → dianggap Owner UMKM
-    // - Nomor lain → dianggap Pelanggan
-    String identifier = _phoneOrEmailController.text.trim();
-    bool isUmkm = identifier == '081234567890';
-
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-
-    setState(() => _loading = false);
-
-    if (isUmkm) {
-      // Untung UMKM: inisialisasi data demo dan arahkan ke dashboard UMKM
-      final service = context.read<UmkmDataService>();
-      service.mulaiDemo();
-      Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
-    } else {
-      // Pelanggan: arahkan ke halaman utama belanja
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Berhasil masuk! Selamat datang di Djajan.'),
-          backgroundColor: AuthStyle.primary,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+    try {
+      final session = await context.read<AuthService>().login(
+            _phoneOrEmailController.text,
+            _passwordController.text,
+          );
+      if (!mounted) return;
+      if (session.role == AuthRole.umkm) {
+        final umkm = context.read<UmkmDataService>();
+        umkm.loadProfileFromLogin(session.data);
+        Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+      }
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.pesan)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -80,6 +74,28 @@ class _LoginScreenState extends State<LoginScreen> {
       context,
       MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
     );
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _loading = true);
+    try {
+      final session = await context.read<AuthService>().loginWithGoogle();
+      if (!mounted) return;
+      if (session.role == AuthRole.umkm) {
+        context.read<UmkmDataService>().loadProfileFromLogin(session.data);
+        Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+      }
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.pesan)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -232,6 +248,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               icon: Icons.login_rounded,
                               loading: _loading,
                               onPressed: _submit,
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _loading ? null : _loginWithGoogle,
+                                icon: const Icon(Icons.login),
+                                label: const Text('Masuk dengan Google'),
+                              ),
                             ),
                           ],
                         ),

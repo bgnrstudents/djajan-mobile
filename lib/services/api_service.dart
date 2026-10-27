@@ -27,10 +27,11 @@ class ApiService {
   /// perlu login ulang. Diisi UmkmDataService.login(), dikosongkan saat logout.
   static String? _token;
   static void setToken(String? token) => _token = token;
+  static bool get hasToken => _token != null && _token!.isNotEmpty;
 
   static Map<String, String> get _headerAuth => {
         'Accept': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
+        if (hasToken) 'Authorization': 'Bearer $_token',
       };
 
   // ---------------------------------------------------------------- GET

@@ -188,7 +188,55 @@ Supaya `djajan_mobile` bisa memakai API yang sudah ada tanpa model baru yang ane
 
 ---
 
-## 4. API Role UMKM — SUDAH ADA (jangan diubah seenaknya)
+## 4. API Autentikasi Pelanggan — Task 1
+
+### `POST /api/pelanggan/register`
+
+Request form:
+
+```text
+nama, no_telp, email (opsional), password, password_confirmation
+```
+
+Response `201` mengembalikan `data` berisi `role: pelanggan`, identitas
+pelanggan, dan token Sanctum. Email boleh kosong; nomor telepon tetap wajib.
+
+### `POST /api/pelanggan/login`
+
+Request form:
+
+```text
+identifier, password
+```
+
+`identifier` dapat berupa email atau nomor WhatsApp. Response `200`
+mengembalikan `role: pelanggan` dan token Sanctum.
+
+### `POST /api/auth/google`
+
+Request form:
+
+```text
+id_token
+```
+
+Laravel memverifikasi token ke Google dan memeriksa `aud` terhadap
+`GOOGLE_CLIENT_ID` serta `email_verified`. Akun baru dibuat sebagai pelanggan.
+Jika email telah terhubung ke UMKM, response mengembalikan `role: umkm`.
+
+### `POST /api/pelanggan/logout`
+
+Membutuhkan Bearer token Sanctum dan menghapus token aktif.
+
+### Konfigurasi
+
+- Backend membutuhkan `GOOGLE_CLIENT_ID` di `.env`.
+- Flutter membutuhkan konfigurasi OAuth client Android/iOS dari Google Cloud
+  Console. Credential tidak boleh disimpan di repository.
+- `google_sub` disimpan unik pada tabel `pelanggan` untuk mencegah akun Google
+  duplikat.
+
+## 5. API Role UMKM — SUDAH ADA (jangan diubah seenaknya)
 
 Sudah jalan & dipakai `djajan_app`. Balasan `data` mengikuti `keFormatJson()` di model.
 
@@ -327,7 +375,7 @@ Res `data`:
 
 ---
 
-## 5. API Role PELANGGAN — PERLU DIBUAT (proposal)
+## 6. API Role PELANGGAN — Endpoint Lanjutan
 
 Ini yang belum ada sama sekali dan dibutuhkan `djajan_mobile`.
 Semua mengikuti konvensi §1. Prefix disarankan `/api/pelanggan/...` agar tidak bentrok
@@ -445,7 +493,7 @@ Res `favorit_list`:
 
 ---
 
-## 6. Pemetaan Status Pesanan (HARUS disepakati)
+## 7. Pemetaan Status Pesanan (HARUS disepakati)
 
 Mobile (`OrderStatus`) vs backend saat ini (`status_pesanan`):
 
@@ -463,7 +511,7 @@ Mobile (`OrderStatus`) vs backend saat ini (`status_pesanan`):
 
 ---
 
-## 7. Perubahan Skema DB yang Diperlukan
+## 8. Perubahan Skema DB yang Diperlukan
 
 ### 7.1 Tabel baru
 ```sql
@@ -506,7 +554,7 @@ jumlah_ulasan INT          DEFAULT 0
 
 ---
 
-## 8. Urutan Implementasi Backend
+## 9. Urutan Implementasi Backend
 
 1. **Selaraskan enum & status** (§2.6, §6) — tanpa ini data campur aduk.
 2. Jalankan migrasi tabel baru (§7.1) + kolom (§7.2, §7.3).
@@ -519,7 +567,7 @@ jumlah_ulasan INT          DEFAULT 0
 
 ---
 
-## 9. Pertanyaan Terbuka (butuh keputusan)
+## 10. Pertanyaan Terbuka (butuh keputusan)
 
 ### 9.1 Pesanan lintas UMKM
 Satu keranjang di mobile bisa berisi produk dari 2+ UMKM, tapi `pesanan` hanya punya 1 `id_umkm`.
@@ -547,7 +595,7 @@ Jarak dihitung dari GPS pelanggan atau dari buku alamat?
 
 ---
 
-## 10. Lampiran — Endpoint Mobile Saat Ini (data palsu yang harus diganti)
+## 11. Lampiran — Endpoint Mobile Saat Ini (data palsu yang harus diganti)
 
 | Fitur mobile | Sumber palsu sekarang | Endpoint target |
 |---|---|---|
