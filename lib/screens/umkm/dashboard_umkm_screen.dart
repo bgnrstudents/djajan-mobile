@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/umkm_seller_models.dart';
 import '../../services/api_service.dart';
 import '../../services/umkm_data_service.dart';
+import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import 'detail_pesanan_screen.dart';
@@ -54,7 +55,9 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger,
                 minimumSize: const Size(110, 44)),
-            onPressed: () {
+            onPressed: () async {
+              await context.read<AuthService>().logout();
+              if (!context.mounted) return;
               context.read<UmkmDataService>().logout();
               Navigator.pop(ctx);
               Navigator.of(context).pushAndRemoveUntil(

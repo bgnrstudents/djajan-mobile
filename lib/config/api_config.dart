@@ -36,12 +36,20 @@ class ApiConfig {
   /// IP laptop Anda (cek `ipconfig` -> IPv4 Address).
   /// Isi hanya saat aplikasi dijalankan di HP asli.
   /// Contoh: '192.168.1.128'
-  static const String ipLaptop = 'localhost';
+  static const String ipLaptop = '192.168.1.7';
 
   /// Pilih target aplikasi:
   /// - false: laptop/browser atau emulator Android
   /// - true: HP asli yang terhubung ke WiFi yang sama
-  static const bool pakaiHpAsli = false; 
+  static const bool pakaiHpAsli = true;
+
+  /// Web OAuth Client ID untuk Google Sign-In.
+  ///
+  /// Berikan saat menjalankan aplikasi dengan:
+  /// --dart-define=GOOGLE_SERVER_CLIENT_ID=web-client-id
+  static const String googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
 
   // ------------------------------------------------------------------
   // Di bawah ini tidak perlu diubah.

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../../../config/app_config.dart';
 import '../../../routes/app_routes.dart';
 import '../favorite/favorite_screen.dart';
 import '../../../services/favorite_service.dart';
+import '../../../services/auth_service.dart';
 import '../order/order_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';
@@ -493,6 +495,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
 
     if (shouldLogout == true && mounted) {
+      await context.read<AuthService>().logout();
+      if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
     }
   }

@@ -92,13 +92,14 @@ autentikasi dan penyelarasan kontrak API disetujui.
 - Strategi: Flutter menggunakan Google Sign-In untuk memperoleh ID token.
 - Laravel memverifikasi ID token ke Google dan tidak mempercayai email dari
   client tanpa verifikasi.
-- Backend mencari atau membuat identitas berdasarkan `google_sub`, kemudian
-  menerbitkan token Sanctum.
+- Backend mencari identitas berdasarkan `google_sub` atau email terverifikasi,
+  kemudian menerbitkan token Sanctum. Akun Google yang belum terdaftar ditolak
+  dan harus melakukan registrasi terlebih dahulu.
 - Google Login tersedia untuk pelanggan dan UMKM. Admin tetap menggunakan
   autentikasi internal yang terpisah.
-- Akun Google baru dibuat sebagai pelanggan secara default. Perubahan menjadi
-  UMKM dilakukan melalui onboarding data usaha dan tetap menunggu verifikasi
-  admin.
+- Registrasi pelanggan tetap dilakukan melalui form registrasi. Google Login
+  hanya dapat digunakan oleh akun yang sudah terdaftar; perubahan menjadi UMKM
+  dilakukan melalui onboarding data usaha dan tetap menunggu verifikasi admin.
 - Jika email Google sudah terhubung ke akun UMKM/password, login diarahkan ke
   role UMKM tersebut.
 - Akun password dan akun Google dengan email yang sama harus memiliki aturan
@@ -110,7 +111,7 @@ autentikasi dan penyelarasan kontrak API disetujui.
 ### Cakupan
 
 - [x] Register pelanggan dan login password pelanggan.
-- [x] Tombol "Lanjutkan dengan Google" pada halaman register.
+- [x] Google Login pada halaman login untuk akun yang sudah terdaftar.
 - [x] Login UMKM melalui endpoint existing.
 - [x] Login dengan Google.
 - [x] Logout.

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/api_config.dart';
 
 import 'api_service.dart';
 
@@ -17,10 +19,10 @@ class AuthService extends ChangeNotifier {
   static const _tokenKey = 'djajan_auth_token';
   static const _roleKey = 'djajan_auth_role';
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
-
+ final GoogleSignIn _googleSignIn = GoogleSignIn(
+  serverClientId: ApiConfig.googleServerClientId,
+  scopes: ['email', 'profile'],
+);
   bool _loading = false;
   String? _errorMessage;
   AuthSession? _session;
@@ -73,26 +75,58 @@ class AuthService extends ChangeNotifier {
 
   Future<AuthSession> loginWithGoogle() async {
     return _run(() async {
-      final account = await _googleSignIn.signIn();
-      if (account == null) {
-        throw ApiException('Login Google dibatalkan.');
+      if (ApiConfig.googleServerClientId.isEmpty) {
+        throw ApiException(
+          'Google Login belum dikonfigurasi. '
+          'Jalankan aplikasi dengan Web OAuth Client ID.',
+        );
       }
 
-      final authentication = await account.authentication;
-      final idToken = authentication.idToken;
-      if (idToken == null || idToken.isEmpty) {
-        throw ApiException('Google tidak memberikan ID token yang valid.');
-      }
+      try {
+        final account = await _googleSignIn.signIn();
+        if (account == null) {
+          throw ApiException('Login Google dibatalkan.');
+        }
 
-      final data = await ApiService.post('auth/google', {'id_token': idToken});
-      return _setSession(data as Map<String, dynamic>);
+        final authentication = await account.authentication;
+        final idToken = authentication.idToken;
+        if (idToken == null || idToken.isEmpty) {
+          throw ApiException('Google tidak memberikan ID token yang valid.');
+        }
+
+        final data =
+            await ApiService.post('auth/google', {'id_token': idToken});
+        return _setSession(data as Map<String, dynamic>);
+      } on ApiException {
+        rethrow;
+      } on PlatformException catch (error) {
+        throw ApiException(_googleErrorMessage(error));
+      } catch (error) {
+        throw ApiException('Google Login gagal: $error');
+      }
     });
+  }
+
+  String _googleErrorMessage(PlatformException error) {
+    switch (error.code) {
+      case 'sign_in_canceled':
+      case 'canceled':
+        return 'Login Google dibatalkan.';
+      case 'sign_in_failed':
+        return 'Google Login gagal. Periksa package Android, SHA-1, dan OAuth Client.';
+      case 'network_error':
+        return 'Google Login membutuhkan koneksi internet.';
+      default:
+        return 'Google Login gagal (${error.code}). ${error.message ?? ''}'.trim();
+    }
   }
 
   Future<void> logout() async {
     try {
       if (ApiService.hasToken) {
-        await ApiService.post('pelanggan/logout', {});
+        final endpoint =
+            _session?.role == AuthRole.umkm ? 'logout' : 'pelanggan/logout';
+        await ApiService.post(endpoint, {});
       }
     } finally {
       await _googleSignIn.signOut();
