@@ -53,9 +53,7 @@ class Product {
       productName: name,
       variant: variant,
       unit: unit,
-      imageUrl: imageUrl.isNotEmpty
-          ? imageUrl
-          : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
+      imageUrl: imageUrl.isNotEmpty ? imageUrl : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
       quantity: quantity,
       price: price.toDouble(),
       type: parsedOrderType,
@@ -68,22 +66,26 @@ class Product {
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    final rawPrice = json['price'] ?? json['harga'];
     return Product(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      umkmId: json['umkm_id']?.toString() ?? '',
+      id: (json['id'] ?? json['id_produk'])?.toString() ?? '',
+      name: (json['name'] ?? json['nama_produk']) as String? ?? '',
+      umkmId: (json['umkm_id'] ?? json['id_umkm'])?.toString() ?? '',
       umkm: json['umkm_name'] as String? ?? json['umkm'] as String? ?? '',
       umkmType: json['umkm_type'] as String? ?? 'UMKM Kuliner Desa',
-      price: (json['price'] as num?)?.toInt() ?? 0,
+      price: rawPrice is num ? rawPrice.toInt() : 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      category: json['category'] as String? ?? 'Semua',
-      orderType: json['order_type'] as String? ?? 'Pesan Sekarang',
-      imageUrl: json['image_url'] as String? ?? '',
-      description: json['description'] as String? ?? '',
+      category: (json['category'] ?? json['kategori']) as String? ?? 'Semua',
+      orderType:
+          (json['order_type'] ?? json['mode_penjualan']) as String? ??
+          'Pesan Sekarang',
+      imageUrl: (json['image_url'] ?? json['gambar_url']) as String? ?? '',
+      description: (json['description'] ?? json['deskripsi']) as String? ?? '',
       variant: json['variant'] as String? ?? 'Pilihan Terbaik',
       unit: json['unit'] as String? ?? 'Porsi',
       courierFee: (json['courier_fee'] as num?)?.toDouble() ?? 5000,
-      pickupLocation: json['pickup_location'] as String? ?? 'Desa Kreyongan Atas',
+      pickupLocation:
+          json['pickup_location'] as String? ?? 'Desa Kreyongan Atas',
     );
   }
 

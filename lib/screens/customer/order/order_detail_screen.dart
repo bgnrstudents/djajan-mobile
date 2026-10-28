@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/order.dart';
+import '../../../services/api_service.dart';
 import '../../../services/order_service.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
@@ -29,6 +30,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final OrderService _service = OrderService();
   bool _busy = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _syncPaymentStatus();
+  }
+
+  Future<void> _syncPaymentStatus() async {
+    final order = _service.findById(widget.orderId);
+    if (order?.paymentMethod != PaymentMethod.midtrans ||
+        order?.status != OrderStatus.waitingPayment) {
+      return;
+    }
+
+    try {
+      await _service.refreshPaymentStatus(widget.orderId);
+      if (mounted) setState(() {});
+    } on ApiException {
+      // The existing order view remains available if status sync is temporarily unavailable.
+    }
+  }
+
   // -------------------------------------------------------------- actions
 
   Future<void> _run(Future<void> Function() action) async {
@@ -50,11 +72,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(o.hasPreOrder ? 'Batalkan PO?' : 'Batalkan Pesanan?'),
         content: Text(
-            'Pesanan ${o.refId} akan dibatalkan dan tidak dapat dikembalikan.'),
+          'Pesanan ${o.refId} akan dibatalkan dan tidak dapat dikembalikan.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Tidak')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tidak'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: OC.danger),
             onPressed: () => Navigator.pop(ctx, true),
@@ -79,8 +103,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         content: Text('${o.refId} akan dihapus dari daftar pesanan Anda.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: OC.danger),
             onPressed: () => Navigator.pop(ctx, true),
@@ -173,7 +198,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
@@ -186,11 +212,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 children: [
                   Icon(Icons.receipt_long, color: OC.primary, size: 22),
                   SizedBox(width: 8),
-                  Text('Struk Digital',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: OC.ink)),
+                  Text(
+                    'Struk Digital',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: OC.ink,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -208,10 +237,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                        color: OC.box, borderRadius: BorderRadius.circular(14)),
-                    child: SelectableText(text,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 12.5, height: 1.5)),
+                      color: OC.box,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: SelectableText(
+                      text,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12.5,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -224,15 +260,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     backgroundColor: OC.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
                     copyText(context, text, 'Struk berhasil disalin!');
                   },
                   icon: const Icon(Icons.content_copy_outlined),
-                  label: const Text('Salin Struk',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  label: const Text(
+                    'Salin Struk',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ],
@@ -264,8 +303,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
               const SizedBox(height: 8),
               TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Tutup')),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Tutup'),
+              ),
             ],
           ),
         ),
@@ -283,7 +323,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         final order = _service.findById(widget.orderId);
         if (order == null) {
           return const Scaffold(
-              body: Center(child: Text('Pesanan tidak ditemukan')));
+            body: Center(child: Text('Pesanan tidak ditemukan')),
+          );
         }
         return Scaffold(
           backgroundColor: OC.bg,
@@ -293,7 +334,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 title: 'Status Pesanan',
                 trailing: IconButton(
                   tooltip: 'Bagikan tautan pesanan',
-                  icon: const Icon(Icons.share_outlined, color: OC.ink, size: 22),
+                  icon: const Icon(
+                    Icons.share_outlined,
+                    color: OC.ink,
+                    size: 22,
+                  ),
                   onPressed: () => _share(order),
                 ),
               ),
@@ -353,25 +398,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             : 'Konfirmasi pesanan Anda';
         body = cod
             ? 'Konfirmasi pesanan agar $short dapat segera memprosesnya.'
+            : o.paymentMethod == PaymentMethod.midtrans
+            ? 'Selesaikan pembayaran melalui Midtrans agar $short dapat segera memproses pesanan Anda.'
             : 'Unggah bukti transfer agar $short dapat segera memproses pesanan Anda.';
         icon = Icons.account_balance_wallet_outlined;
         action = FilledButton.icon(
           style: FilledButton.styleFrom(
             backgroundColor: OC.primary,
             foregroundColor: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          onPressed: () {
+          onPressed: () async {
             if (o.paymentMethod == PaymentMethod.midtrans) {
-              Navigator.push(
+              await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
                   builder: (_) => MidtransPaymentScreen(orderId: o.id),
                 ),
               );
+              if (mounted) await _syncPaymentStatus();
             } else {
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => OrderPaymentScreen(orderId: o.id),
@@ -380,8 +429,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             }
           },
           icon: const Icon(Icons.upload_file_rounded, size: 18),
-          label: Text(cod ? 'Konfirmasi Pesanan' : 'Bayar Sekarang',
-              style: const TextStyle(fontWeight: FontWeight.w700)),
+          label: Text(
+            cod ? 'Konfirmasi Pesanan' : 'Bayar Sekarang',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
         );
         break;
       case OrderStatus.reviewing:
@@ -435,7 +486,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         border: Border.all(color: OC.line),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 2)),
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -455,7 +509,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       width: 36,
                       height: 36,
                       decoration: const BoxDecoration(
-                          color: Colors.white, shape: BoxShape.circle),
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
                       child: Icon(icon, size: 19, color: toneFg),
                     ),
                     const SizedBox(width: 10),
@@ -463,29 +519,38 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tag,
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: toneFg)),
+                          Text(
+                            tag,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: toneFg,
+                            ),
+                          ),
                           const SizedBox(height: 1),
-                          Text(o.refId,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: toneFg.withValues(alpha: 0.7))),
+                          Text(
+                            o.refId,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: toneFg.withValues(alpha: 0.7),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20)),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -493,17 +558,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             width: 7,
                             height: 7,
                             decoration: BoxDecoration(
-                                color: toneFg, shape: BoxShape.circle),
+                              color: toneFg,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Flexible(
-                            child: Text(chip,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: toneFg)),
+                            child: Text(
+                              chip,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: toneFg,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -511,16 +581,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(headline,
-                    style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: OC.ink,
-                        height: 1.25)),
+                Text(
+                  headline,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: OC.ink,
+                    height: 1.25,
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(body,
-                    style: const TextStyle(
-                        fontSize: 12.5, color: OC.muted, height: 1.35)),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: OC.muted,
+                    height: 1.35,
+                  ),
+                ),
                 if (action != null) ...[
                   const SizedBox(height: 12),
                   SizedBox(width: double.infinity, height: 44, child: action),
@@ -530,11 +608,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   children: [
                     Icon(Icons.schedule, size: 14, color: toneFg),
                     const SizedBox(width: 5),
-                    Text('Dibuat ${fmtDateComma(o.createdAt)}',
-                        style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: toneFg)),
+                    Text(
+                      'Dibuat ${fmtDateComma(o.createdAt)}',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: toneFg,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -549,7 +630,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 Row(
                   children: [
                     const Expanded(
-                        child: Text('Tahapan Pesanan', style: OT.label)),
+                      child: Text('Tahapan Pesanan', style: OT.label),
+                    ),
                     Pill(
                       text: cancelled ? 'Dibatalkan' : 'Tahap $stage dari 5',
                       bg: cancelled ? OC.dangerSoft : OC.mint,
@@ -566,10 +648,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     state: cancelled
                         ? _StepState.pending
                         : (i + 1 <= prog.done
-                            ? _StepState.done
-                            : (prog.active == i + 1
-                                ? _StepState.active
-                                : _StepState.pending)),
+                              ? _StepState.done
+                              : (prog.active == i + 1
+                                    ? _StepState.active
+                                    : _StepState.pending)),
                   ),
               ],
             ),
@@ -618,7 +700,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final prog = _progress(o);
     final isGeprek = first.productName.toLowerCase().contains('geprek');
 
-    final s2 = 'Memastikan kesiapan ${main.totalQty} ${first.unit.toLowerCase()} '
+    final s2 =
+        'Memastikan kesiapan ${main.totalQty} ${first.unit.toLowerCase()} '
         '${isGeprek ? 'ayam geprek katering' : first.productName}'
         '${main.requiredAt != null ? ' untuk tanggal ${_dayMonth(main.requiredAt!)}' : ''}.';
 
@@ -636,7 +719,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     } else if (o.status == OrderStatus.waitingPayment) {
       s3 = 'Segera transfer & unggah bukti pembayaran Anda.';
     } else {
-      s3 = 'Instruksi bayar (QRIS / Transfer Desa) dibuka setelah PO disetujui.';
+      s3 =
+          'Instruksi bayar (QRIS / Transfer Desa) dibuka setelah PO disetujui.';
     }
 
     final courier = main.delivery == DeliveryMethod.courier;
@@ -649,8 +733,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         Icons.check_rounded,
         trailing: fmtTime(o.createdAt),
       ),
-      _Step('Sedang Ditinjau ${_shortName(main.umkmName)}', s2,
-          Icons.fact_check_outlined),
+      _Step(
+        'Sedang Ditinjau ${_shortName(main.umkmName)}',
+        s2,
+        Icons.fact_check_outlined,
+      ),
       _Step(
         o.paymentMethod == PaymentMethod.cod
             ? 'Pembayaran Tunai (COD)'
@@ -671,10 +758,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               main.purpose != null
                   ? 'Diantar langsung dalam kondisi hangat ke lokasi kegiatan ${main.purpose!.toLowerCase()}.'
                   : 'Diantar langsung dalam kondisi hangat ke alamat penerima.',
-              Icons.two_wheeler)
-          : _Step('Siap Diambil Sendiri',
+              Icons.two_wheeler,
+            )
+          : _Step(
+              'Siap Diambil Sendiri',
               'Ambil pesanan Anda di ${main.pickupLocation}.',
-              Icons.storefront_outlined),
+              Icons.storefront_outlined,
+            ),
     ];
   }
 
@@ -691,8 +781,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         circle = Container(
           width: dot,
           height: dot,
-          decoration:
-              const BoxDecoration(color: OC.primary, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+            color: OC.primary,
+            shape: BoxShape.circle,
+          ),
           child: const Icon(Icons.check_rounded, color: Colors.white, size: 17),
         );
         break;
@@ -709,7 +801,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 width: dot,
                 height: dot,
                 decoration: const BoxDecoration(
-                    color: OC.peach, shape: BoxShape.circle),
+                  color: OC.peach,
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(s.icon, color: OC.amber, size: 16),
               ),
               Positioned(
@@ -735,8 +829,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         circle = Container(
           width: dot,
           height: dot,
-          decoration:
-              const BoxDecoration(color: OC.box, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+            color: OC.box,
+            shape: BoxShape.circle,
+          ),
           child: Icon(s.icon, color: OC.faint, size: 15),
         );
         break;
@@ -778,37 +874,50 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(s.title,
-                            style: TextStyle(
-                                fontSize: state == _StepState.active ? 14 : 13,
-                                fontWeight: FontWeight.w700,
-                                color: titleColor)),
+                        child: Text(
+                          s.title,
+                          style: TextStyle(
+                            fontSize: state == _StepState.active ? 14 : 13,
+                            fontWeight: FontWeight.w700,
+                            color: titleColor,
+                          ),
+                        ),
                       ),
                       if (state == _StepState.active)
                         const Padding(
                           padding: EdgeInsets.only(top: 2),
-                          child: Text('Aktif',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: OC.amber)),
+                          child: Text(
+                            'Aktif',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: OC.amber,
+                            ),
+                          ),
                         )
-                      else if (s.trailing != null &&
-                          state == _StepState.done)
+                      else if (s.trailing != null && state == _StepState.done)
                         Padding(
                           padding: const EdgeInsets.only(top: 1),
-                          child: Text(s.trailing!,
-                              style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: OC.muted)),
+                          child: Text(
+                            s.trailing!,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: OC.muted,
+                            ),
+                          ),
                         ),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(s.body,
-                      style: TextStyle(
-                          fontSize: 12.5, color: bodyColor, height: 1.35)),
+                  Text(
+                    s.body,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: bodyColor,
+                      height: 1.35,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -828,23 +937,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Row(
             children: [
               const IconBadge(
-                  icon: Icons.storefront_outlined,
-                  bg: OC.primarySoft,
-                  fg: OC.primary,
-                  size: 38),
+                icon: Icons.storefront_outlined,
+                bg: OC.primarySoft,
+                fg: OC.primary,
+                size: 38,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(v.umkmName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: OT.cardTitle),
-                    Text(v.umkmType,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: OT.caption),
+                    Text(
+                      v.umkmName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: OT.cardTitle,
+                    ),
+                    Text(
+                      v.umkmType,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: OT.caption,
+                    ),
                   ],
                 ),
               ),
@@ -874,8 +988,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Row(
             children: [
               Expanded(
-                child: Text('Subtotal (${v.totalQty} porsi)',
-                    style: OT.secondary),
+                child: Text(
+                  'Subtotal (${v.totalQty} porsi)',
+                  style: OT.secondary,
+                ),
               ),
               const SizedBox(width: 8),
               Text(rupiah(v.subtotal), style: OT.money),
@@ -898,25 +1014,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(i.productName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: OT.item),
+                Text(
+                  i.productName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: OT.item,
+                ),
                 const SizedBox(height: 2),
-                Text(i.variant,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 12, color: OC.muted, height: 1.3)),
+                Text(
+                  i.variant,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: OC.muted,
+                    height: 1.3,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                          '${i.quantity}x @ ${rupiah(i.price)}/${i.unit.toLowerCase()}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: OT.secondary),
+                        '${i.quantity}x @ ${rupiah(i.price)}/${i.unit.toLowerCase()}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: OT.secondary,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(rupiah(i.subtotal), style: OT.money),
@@ -932,28 +1056,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Widget _poInfoBox(OrderVendor v) {
     Widget field(IconData icon, String label, String value) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(icon, size: 14, color: OC.amber),
-                  const SizedBox(width: 5),
-                  Text(label,
-                      style: OT.label.copyWith(color: OC.amber)),
-                ],
-              ),
-              const SizedBox(height: 3),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: OC.ink,
-                      height: 1.3)),
+              Icon(icon, size: 14, color: OC.amber),
+              const SizedBox(width: 5),
+              Text(label, style: OT.label.copyWith(color: OC.amber)),
             ],
           ),
-        );
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: OC.ink,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
 
     return Container(
       width: double.infinity,
@@ -968,8 +1094,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (v.requiredAt != null)
-            field(Icons.calendar_month_outlined, 'WAKTU DIBUTUHKAN',
-                fmtDateTime(v.requiredAt!)),
+            field(
+              Icons.calendar_month_outlined,
+              'WAKTU DIBUTUHKAN',
+              fmtDateTime(v.requiredAt!),
+            ),
           if (v.purpose != null)
             field(Icons.groups_outlined, 'KEPERLUAN', v.purpose!),
           if (v.note != null)
@@ -985,7 +1114,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: OC.box, borderRadius: BorderRadius.circular(12)),
+        color: OC.box,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1012,32 +1143,44 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: OC.box, borderRadius: BorderRadius.circular(12)),
+        color: OC.box,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(courier ? Icons.two_wheeler_outlined : Icons.storefront_outlined,
-                  size: 17, color: OC.primary),
+              Icon(
+                courier
+                    ? Icons.two_wheeler_outlined
+                    : Icons.storefront_outlined,
+                size: 17,
+                color: OC.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                    courier
-                        ? 'Diantar Kurir Warga / UMKM'
-                        : 'Ambil Sendiri (Pickup)',
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: OC.ink)),
+                  courier
+                      ? 'Diantar Kurir Warga / UMKM'
+                      : 'Ambil Sendiri (Pickup)',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: OC.ink,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               Text(
-                courier ? (v.deliveryFee == 0 ? 'Gratis' : rupiah(v.deliveryFee)) : 'Gratis',
+                courier
+                    ? (v.deliveryFee == 0 ? 'Gratis' : rupiah(v.deliveryFee))
+                    : 'Gratis',
                 style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: OC.primary),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: OC.primary,
+                ),
               ),
             ],
           ),
@@ -1048,13 +1191,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 const Icon(Icons.person_outline, size: 15, color: OC.muted),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text('${r.name} · ${r.phone}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: OC.ink)),
+                  child: Text(
+                    '${r.name} · ${r.phone}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: OC.ink,
+                    ),
+                  ),
                 ),
                 if (o.status.canEdit)
                   InkWell(
@@ -1062,11 +1208,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     onTap: () => _editRecipient(o),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Text('Ubah',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: OC.primary)),
+                      child: Text(
+                        'Ubah',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: OC.primary,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -1075,8 +1224,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 15, color: OC.muted),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 15,
+                  color: OC.muted,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -1084,7 +1236,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ? r.address
                         : '${r.address} (${r.addressNote})',
                     style: const TextStyle(
-                        fontSize: 12.5, color: OC.muted, height: 1.35),
+                      fontSize: 12.5,
+                      color: OC.muted,
+                      height: 1.35,
+                    ),
                   ),
                 ),
               ],
@@ -1093,13 +1248,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 15, color: OC.muted),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 15,
+                  color: OC.muted,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text('Ambil pesanan di ${v.pickupLocation}.',
-                      style: const TextStyle(
-                          fontSize: 12.5, color: OC.muted, height: 1.35)),
+                  child: Text(
+                    'Ambil pesanan di ${v.pickupLocation}.',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: OC.muted,
+                      height: 1.35,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1118,8 +1281,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             onTap: () => _showProof(o),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.memory(o.proofBytes!,
-                  width: 56, height: 56, fit: BoxFit.cover),
+              child: Image.memory(
+                o.proofBytes!,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -1143,8 +1310,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               minimumSize: const Size(40, 34),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Lihat',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Lihat',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
           ),
           if (o.status == OrderStatus.reviewing &&
               o.paymentMethod == PaymentMethod.qris)
@@ -1154,7 +1323,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => OrderPaymentScreen(orderId: o.id)),
+                  builder: (_) => OrderPaymentScreen(orderId: o.id),
+                ),
               ),
             ),
         ],
@@ -1185,23 +1355,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const TitleRow(
-              icon: Icons.receipt_long_outlined,
-              title: 'Rincian Pembayaran'),
+            icon: Icons.receipt_long_outlined,
+            title: 'Rincian Pembayaran',
+          ),
           const SizedBox(height: 6),
           MoneyRow(
-              label: 'Subtotal menu (${o.totalQty} porsi)',
-              value: rupiah(o.subtotal)),
+            label: 'Subtotal menu (${o.totalQty} porsi)',
+            value: rupiah(o.subtotal),
+          ),
           MoneyRow(
-              label: 'Ongkir kurir',
-              value: o.shippingTotal == 0 ? 'Gratis' : rupiah(o.shippingTotal)),
+            label: 'Ongkir kurir',
+            value: o.shippingTotal == 0 ? 'Gratis' : rupiah(o.shippingTotal),
+          ),
           MoneyRow(
-              label: 'Biaya layanan',
-              value: o.serviceFee == 0 ? 'Gratis' : rupiah(o.serviceFee)),
+            label: 'Biaya layanan',
+            value: o.serviceFee == 0 ? 'Gratis' : rupiah(o.serviceFee),
+          ),
           if (o.discount > 0)
             MoneyRow(
-                label: 'Diskon',
-                value: '-${rupiah(o.discount)}',
-                color: OC.primary),
+              label: 'Diskon',
+              value: '-${rupiah(o.discount)}',
+              color: OC.primary,
+            ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 6),
             child: Divider(height: 1, color: OC.line),
@@ -1212,8 +1387,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(o.hasPreOrder ? 'Total Pembayaran PO' : 'Total Pembayaran',
-                        style: OT.cardTitle),
+                    Text(
+                      o.hasPreOrder
+                          ? 'Total Pembayaran PO'
+                          : 'Total Pembayaran',
+                      style: OT.cardTitle,
+                    ),
                     Text(note, style: OT.caption),
                   ],
                 ),
@@ -1241,7 +1420,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               backgroundColor: OC.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             onPressed: () => openWhatsApp(
               context,
@@ -1250,9 +1430,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   'Halo ${main.umkmName}, saya ingin menanyakan pesanan ${o.refId}.',
             ),
             icon: const Icon(Icons.chat_outlined, size: 20),
-            label: Text('Hubungi ${_shortName(main.umkmName)} via WhatsApp',
-                style: const TextStyle(
-                    fontSize: 14.5, fontWeight: FontWeight.w700)),
+            label: Text(
+              'Hubungi ${_shortName(main.umkmName)} via WhatsApp',
+              style: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -1276,18 +1460,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       onTap: _busy ? null : () => _cancel(o),
                     )
                   : (!o.status.isActive
-                      ? _softButton(
-                          icon: Icons.delete_outline,
-                          label: 'Hapus Riwayat',
-                          color: OC.danger,
-                          onTap: _busy ? null : () => _delete(o),
-                        )
-                      : _softButton(
-                          icon: Icons.lock_outline,
-                          label: 'Tidak dapat batal',
-                          color: OC.faint,
-                          onTap: null,
-                        )),
+                        ? _softButton(
+                            icon: Icons.delete_outline,
+                            label: 'Hapus Riwayat',
+                            color: OC.danger,
+                            onTap: _busy ? null : () => _delete(o),
+                          )
+                        : _softButton(
+                            icon: Icons.lock_outline,
+                            label: 'Tidak dapat batal',
+                            color: OC.faint,
+                            onTap: null,
+                          )),
             ),
           ],
         ),
@@ -1315,13 +1499,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               Icon(icon, size: 18, color: color),
               const SizedBox(width: 7),
               Flexible(
-                child: Text(label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: color)),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
               ),
             ],
           ),

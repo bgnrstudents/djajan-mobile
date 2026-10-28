@@ -2,12 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../../../models/product.dart';
 import '../models/order.dart';
-import 'order_service.dart';
 
 class CartService extends ChangeNotifier {
-  CartService._internal() {
-    _seedDefaultItems();
-  }
+  CartService._internal();
 
   static final CartService _instance = CartService._internal();
   factory CartService() => _instance;
@@ -38,9 +35,11 @@ class CartService extends ChangeNotifier {
         ? product.id
         : 'prod_${product.name.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}';
 
-    final index = _items.indexWhere((l) =>
-        l.productId == targetId ||
-        (l.productName == product.name && l.umkmName == product.umkm));
+    final index = _items.indexWhere(
+      (l) =>
+          l.productId == targetId ||
+          (l.productName == product.name && l.umkmName == product.umkm),
+    );
 
     if (index >= 0) {
       final existing = _items[index];
@@ -56,7 +55,9 @@ class CartService extends ChangeNotifier {
     final index = _items.indexWhere((l) => l.productId == line.productId);
     if (index >= 0) {
       final existing = _items[index];
-      _items[index] = existing.copyWith(quantity: existing.quantity + line.quantity);
+      _items[index] = existing.copyWith(
+        quantity: existing.quantity + line.quantity,
+      );
     } else {
       _items.add(line);
     }
@@ -86,10 +87,5 @@ class CartService extends ChangeNotifier {
   void clear() {
     _items.clear();
     notifyListeners();
-  }
-
-  /// Data awal keranjang untuk preview & demo aplikasi
-  void _seedDefaultItems() {
-    _items.addAll(SampleData.cart);
   }
 }

@@ -23,26 +23,41 @@ class ApiService {
   static final http.Client _client = http.Client();
 
   /// Token Sanctum, disimpan di memori (sama seperti sebelumnya id_umkm
-  /// cuma disimpan di memori) — hilang saat aplikasi ditutup total, pengguna
+  /// cuma disimpan di memori) â€” hilang saat aplikasi ditutup total, pengguna
   /// perlu login ulang. Diisi UmkmDataService.login(), dikosongkan saat logout.
   static String? _token;
   static void setToken(String? token) => _token = token;
   static bool get hasToken => _token != null && _token!.isNotEmpty;
 
   static Map<String, String> get _headerAuth => {
-        'Accept': 'application/json',
-        if (hasToken) 'Authorization': 'Bearer $_token',
-      };
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+    if (hasToken) 'Authorization': 'Bearer ' + _token!,
+  };
 
   // ---------------------------------------------------------------- GET
   static Future<dynamic> get(String endpoint, {Map<String, String>? query}) {
     final uri = Uri.parse('${ApiConfig.apiUrl}/$endpoint')
         .replace(queryParameters: query);
-    return _jalankan(() =>
-        _client.get(uri, headers: _headerAuth).timeout(ApiConfig.timeout));
+    return _jalankan(
+      () => _client.get(uri, headers: _headerAuth).timeout(ApiConfig.timeout),
+    );
   }
 
   // --------------------------------------------------------------- POST
+  static Future<dynamic> postJson(String endpoint, Map<String, dynamic> data) {
+    final uri = Uri.parse('${ApiConfig.apiUrl}/$endpoint');
+    return _jalankan(
+      () => _client
+          .post(
+            uri,
+            headers: {..._headerAuth, 'Content-Type': 'application/json'},
+            body: jsonEncode(data),
+          )
+          .timeout(ApiConfig.timeout),
+    );
+  }
+
   /// POST biasa (form-urlencoded). Nilai non-String otomatis diubah ke String.
   static Future<dynamic> post(String endpoint, Map<String, dynamic> data) {
     final uri = Uri.parse('${ApiConfig.apiUrl}/$endpoint');
@@ -53,7 +68,7 @@ class ApiService {
     );
   }
 
-  /// POST multipart — dipakai saat mengirim data sekaligus file gambar.
+  /// POST multipart â€” dipakai saat mengirim data sekaligus file gambar.
   /// [gambar] boleh null (berarti hanya data yang dikirim).
   static Future<dynamic> postDenganGambar(
     String endpoint,
@@ -67,21 +82,25 @@ class ApiService {
     final bytes = await gambar.readAsBytes();
     if (bytes.lengthInBytes > 5 * 1024 * 1024) {
       throw ApiException(
-          'Ukuran gambar melebihi 5 MB. Silakan pilih gambar lain.');
+        'Ukuran gambar melebihi 5 MB. Silakan pilih gambar lain.',
+      );
     }
 
     return _jalankan(() async {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${ApiConfig.apiUrl}/$endpoint'),
-      )
-        ..headers.addAll(_headerAuth)
-        ..fields.addAll(_keString(data))
-        ..files.add(http.MultipartFile.fromBytes(
-          namaField,
-          bytes,
-          filename: _namaFileAman(gambar.name),
-        ));
+      final request =
+          http.MultipartRequest(
+              'POST',
+              Uri.parse('${ApiConfig.apiUrl}/$endpoint'),
+            )
+            ..headers.addAll(_headerAuth)
+            ..fields.addAll(_keString(data))
+            ..files.add(
+              http.MultipartFile.fromBytes(
+                namaField,
+                bytes,
+                filename: _namaFileAman(gambar.name),
+              ),
+            );
 
       final streamed = await request.send().timeout(ApiConfig.timeout);
       return http.Response.fromStream(streamed);
@@ -92,7 +111,8 @@ class ApiService {
   /// Menjalankan permintaan HTTP sambil menerjemahkan seluruh kemungkinan error
   /// menjadi pesan berbahasa Indonesia yang mudah dipahami pengguna.
   static Future<dynamic> _jalankan(
-      Future<http.Response> Function() aksi) async {
+    Future<http.Response> Function() aksi,
+  ) async {
     try {
       return _proses(await aksi());
     } on ApiException {
@@ -107,7 +127,8 @@ class ApiService {
       );
     } catch (e) {
       final msg = e.toString().toLowerCase();
-      if (msg.contains('socketexception') || msg.contains('connection refused')) {
+      if (msg.contains('socketexception') ||
+          msg.contains('connection refused')) {
         throw ApiException(
           'Gagal terhubung ke server.\n\n'
           'Pastikan:\n'

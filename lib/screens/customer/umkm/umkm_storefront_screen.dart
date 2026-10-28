@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../config/app_config.dart';
 import '../../../data/sample_catalog.dart';
 import '../../../models/product.dart';
 import '../../../models/umkm.dart';
+import '../../../services/catalog_service.dart';
 import '../../../widgets/favorite_button.dart';
 import '../../../widgets/product_card.dart';
 import '../cart/cart.dart';
@@ -35,7 +37,15 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   Umkm get umkm => widget.umkm;
 
-  List<Product> get _storeProducts => SampleCatalog.productsOf(umkm.id);
+  CatalogService? get _catalog => Provider.of<CatalogService?>(context, listen: false);
+
+  List<Product> get _storeProducts {
+    final catalog = _catalog;
+    if (catalog == null) {
+      return SampleCatalog.productsOf(umkm.id);
+    }
+    return catalog.products.where((product) => product.umkmId == umkm.id).toList();
+  }
 
   @override
   void dispose() {

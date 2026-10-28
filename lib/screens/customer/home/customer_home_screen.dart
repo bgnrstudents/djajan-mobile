@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../data/sample_catalog.dart';
+import '../../../services/catalog_service.dart';
 import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../widgets/app_bottom_navigation.dart';
@@ -30,23 +32,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   String selectedOrderType = 'Semua';
   final TextEditingController searchController = TextEditingController();
 
-  // Sumber data katalog bersama (beranda, katalog, storefront).
-  final List<Product> products = SampleCatalog.products;
-  final List<Umkm> umkms = SampleCatalog.umkms;
+  CatalogService? _catalog;
+
+  List<Product> get products =>
+      _catalog == null ? SampleCatalog.products : _catalog!.products;
+
+  List<Umkm> get umkms =>
+      _catalog == null ? SampleCatalog.umkms : _catalog!.umkms;
 
   void _openStorefront(Umkm umkm) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)));
   }
 
   void _openCatalog({String category = 'Semua', String query = ''}) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CatalogListScreen(
-          initialCategory: category,
-          initialQuery: query,
-        ),
+        builder: (_) =>
+            CatalogListScreen(initialCategory: category, initialQuery: query),
       ),
     );
   }
@@ -59,6 +63,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _catalog = Provider.of<CatalogService?>(context);
     return Scaffold(
       body: SafeArea(child: _buildCurrentPage()),
       bottomNavigationBar: AppBottomNavigation(
@@ -139,7 +144,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   children: [
                     Text(
                       'UMKM di Desa',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 2),
                     Text(
@@ -168,7 +176,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               final umkm = umkms[index];
               return UmkmCard(
                 umkm: umkm,
-                productCount: SampleCatalog.productsOf(umkm.id).length,
+                productCount: _catalog == null
+                    ? SampleCatalog.productsOf(umkm.id).length
+                    : _catalog!.productsOf(umkm.id).length,
                 onTap: () => _openStorefront(umkm),
               );
             },
@@ -201,10 +211,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 child: Text(
                   'Desa Kreyongan Atas',
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 2),
@@ -224,9 +231,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           return IconButton(
             tooltip: 'Notifikasi',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const NotificationScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const NotificationScreen()),
             ),
             icon: Stack(
               clipBehavior: Clip.none,
@@ -584,7 +589,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
               itemBuilder: (context, index) {
                 final product = filteredProducts[index];
-                final umkm = SampleCatalog.umkmById(product.umkmId);
+                final umkm = _catalog == null
+                    ? SampleCatalog.umkmById(product.umkmId)
+                    : _catalog!.umkmById(product.umkmId);
 
                 return ProductCard(
                   product: product,
@@ -633,7 +640,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           return Expanded(
             child: GestureDetector(
               onTap: () {
-                setState(() {   
+                setState(() {
                   selectedOrderType = type;
                 });
               },

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../config/app_config.dart';
 import '../../../data/sample_catalog.dart';
 import '../../../models/product.dart';
 import '../../../models/umkm.dart';
+import '../../../services/catalog_service.dart';
 import '../../../widgets/product_card.dart';
 import '../../../widgets/umkm_card.dart';
 import '../cart/cart.dart';
@@ -40,6 +42,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
 
   late String _category;
   String _orderType = 'Semua';
+  CatalogService? _catalog;
 
   @override
   void initState() {
@@ -54,25 +57,44 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
     super.dispose();
   }
 
-  List<Product> get _results => SampleCatalog.search(
+  List<Product> get _results {
+    final catalog = _catalog;
+    if (catalog == null) {
+      return SampleCatalog.search(
         _searchController.text,
         category: _category,
         orderType: _orderType,
       );
+    }
+    final query = _searchController.text.trim().toLowerCase();
+    return catalog.products.where((product) {
+      final queryMatch =
+          query.isEmpty ||
+          product.name.toLowerCase().contains(query) ||
+          product.umkm.toLowerCase().contains(query);
+      final categoryMatch =
+          _category == 'Semua' || product.category == _category;
+      final orderMatch =
+          _orderType == 'Semua' || product.orderType == _orderType;
+      return queryMatch && categoryMatch && orderMatch;
+    }).toList();
+  }
 
   List<Umkm> get _umkmResults {
     final q = _searchController.text.trim().toLowerCase();
     if (q.isEmpty) return const [];
-    return SampleCatalog.umkms.where((u) {
+    return (_catalog == null ? SampleCatalog.umkms : _catalog!.umkms).where((
+      u,
+    ) {
       return u.name.toLowerCase().contains(q) ||
           u.type.toLowerCase().contains(q);
     }).toList();
   }
 
   void _openStorefront(Umkm umkm) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)));
   }
 
   void _addToCart(Product product) {
@@ -86,9 +108,9 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
         action: SnackBarAction(
           label: 'Lihat',
           textColor: const Color(0xFFFFBE25),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CartScreen()),
-          ),
+          onPressed: () =>
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const CartScreen())),
         ),
       ),
     );
@@ -96,6 +118,11 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final catalog = Provider.of<CatalogService?>(context);
+    _catalog = catalog;
+    final isLoading = catalog?.isLoading ?? false;
+    final hasProducts = catalog?.products.isNotEmpty ?? false;
+    final hasError = catalog?.errorMessage != null;
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -115,43 +142,70 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-        children: [
-          _buildSearchField(),
-          const SizedBox(height: 14),
-          _buildCategoryChips(),
-          const SizedBox(height: 12),
-          _buildOrderTypeFilter(),
-          const SizedBox(height: 18),
+      body: isLoading && !hasProducts
+          ? const Center(child: CircularProgressIndicator())
+          : hasError && !hasProducts
+          ? _buildError(catalog!)
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+              children: [
+                _buildSearchField(),
+                const SizedBox(height: 14),
+                _buildCategoryChips(),
+                const SizedBox(height: 12),
+                _buildOrderTypeFilter(),
+                const SizedBox(height: 18),
 
-          // Hasil UMKM (hanya saat mengetik)
-          if (_umkmResults.isNotEmpty) ...[
-            _sectionTitle('UMKM Ditemukan', _umkmResults.length),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 196,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _umkmResults.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, i) {
-                  final umkm = _umkmResults[i];
-                  return UmkmCard(
-                    umkm: umkm,
-                    productCount: SampleCatalog.productsOf(umkm.id).length,
-                    onTap: () => _openStorefront(umkm),
-                  );
-                },
-              ),
+                // Hasil UMKM (hanya saat mengetik)
+                if (_umkmResults.isNotEmpty) ...[
+                  _sectionTitle('UMKM Ditemukan', _umkmResults.length),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 196,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _umkmResults.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, i) {
+                        final umkm = _umkmResults[i];
+                        return UmkmCard(
+                          umkm: umkm,
+                          productCount: _catalog == null
+                              ? SampleCatalog.productsOf(umkm.id).length
+                              : catalog!.productsOf(umkm.id).length,
+                          onTap: () => _openStorefront(umkm),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                _sectionTitle('Produk', _results.length),
+                const SizedBox(height: 10),
+                _buildProductGrid(),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
+    );
+  }
 
-          _sectionTitle('Produk', _results.length),
-          const SizedBox(height: 10),
-          _buildProductGrid(),
-        ],
+  Widget _buildError(CatalogService catalog) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+            const SizedBox(height: 12),
+            Text(catalog.errorMessage!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: catalog.load,
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -225,7 +279,9 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
   }
 
   Widget _buildCategoryChips() {
-    final categories = SampleCatalog.categories;
+    final categories = _catalog == null
+        ? SampleCatalog.categories
+        : _catalog!.categories;
     return SizedBox(
       height: 40,
       child: ListView.separated(
@@ -288,8 +344,9 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
                     type,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight:
-                          selected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: selected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: const Color(0xFF59636E),
                     ),
                   ),
@@ -348,7 +405,9 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
       ),
       itemBuilder: (context, index) {
         final product = items[index];
-        final umkm = SampleCatalog.umkmById(product.umkmId);
+        final umkm =
+            _catalog?.umkmById(product.umkmId) ??
+            SampleCatalog.umkmById(product.umkmId);
         return ProductCard(
           product: product,
           onTap: () => Navigator.of(context).push(

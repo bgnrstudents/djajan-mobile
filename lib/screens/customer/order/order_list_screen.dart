@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/order.dart';
+import '../../../services/api_service.dart';
 import '../../../services/order_service.dart';
 import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
@@ -227,14 +228,24 @@ class _OrderListScreenState extends State<OrderListScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(11)),
                       ),
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => o.paymentMethod == PaymentMethod.midtrans
-                              ? MidtransPaymentScreen(orderId: o.id)
-                              : OrderPaymentScreen(orderId: o.id),
-                        ),
-                      ),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                o.paymentMethod == PaymentMethod.midtrans
+                                ? MidtransPaymentScreen(orderId: o.id)
+                                : OrderPaymentScreen(orderId: o.id),
+                          ),
+                        );
+                        if (o.paymentMethod == PaymentMethod.midtrans) {
+                          try {
+                            await _service.refreshPaymentStatus(o.id);
+                          } on ApiException {
+                            // The list remains usable if the status endpoint is temporarily unavailable.
+                          }
+                        }
+                      },
                       child: Text(
                           o.paymentMethod == PaymentMethod.cod
                               ? 'Konfirmasi'

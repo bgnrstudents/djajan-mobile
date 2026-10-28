@@ -221,51 +221,80 @@ untuk pengujian perangkat nyata.
 
 ## Task 4 — Katalog Produk Pembeli
 
-**Status:** Siap dimulai
+**Status:** Selesai — integrasi API dan UI katalog lulus
 
 ### Cakupan
 
-- [ ] Daftar UMKM.
-- [ ] Daftar kategori.
-- [ ] Daftar produk.
-- [ ] Detail produk.
-- [ ] Search dan filter.
-- [ ] Detail UMKM.
-- [ ] Provider untuk state katalog.
+- [x] Daftar UMKM.
+- [x] Daftar kategori.
+- [x] Daftar produk.
+- [x] Detail produk.
+- [x] Search dan filter.
+- [x] Detail UMKM.
+- [x] Provider untuk state katalog.
 
 ### Test Gate
 
-- [ ] Katalog menampilkan data API aktual.
-- [ ] Search dan filter menghasilkan data yang benar.
-- [ ] Navigasi ke detail berfungsi.
-- [ ] Loading dan error tidak menyebabkan UI crash.
-- [ ] Layout diuji pada beberapa ukuran layar.
+- [x] Katalog menampilkan data API aktual.
+- [x] Search dan filter menghasilkan data yang benar.
+- [x] Navigasi ke detail berfungsi.
+- [x] Loading dan error tidak menyebabkan UI crash.
+- [x] Layout diuji pada beberapa ukuran layar.
 
 ## Task 5 — Keranjang dan Checkout
 
-**Status:** Menunggu Task 4
+**Status:** Selesai dengan catatan — checkout dan pembayaran Sandbox sudah
+terintegrasi, tetapi sinkronisasi status setelah kembali dari pembayaran masih
+menjadi bug terbuka untuk diperbaiki pada sesi berikutnya.
 
 ### Cakupan
 
-- [ ] Tambah produk ke keranjang.
-- [ ] Ubah jumlah dan hapus item.
-- [ ] Validasi stok.
-- [ ] Perhitungan subtotal dan total.
-- [ ] Checkout dan pembuatan order.
-- [ ] Pencegahan double submission.
+- [x] Tambah produk ke keranjang.
+- [x] Ubah jumlah dan hapus item.
+- [x] Validasi stok.
+- [x] Perhitungan subtotal dan total.
+- [x] Checkout dan pembuatan order.
+- [x] Pencegahan double submission.
+- [x] Integrasi checkout dengan backend Laravel.
+- [x] Integrasi Midtrans Sandbox menggunakan Snap.
+- [x] Pembayaran Midtrans dibuka di dalam WebView Flutter.
+- [x] Dukungan pembayaran COD dan Midtrans.
+- [x] Callback/payment notification Midtrans pada backend.
+- [x] Query status transaksi Midtrans sebagai fallback callback.
+- [x] Validasi mode `pre_order` dan stok produk.
+- [x] Pengiriman ongkir dan biaya layanan sebagai item transaksi Midtrans.
 
 ### Test Gate
 
-- [ ] Total harga akurat.
-- [ ] Jumlah tidak melebihi stok.
-- [ ] Keranjang kosong tidak dapat checkout.
-- [ ] Produk tidak aktif tidak dapat dipesan.
-- [ ] Order tidak terduplikasi.
-- [ ] Transaksi database bersifat atomic.
+- [x] Total harga akurat.
+- [x] Jumlah tidak melebihi stok.
+- [x] Keranjang kosong tidak dapat checkout.
+- [x] Produk tidak aktif tidak dapat dipesan.
+- [x] Order tidak terduplikasi.
+- [x] Transaksi database bersifat atomic.
+- [x] Migration field pembayaran Midtrans berhasil dijalankan.
+- [x] `flutter pub get` dan `flutter analyze --no-fatal-infos` berhasil tanpa
+  error compile.
+- [x] PHP lint dan route backend terkait checkout berhasil diverifikasi.
+- [x] Checkout nyata berhasil membuat transaksi Midtrans Sandbox.
+- [ ] Setelah pembayaran sukses, status order mobile selalu berubah dari
+  `Menunggu Pembayaran` dan tombol `Bayar Sekarang` selalu hilang.
+- [ ] Pastikan redirect pembayaran tidak menampilkan halaman peringatan ngrok
+  dan callback/status query selalu selesai sebelum pengguna kembali ke detail
+  pesanan.
+
+### Catatan Bug Terbuka
+
+- Pada pengujian terakhir, pembayaran berhasil dilakukan tetapi detail pesanan
+  masih menampilkan `Menunggu Pembayaran` dan tombol `Bayar Sekarang`.
+- Halaman redirect melalui tunnel ngrok masih dapat muncul setelah pembayaran.
+- Perbaikan lanjutan dijadwalkan sebagai langkah pertama pada sesi berikutnya:
+  telusuri status response backend, rehidrasi order dari API, dan pastikan
+  navigasi kembali dari WebView memicu refresh detail serta daftar pesanan.
 
 ## Task 6 — Status Pesanan dan Riwayat Transaksi
 
-**Status:** Menunggu Task 5
+**Status:** Menunggu penyelesaian bug sinkronisasi pembayaran Task 5
 
 ### Status Pesanan
 
@@ -333,6 +362,7 @@ Satu task dianggap selesai apabila:
 2. Jalankan seluruh test gate Task 0.
 3. Catat hasil audit dan error baseline.
 4. Jangan mulai Task 1 sebelum Task 0 dinyatakan lulus.
-5. Task 0, Task 1, Task 2, dan Task 3 sudah selesai.
-6. Berikutnya mulai **Task 4 — Katalog Produk Pembeli** dan jalankan test gate
-   sebelum melanjutkan ke Task 5.
+5. Task 0, Task 1, Task 2, Task 3, Task 4, dan implementasi utama Task 5 sudah
+   selesai.
+6. Selesaikan bug sinkronisasi status pembayaran yang tercatat pada Task 5
+   sebelum melanjutkan penuh ke Task 6.

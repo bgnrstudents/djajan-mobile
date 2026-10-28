@@ -70,17 +70,21 @@ class Umkm {
 
   factory Umkm.fromJson(Map<String, dynamic> json) {
     return Umkm(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      type: json['type'] as String? ?? 'UMKM Kuliner Desa',
-      description: json['description'] as String? ?? '',
-      imageUrl: json['image_url'] as String? ?? '',
-      pickupLocation: json['pickup_location'] as String? ?? 'Desa Kreyongan Atas',
+      id: (json['id'] ?? json['id_umkm'])?.toString() ?? '',
+      name: (json['name'] ?? json['nama_usaha']) as String? ?? '',
+      type:
+          (json['type'] ?? json['spesialis']) as String? ?? 'UMKM Kuliner Desa',
+      description:
+          (json['description'] ?? json['deskripsi_usaha']) as String? ?? '',
+      imageUrl: (json['image_url'] ?? json['foto_profil_url']) as String? ?? '',
+      pickupLocation:
+          (json['pickup_location'] ?? json['alamat']) as String? ??
+          'Desa Kreyongan Atas',
       courierFee: (json['courier_fee'] as num?)?.toDouble(),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       soldCount: (json['sold_count'] as num?)?.toInt() ?? 0,
       isVerified: json['is_verified'] as bool? ?? true,
-      phone: json['phone'] as String? ?? '',
+      phone: (json['phone'] ?? json['no_telp_usaha']) as String? ?? '',
     );
   }
 

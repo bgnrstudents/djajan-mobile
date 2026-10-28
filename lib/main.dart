@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'services/auth_service.dart';
 import 'services/category_service.dart';
+import 'services/catalog_service.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/customer/home/customer_home_screen.dart';
@@ -36,6 +37,7 @@ class DjajanApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => CategoryService()),
+        ChangeNotifierProvider(create: (_) => CatalogService()..load()),
         ChangeNotifierProvider(create: (_) => UmkmDataService()..muatSemua()),
       ],
       child: MaterialApp(
@@ -60,7 +62,8 @@ class DjajanApp extends StatelessWidget {
           // --- ROUTES UMKM (owner/seller) ---
           AppRoutes.umkmDashboard: (context) => DashboardUmkmScreen(),
           AppRoutes.umkmTambahProduk: (context) => TambahProdukScreen(),
-          AppRoutes.umkmDetailPesanan: (context) => DetailPesananScreen(idPesanan: ''),
+          AppRoutes.umkmDetailPesanan: (context) =>
+              DetailPesananScreen(idPesanan: ''),
           AppRoutes.umkmPengaturan: (context) => PengaturanScreen(),
         },
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'notification_service.dart';
 import '../models/order.dart';
+import 'api_service.dart';
 
 class OrderService extends ChangeNotifier {
   OrderService._internal() {
@@ -14,7 +15,6 @@ class OrderService extends ChangeNotifier {
   static const int maxProofBytes = 5 * 1024 * 1024;
 
   final List<Order> _orders = [];
-  int _counter = 1;
 
   List<Order> get orders {
     final list = List<Order>.from(_orders);
@@ -27,6 +27,27 @@ class OrderService extends ChangeNotifier {
       if (o.id == id) return o;
     }
     return null;
+  }
+
+  Future<String?> refreshPaymentStatus(String orderId) async {
+    final order = _require(orderId);
+    final data = await ApiService.get('pesanan/saya/$orderId');
+    final paymentStatus = (data['payment_status'] ?? data['status_pembayaran'])
+        .toString()
+        .toLowerCase();
+    final status = paymentStatus == 'paid' || paymentStatus == 'settlement'
+        ? OrderStatus.reviewing
+        : paymentStatus == 'failed' ||
+              paymentStatus == 'deny' ||
+              paymentStatus == 'cancel' ||
+              paymentStatus == 'expire'
+        ? OrderStatus.cancelled
+        : order.status;
+    if (status != order.status) {
+      _replace(order.copyWith(status: status));
+    }
+    notifyListeners();
+    return paymentStatus;
   }
 
   PaymentAccount accountFor(String umkmId) {
@@ -54,17 +75,18 @@ class OrderService extends ChangeNotifier {
     final vendors = <OrderVendor>[];
     for (final entry in grouped.entries) {
       final first = entry.value.first;
-      final opt = options[entry.key] ??
+      final opt =
+          options[entry.key] ??
           const VendorCheckout(delivery: DeliveryMethod.pickup);
       final isPO = entry.value.any((l) => l.type == OrderType.preOrder);
 
       if (isPO && opt.requiredAt == null) {
-        throw OrderException(
-            'Pilih waktu dibutuhkan untuk ${first.umkmName}.');
+        throw OrderException('Pilih waktu dibutuhkan untuk ${first.umkmName}.');
       }
       if (isPO && opt.requiredAt!.isBefore(DateTime.now())) {
         throw OrderException(
-            'Waktu dibutuhkan ${first.umkmName} sudah terlewat.');
+          'Waktu dibutuhkan ${first.umkmName} sudah terlewat.',
+        );
       }
       if (isPO) {
         final e = OrderValidator.purpose(opt.purpose);
@@ -78,13 +100,15 @@ class OrderService extends ChangeNotifier {
         delivery = DeliveryMethod.pickup;
       }
 
-      vendors.add(OrderVendor(
-        umkmId: first.umkmId,
-        umkmName: first.umkmName,
-        umkmType: first.umkmType,
-        type: isPO ? OrderType.preOrder : OrderType.instant,
-        items: entry.value
-            .map((l) => OrderItem(
+      vendors.add(
+        OrderVendor(
+          umkmId: first.umkmId,
+          umkmName: first.umkmName,
+          umkmType: first.umkmType,
+          type: isPO ? OrderType.preOrder : OrderType.instant,
+          items: entry.value
+              .map(
+                (l) => OrderItem(
                   productId: l.productId,
                   productName: l.productName,
                   variant: l.variant,
@@ -92,31 +116,62 @@ class OrderService extends ChangeNotifier {
                   imageUrl: l.imageUrl,
                   quantity: l.quantity,
                   price: l.price,
-                ))
-            .toList(),
-        delivery: delivery,
-        deliveryFee:
-            delivery == DeliveryMethod.courier ? (first.courierFee ?? 0) : 0,
-        pickupLocation: first.pickupLocation,
-        requiredAt: isPO ? opt.requiredAt : null,
-        purpose: isPO ? OrderValidator.clean(opt.purpose) : null,
-        note: OrderValidator.clean(opt.note).isEmpty
-            ? null
-            : OrderValidator.clean(opt.note),
-      ));
+                ),
+              )
+              .toList(),
+          delivery: delivery,
+          deliveryFee: delivery == DeliveryMethod.courier
+              ? (first.courierFee ?? 0)
+              : 0,
+          pickupLocation: first.pickupLocation,
+          requiredAt: isPO ? opt.requiredAt : null,
+          purpose: isPO ? OrderValidator.clean(opt.purpose) : null,
+          note: OrderValidator.clean(opt.note).isEmpty
+              ? null
+              : OrderValidator.clean(opt.note),
+        ),
+      );
     }
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    if (vendors.length != 1) {
+      throw const OrderException(
+        'Checkout saat ini hanya mendukung satu UMKM per transaksi.',
+      );
+    }
+
+    final isCod = paymentMethod == PaymentMethod.cod;
+    final vendor = vendors.single;
+    final backendData = await ApiService.postJson('pesanan/checkout', {
+      'metode_pembayaran': isCod ? 'cod' : 'midtrans',
+      'metode_pengiriman': vendor.delivery == DeliveryMethod.courier
+          ? 'kurir'
+          : 'pickup',
+      'alamat_tujuan': recipient.address,
+      'catatan': vendor.note ?? recipient.addressNote ?? '',
+      'waktu_dibutuhkan': vendor.requiredAt?.toIso8601String(),
+      'keperluan_acara': vendor.purpose ?? '',
+      'biaya_pengantaran': vendor.deliveryFee.round(),
+      'biaya_layanan': 0,
+      'items': vendor.items
+          .map(
+            (item) => {
+              'id_produk': int.tryParse(item.productId) ?? 0,
+              'jumlah': item.quantity,
+              'harga_satuan': item.price.round(),
+            },
+          )
+          .toList(),
+    });
 
     final now = DateTime.now();
-    _counter++;
-    final seq = _counter.toString().padLeft(3, '0');
-    final date = '${now.year}${_two(now.month)}${_two(now.day)}';
-    final isCod = paymentMethod == PaymentMethod.cod;
+    final backendOrderId = (backendData['id_pesanan'] ?? '').toString();
+    if (backendOrderId.isEmpty) {
+      throw const OrderException('Server tidak mengembalikan nomor pesanan.');
+    }
 
     final order = Order(
-      id: 'ORD-$date-$seq',
-      refId: '#DJN-$date-$seq',
+      id: backendOrderId,
+      refId: backendOrderId,
       createdAt: now,
       vendors: vendors,
       recipient: recipient,
@@ -126,6 +181,8 @@ class OrderService extends ChangeNotifier {
       status: OrderStatus.waitingPayment,
       account: accountFor(vendors.first.umkmId),
       paymentDeadline: isCod ? null : now.add(const Duration(hours: 24)),
+      snapToken: backendData['snap_token']?.toString(),
+      paymentUrl: backendData['payment_url']?.toString(),
     );
 
     _orders.add(order);
@@ -161,12 +218,14 @@ class OrderService extends ChangeNotifier {
 
     await Future.delayed(const Duration(milliseconds: 900));
 
-    final updated = _replace(order.copyWith(
-      proofBytes: bytes,
-      proofName: fileName,
-      proofUploadedAt: DateTime.now(),
-      status: OrderStatus.reviewing,
-    ));
+    final updated = _replace(
+      order.copyWith(
+        proofBytes: bytes,
+        proofName: fileName,
+        proofUploadedAt: DateTime.now(),
+        status: OrderStatus.reviewing,
+      ),
+    );
 
     _notify(
       title: 'Bukti Pembayaran Terkirim',
@@ -199,7 +258,9 @@ class OrderService extends ChangeNotifier {
   Future<Order> markAsPaidViaMidtrans(String orderId) async {
     final order = _require(orderId);
     if (order.status != OrderStatus.waitingPayment) {
-      throw const OrderException('Pesanan ini sudah dibayar atau dalam proses.');
+      throw const OrderException(
+        'Pesanan ini sudah dibayar atau dalam proses.',
+      );
     }
     await Future.delayed(const Duration(milliseconds: 600));
     final updated = _replace(order.copyWith(status: OrderStatus.reviewing));
@@ -221,7 +282,8 @@ class OrderService extends ChangeNotifier {
     final error = OrderValidator.recipientError(recipient);
     if (error != null) throw OrderException(error);
     return _replace(
-        order.copyWith(recipient: OrderValidator.normalizeRecipient(recipient)));
+      order.copyWith(recipient: OrderValidator.normalizeRecipient(recipient)),
+    );
   }
 
   Future<Order> advanceStatus(String orderId) async {
@@ -235,8 +297,7 @@ class OrderService extends ChangeNotifier {
       case OrderStatus.delivering:
         next = OrderStatus.completed;
       case OrderStatus.waitingPayment:
-        throw const OrderException(
-            'Unggah bukti transfer terlebih dahulu.');
+        throw const OrderException('Unggah bukti transfer terlebih dahulu.');
       case OrderStatus.completed:
       case OrderStatus.cancelled:
         throw const OrderException('Pesanan sudah berakhir.');
@@ -255,7 +316,8 @@ class OrderService extends ChangeNotifier {
     final order = _require(orderId);
     if (!order.status.canCancel) {
       throw const OrderException(
-          'Pesanan yang sudah diproses tidak dapat dibatalkan.');
+        'Pesanan yang sudah diproses tidak dapat dibatalkan.',
+      );
     }
     final updated = _replace(order.copyWith(status: OrderStatus.cancelled));
     _notify(
@@ -270,7 +332,8 @@ class OrderService extends ChangeNotifier {
     final order = _require(orderId);
     if (order.status.isActive) {
       throw const OrderException(
-          'Batalkan pesanan terlebih dahulu sebelum menghapus.');
+        'Batalkan pesanan terlebih dahulu sebelum menghapus.',
+      );
     }
     _orders.removeWhere((o) => o.id == order.id);
     notifyListeners();
@@ -288,8 +351,6 @@ class OrderService extends ChangeNotifier {
     notifyListeners();
     return updated;
   }
-
-  static String _two(int v) => v.toString().padLeft(2, '0');
 
   // -------------------------------------------------------- Notifikasi
   void _notify({
@@ -351,48 +412,49 @@ class OrderService extends ChangeNotifier {
   };
 
   void _seed() {
-    _orders.add(Order(
-      id: 'ORD-20260915-001',
-      refId: '#DJN-20260915-001',
-      createdAt: DateTime(2026, 9, 15, 9, 15),
-      vendors: [
-        OrderVendor(
-          umkmId: 'umkm-bu-minten',
-          umkmName: 'Dapur Bu Minten',
-          umkmType: 'Spesialis Katering',
-          type: OrderType.preOrder,
-          items: const [
-            OrderItem(
-              productId: 'p-nasi-geprek',
-              productName: 'Nasi Kotak Ayam Geprek',
-              variant: 'Nasi kuning wangi, tempe bacem, lalapan segar',
-              unit: 'box',
-              imageUrl: SampleData.imgNasiGeprek,
-              quantity: 10,
-              price: 15000,
-            ),
-          ],
-          delivery: DeliveryMethod.courier,
-          deliveryFee: 5000,
-          pickupLocation: 'Dapur Bu Minten RT 01',
-          requiredAt: DateTime(2026, 9, 20, 11, 0),
-          purpose: 'Rapat Desa Kreyongan Atas',
-          note: 'Sambal dipisah pakai cup kecil, kemangi dipacking rapi kering.',
+    _orders.add(
+      Order(
+        id: 'ORD-20260915-001',
+        refId: '#DJN-20260915-001',
+        createdAt: DateTime(2026, 9, 15, 9, 15),
+        vendors: [
+          OrderVendor(
+            umkmId: 'umkm-bu-minten',
+            umkmName: 'Dapur Bu Minten',
+            umkmType: 'Spesialis Katering',
+            type: OrderType.preOrder,
+            items: const [
+              OrderItem(
+                productId: 'p-nasi-geprek',
+                productName: 'Nasi Kotak Ayam Geprek',
+                variant: 'Nasi kuning wangi, tempe bacem, lalapan segar',
+                unit: 'box',
+                imageUrl: SampleData.imgNasiGeprek,
+                quantity: 10,
+                price: 15000,
+              ),
+            ],
+            delivery: DeliveryMethod.courier,
+            deliveryFee: 5000,
+            pickupLocation: 'Dapur Bu Minten RT 01',
+            requiredAt: DateTime(2026, 9, 20, 11, 0),
+            purpose: 'Rapat Desa Kreyongan Atas',
+            note: 'Sambal dipisah pakai cup kecil, kemangi dipacking rapi kering.',
+          ),
+        ],
+        recipient: const Recipient(
+          name: 'Muhammad Rizki',
+          phone: '0812-3456-7890',
+          address: 'RT 03 / RW 02, Balai Pertemuan RW, Desa Kreyongan Atas',
+          addressNote: 'Rumah pagar hijau samping pos ronda kamling',
         ),
-      ],
-      recipient: const Recipient(
-        name: 'Muhammad Rizki',
-        phone: '0812-3456-7890',
-        address:
-            'RT 03 / RW 02, Balai Pertemuan RW, Desa Kreyongan Atas',
-        addressNote: 'Rumah pagar hijau samping pos ronda kamling',
+        paymentMethod: PaymentMethod.qris,
+        serviceFee: 1000,
+        discount: 5000,
+        status: OrderStatus.reviewing,
+        account: _defaultAccount,
       ),
-      paymentMethod: PaymentMethod.qris,
-      serviceFee: 1000,
-      discount: 5000,
-      status: OrderStatus.reviewing,
-      account: _defaultAccount,
-    ));
+    );
   }
 }
 
