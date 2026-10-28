@@ -160,51 +160,68 @@ untuk pengujian perangkat nyata.
 
 ## Task 2 — Master Data UMKM dan Kategori
 
-**Status:** Siap dimulai
+**Status:** Selesai
 
 ### Cakupan
 
-- [ ] CRUD data UMKM.
-- [ ] Master kategori produk dibaca mobile dari backend; tidak ada CRUD kategori
+- [x] Pengelolaan data UMKM melalui registrasi mobile dan verifikasi/edit admin.
+- [x] Master kategori produk dibaca mobile dari backend; tidak ada CRUD kategori
   pada website admin.
-- [ ] Relasi user penjual dengan UMKM.
-- [ ] Status UMKM aktif/nonaktif.
-- [ ] Logo atau foto UMKM bila diperlukan.
+- [x] Relasi user penjual dengan UMKM.
+- [x] Status UMKM aktif/nonaktif.
+- [x] Logo atau foto UMKM bila diperlukan.
 
 ### Test Gate
 
-- [ ] Admin dapat membuat dan mengubah UMKM.
-- [ ] Penjual hanya dapat mengakses UMKM miliknya.
-- [ ] Validasi data wajib berjalan.
-- [ ] Kategori dapat digunakan oleh produk.
-- [ ] Flutter menangani loading, empty, success, dan error state.
+- [x] Admin dapat mengubah UMKM dan memverifikasi pendaftaran.
+- [x] Penjual hanya dapat mengakses UMKM miliknya.
+- [x] Validasi data wajib berjalan.
+- [x] Kategori dapat digunakan oleh produk.
+- [x] Flutter menangani loading, empty, success, dan error state.
+
+### Hasil Verifikasi
+
+- Endpoint kategori publik mengembalikan kategori aktif.
+- Registrasi, verifikasi, dan login UMKM berhasil diuji manual.
+- Produk dapat memakai kategori dari API.
+- Website admin tidak menyediakan CRUD kategori.
 
 ## Task 3 — Manajemen Produk dan Stok
 
-**Status:** Menunggu Task 2
+**Status:** Selesai — test manual lulus
 
 ### Cakupan
 
-- [ ] Tambah, ubah, dan hapus produk.
-- [ ] Harga dan deskripsi.
-- [ ] Foto produk.
-- [ ] Kategori.
-- [ ] Stok.
-- [ ] Status tersedia/tidak tersedia.
-- [ ] Pagination, pencarian, filter, dan sorting.
+- [x] Tambah, ubah, dan hapus produk melalui aplikasi mobile UMKM.
+- [x] Harga dan deskripsi.
+- [x] Foto produk.
+- [x] Kategori.
+- [x] Stok.
+- [x] Status tersedia/tidak tersedia.
+- [x] Pagination, pencarian, filter, dan sorting pada monitoring website admin.
 
 ### Test Gate
 
-- [ ] Produk tersimpan pada UMKM yang benar.
-- [ ] Akses produk UMKM lain ditolak.
-- [ ] Stok dan harga tervalidasi.
-- [ ] Produk habis tidak dapat dipesan.
-- [ ] UI menangani data kosong dan API gagal.
-- [ ] Query API tidak mengambil data berlebihan.
+- [x] Produk tersimpan pada UMKM yang benar.
+- [x] Akses produk UMKM lain ditolak.
+- [x] Stok dan harga tervalidasi.
+- [x] Produk habis tidak dapat dipesan.
+- [x] UI menangani data kosong dan API gagal.
+- [x] Query monitoring website memakai pagination, pencarian, dan filter.
+
+### Hasil Verifikasi
+
+- Test Flutter: 20 test lulus.
+- Test backend: seluruh test lulus; tersisa warning deprecated PHP 8.5 dan
+  risky warning output buffer.
+- Test manual mobile: login UMKM, tambah produk, pilih kategori, edit stok,
+  ubah status ketersediaan, dan hapus produk berhasil.
+- Admin website hanya dapat melihat, mencari, memfilter, dan membuka detail
+  produk; perubahan produk tetap dilakukan UMKM melalui mobile.
 
 ## Task 4 — Katalog Produk Pembeli
 
-**Status:** Menunggu Task 3
+**Status:** Siap dimulai
 
 ### Cakupan
 
@@ -316,3 +333,6 @@ Satu task dianggap selesai apabila:
 2. Jalankan seluruh test gate Task 0.
 3. Catat hasil audit dan error baseline.
 4. Jangan mulai Task 1 sebelum Task 0 dinyatakan lulus.
+5. Task 0, Task 1, Task 2, dan Task 3 sudah selesai.
+6. Berikutnya mulai **Task 4 — Katalog Produk Pembeli** dan jalankan test gate
+   sebelum melanjutkan ke Task 5.
