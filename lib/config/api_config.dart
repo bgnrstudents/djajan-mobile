@@ -36,7 +36,7 @@ class ApiConfig {
   /// IP laptop Anda (cek `ipconfig` -> IPv4 Address).
   /// Isi hanya saat aplikasi dijalankan di HP asli.
   /// Contoh: '192.168.1.128'
-  static const String ipLaptop = '192.168.1.7';
+  static const String ipLaptop = '192.168.1.90';
 
   /// Pilih target aplikasi:
   /// - false: laptop/browser atau emulator Android

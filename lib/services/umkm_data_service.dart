@@ -279,6 +279,7 @@ class UmkmDataService extends ChangeNotifier {
   /// CREATE — menyimpan produk baru ke tabel `produk`, beserta fotonya.
   Future<String> tambahProduk({
     required String namaProduk,
+    required int idKategori,
     required String kategori,
     required int harga,
     required String deskripsi,
@@ -293,6 +294,7 @@ class UmkmDataService extends ChangeNotifier {
       'produk_create',
       {
         'id_umkm': _profile!.idUmkm,
+        'id_kategori': idKategori,
         'nama_produk': namaProduk,
         'kategori': kategori,
         'harga': harga,
@@ -314,6 +316,7 @@ class UmkmDataService extends ChangeNotifier {
   /// UPDATE — memperbarui baris produk yang sudah ada.
   Future<String> updateProduk({
     required int idProduk,
+    required int idKategori,
     required String namaProduk,
     required String kategori,
     required int harga,
@@ -329,6 +332,7 @@ class UmkmDataService extends ChangeNotifier {
       'produk_update',
       {
         'id_produk': idProduk,
+        'id_kategori': idKategori,
         'nama_produk': namaProduk,
         'kategori': kategori,
         'harga': harga,

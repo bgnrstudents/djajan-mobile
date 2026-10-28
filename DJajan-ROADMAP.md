@@ -165,7 +165,8 @@ untuk pengujian perangkat nyata.
 ### Cakupan
 
 - [ ] CRUD data UMKM.
-- [ ] CRUD kategori produk.
+- [ ] Master kategori produk dibaca mobile dari backend; tidak ada CRUD kategori
+  pada website admin.
 - [ ] Relasi user penjual dengan UMKM.
 - [ ] Status UMKM aktif/nonaktif.
 - [ ] Logo atau foto UMKM bila diperlukan.

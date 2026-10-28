@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../../models/umkm_seller_models.dart';
 import '../../services/api_service.dart';
 import '../../services/umkm_data_service.dart';
+import '../../services/category_service.dart';
+import '../../models/category.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../customer/order/order_widgets.dart';
@@ -55,14 +57,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   // (mis. "999999999" atau "!!!!!").
   static final RegExp _polaAdaHuruf = RegExp(r'[A-Za-zÀ-ÖØ-öø-ÿ]');
 
+  int? _idKategori;
   late String _kategori;
-  final List<String> _kategoriOptions = const [
-    'Makanan & Catering',
-    'Jajan Pasar',
-    'Minuman',
-    'Kue & Roti',
-    'Sembako',
-  ];
 
   late ModePenjualan _mode;
   late String _waktuMasak;
@@ -206,6 +202,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
       if (_isEdit) {
         pesan = await service.updateProduk(
           idProduk: widget.produkToEdit!.idProduk,
+          idKategori: _idKategori!,
           namaProduk: _namaCtrl.text.trim(),
           kategori: _kategori,
           harga: harga,
@@ -219,6 +216,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         );
       } else {
         pesan = await service.tambahProduk(
+          idKategori: _idKategori!,
           namaProduk: _namaCtrl.text.trim(),
           kategori: _kategori,
           harga: harga,
@@ -262,7 +260,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         TextEditingController(text: (p?.minOrderPO ?? 20).toString());
     _stokCtrl = TextEditingController(text: (p?.stok ?? 15).toString());
     _kategori = p?.kategori ?? 'Makanan & Catering';
-    if (!_kategoriOptions.contains(_kategori)) _kategori = _kategoriOptions.first;
+    _idKategori = p?.idKategori;
+    Future.microtask(() => context.read<CategoryService>().load());
     _mode = p?.modePenjualan ?? ModePenjualan.keduanya;
     _waktuMasak = p?.waktuMasakPO ?? 'H-2 Hari';
     if (!_waktuMasakOptions.contains(_waktuMasak)) _waktuMasak = 'H-2 Hari';
@@ -452,13 +451,35 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                   ),
                   const SizedBox(height: 16),
                   _label('Kategori Produk', wajib: true),
-                  DropdownButtonFormField<String>(
-                    initialValue: _kategori,
+                  Consumer<CategoryService>(
+                    builder: (context, categoryService, _) {
+                      final categories = categoryService.categories;
+                      final selected = categories.any((c) => c.id == _idKategori)
+                          ? _idKategori
+                          : null;
+                      return DropdownButtonFormField<int>(
+                    initialValue: selected,
                     isExpanded: true,
-                    items: _kategoriOptions
-                        .map((k) => DropdownMenuItem(value: k, child: Text(k)))
+                    items: categories
+                        .map((Category category) => DropdownMenuItem(
+                              value: category.id,
+                              child: Text(category.name),
+                            ))
                         .toList(),
-                    onChanged: (v) => setState(() => _kategori = v!),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      final category = categories.firstWhere((c) => c.id == v);
+                      setState(() {
+                        _idKategori = v;
+                        _kategori = category.name;
+                      });
+                    },
+                    validator: (v) => v == null
+                        ? categoryService.loading
+                            ? 'Kategori sedang dimuat'
+                            : categoryService.errorMessage ??
+                                'Kategori wajib dipilih'
+                        : null,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -476,6 +497,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                         borderSide: BorderSide(color: OC.primary, width: 1.6),
                       ),
                     ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   _label('Harga Satuan', wajib: true),

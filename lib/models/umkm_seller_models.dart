@@ -164,6 +164,7 @@ extension ModePenjualanX on ModePenjualan {
 class Produk {
   final int idProduk;
   final int idUmkm;
+  int? idKategori;
   String namaProduk;
   String kategori;
   int harga;
@@ -178,6 +179,7 @@ class Produk {
   Produk({
     required this.idProduk,
     required this.idUmkm,
+    this.idKategori,
     required this.namaProduk,
     required this.kategori,
     required this.harga,
@@ -195,6 +197,7 @@ class Produk {
   factory Produk.fromJson(Map<String, dynamic> j) => Produk(
         idProduk: _int(j['id_produk']),
         idUmkm: _int(j['id_umkm']),
+        idKategori: j['id_kategori'] == null ? null : _int(j['id_kategori']),
         namaProduk: _str(j['nama_produk']),
         kategori: _str(j['kategori']),
         harga: _int(j['harga']),

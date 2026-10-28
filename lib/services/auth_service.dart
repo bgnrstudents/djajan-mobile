@@ -83,6 +83,7 @@ class AuthService extends ChangeNotifier {
       }
 
       try {
+        await _googleSignIn.signOut();
         final account = await _googleSignIn.signIn();
         if (account == null) {
           throw ApiException('Login Google dibatalkan.');
