@@ -7,6 +7,8 @@ import '../../../routes/app_routes.dart';
 import '../favorite/favorite_screen.dart';
 import '../../../services/favorite_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/order_service.dart';
+import '../../../services/notification_service.dart';
 import '../order/order_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';
@@ -82,10 +84,7 @@ void showProfileHelp(BuildContext context) {
       ),
       title: const Text(
         'Pusat Bantuan',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: inkColor,
-        ),
+        style: TextStyle(fontWeight: FontWeight.bold, color: inkColor),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -93,11 +92,7 @@ void showProfileHelp(BuildContext context) {
           const Text(
             'Butuh bantuan dengan pesanan atau akun? Hubungi Admin Djajan via WhatsApp.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: mutedColor,
-              height: 1.4,
-            ),
+            style: TextStyle(fontSize: 14, color: mutedColor, height: 1.4),
           ),
           const SizedBox(height: 20),
           Container(
@@ -137,9 +132,7 @@ void showProfileHelp(BuildContext context) {
       actions: [
         TextButton(
           onPressed: () async {
-            await Clipboard.setData(
-              const ClipboardData(text: '081234567890'),
-            );
+            await Clipboard.setData(const ClipboardData(text: '081234567890'));
             if (!context.mounted) return;
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -187,7 +180,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
   );
 
   List<ProfileFormField> get _accountFields => [
-    ProfileFormField(label: 'Nama Lengkap', initialValue: _user.name, prefixIcon: Icons.person_outline),
+    ProfileFormField(
+      label: 'Nama Lengkap',
+      initialValue: _user.name,
+      prefixIcon: Icons.person_outline,
+    ),
     ProfileFormField(
       label: 'Nomor Handphone',
       initialValue: _user.phoneNumber,
@@ -203,7 +200,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
   ];
 
   List<ProfileFormField> get _addressFields => [
-    ProfileFormField(label: 'Label Alamat', initialValue: _addressLabel, prefixIcon: Icons.label_outline),
+    ProfileFormField(
+      label: 'Label Alamat',
+      initialValue: _addressLabel,
+      prefixIcon: Icons.label_outline,
+    ),
     ProfileFormField(
       label: 'Alamat Lengkap',
       initialValue: _address,
@@ -219,8 +220,16 @@ class _ProfilScreenState extends State<ProfilScreen> {
   ];
 
   List<ProfileFormField> get _businessFields => [
-    ProfileFormField(label: 'Nama Usaha', initialValue: _businessName ?? '', prefixIcon: Icons.storefront_outlined),
-    ProfileFormField(label: 'Nama Pemilik', initialValue: _user.name, prefixIcon: Icons.badge_outlined),
+    ProfileFormField(
+      label: 'Nama Usaha',
+      initialValue: _businessName ?? '',
+      prefixIcon: Icons.storefront_outlined,
+    ),
+    ProfileFormField(
+      label: 'Nama Pemilik',
+      initialValue: _user.name,
+      prefixIcon: Icons.badge_outlined,
+    ),
     ProfileFormField(
       label: 'Nomor Handphone',
       initialValue: _user.phoneNumber,
@@ -313,7 +322,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
             const DjajanPageHeader(
               title: 'Profil Saya',
               subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
-              rightAction: Icon(Icons.settings_outlined, color: OC.muted, size: 24),
+              rightAction: Icon(
+                Icons.settings_outlined,
+                color: OC.muted,
+                size: 24,
+              ),
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 16),
@@ -496,6 +509,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
     if (shouldLogout == true && mounted) {
       await context.read<AuthService>().logout();
+      OrderService().clear();
+      NotificationService().clear();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
     }
@@ -749,7 +764,11 @@ class _ProfileMenuTile extends StatelessWidget {
               if (item.trailing != null)
                 item.trailing!
               else
-                const Icon(Icons.chevron_right, size: 20, color: Color(0xFF94A3B8)),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Color(0xFF94A3B8),
+                ),
             ],
           ),
         ),
@@ -985,7 +1004,11 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (var index = 0; index < widget.fields.length; index++) ...[
+                  for (
+                    var index = 0;
+                    index < widget.fields.length;
+                    index++
+                  ) ...[
                     Text(
                       widget.fields[index].label,
                       style: const TextStyle(
@@ -1000,13 +1023,17 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                       keyboardType: widget.fields[index].keyboardType,
                       maxLines: widget.fields[index].maxLines,
                       decoration: InputDecoration(
-                        hintText: 'Masukkan ${widget.fields[index].label.toLowerCase()}',
+                        hintText:
+                            'Masukkan ${widget.fields[index].label.toLowerCase()}',
                         hintStyle: const TextStyle(
                           fontSize: 13.5,
                           color: faintColor,
                         ),
                         helperText: widget.fields[index].helperText,
-                        helperStyle: const TextStyle(fontSize: 11.5, color: mutedColor),
+                        helperStyle: const TextStyle(
+                          fontSize: 11.5,
+                          color: mutedColor,
+                        ),
                         prefixIcon: widget.fields[index].prefixIcon != null
                             ? Icon(
                                 widget.fields[index].prefixIcon,
@@ -1030,11 +1057,16 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryColor, width: 2),
+                          borderSide: const BorderSide(
+                            color: primaryColor,
+                            width: 2,
+                          ),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFEF4444),
+                          ),
                         ),
                       ),
                       validator: (value) {
@@ -1068,10 +1100,7 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                 icon: const Icon(Icons.check_circle_outline, size: 18),
                 label: const Text(
                   'Simpan Perubahan',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: primaryColor,

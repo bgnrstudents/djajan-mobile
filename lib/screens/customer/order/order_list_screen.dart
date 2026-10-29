@@ -92,11 +92,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
                 selectedColor: OC.primary,
                 backgroundColor: Colors.white,
                 side: const BorderSide(color: OC.line),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 labelStyle: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: _filter == f ? Colors.white : OC.ink),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _filter == f ? Colors.white : OC.ink,
+                ),
                 onSelected: (_) => setState(() => _filter = f),
               ),
             ),
@@ -112,12 +115,19 @@ class _OrderListScreenState extends State<OrderListScreen> {
         children: [
           const Icon(Icons.receipt_long_outlined, size: 60, color: OC.faint),
           const SizedBox(height: 12),
-          const Text('Belum ada pesanan',
-              style: TextStyle(
-                  fontSize: 16.5, fontWeight: FontWeight.w700, color: OC.muted)),
+          const Text(
+            'Belum ada pesanan',
+            style: TextStyle(
+              fontSize: 16.5,
+              fontWeight: FontWeight.w700,
+              color: OC.muted,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text('Pesanan yang sesuai filter akan muncul di sini',
-              style: TextStyle(fontSize: 13, color: OC.faint)),
+          const Text(
+            'Pesanan yang sesuai filter akan muncul di sini',
+            style: TextStyle(fontSize: 13, color: OC.faint),
+          ),
         ],
       ),
     );
@@ -155,47 +165,58 @@ class _OrderListScreenState extends State<OrderListScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(o.refId,
-                        style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
-                            color: OC.ink)),
+                    child: Text(
+                      o.refId,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: OC.ink,
+                      ),
+                    ),
                   ),
-                  Pill(
-                      text: o.status.label,
-                      bg: c.bg,
-                      fg: c.fg,
-                      fontSize: 11),
+                  Pill(text: o.status.label, bg: c.bg, fg: c.fg, fontSize: 11),
                 ],
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  NetImage(url: firstItem.imageUrl, width: 56, height: 56, radius: 10),
+                  NetImage(
+                    url: firstItem.imageUrl,
+                    width: 56,
+                    height: 56,
+                    radius: 10,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(o.vendorNames,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: OC.muted)),
-                        Text(firstItem.productName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: OC.ink)),
                         Text(
-                            more > 0
-                                ? '${firstItem.quantity}x ${firstItem.unit.toLowerCase()} • +$more menu lainnya'
-                                : '${firstItem.quantity}x ${firstItem.unit.toLowerCase()}',
-                            style: const TextStyle(fontSize: 12, color: OC.muted)),
+                          o.vendorNames,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: OC.muted,
+                          ),
+                        ),
+                        Text(
+                          firstItem.productName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: OC.ink,
+                          ),
+                        ),
+                        Text(
+                          more > 0
+                              ? '${firstItem.quantity}x ${firstItem.unit.toLowerCase()} • +$more menu lainnya'
+                              : '${firstItem.quantity}x ${firstItem.unit.toLowerCase()}',
+                          style: const TextStyle(fontSize: 12, color: OC.muted),
+                        ),
                       ],
                     ),
                   ),
@@ -211,11 +232,18 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Total Pembayaran',
-                            style: TextStyle(fontSize: 12, color: OC.muted)),
+                        const Text(
+                          'Total Pembayaran',
+                          style: TextStyle(fontSize: 12, color: OC.muted),
+                        ),
                         Text(rupiah(o.total), style: OT.moneyLarge),
-                        Text(fmtDateComma(o.createdAt),
-                            style: const TextStyle(fontSize: 11.5, color: OC.faint)),
+                        Text(
+                          fmtDateComma(o.createdAt),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: OC.faint,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -226,7 +254,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
                         minimumSize: const Size(0, 40),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(11)),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
                       ),
                       onPressed: () async {
                         await Navigator.push(
@@ -240,18 +269,23 @@ class _OrderListScreenState extends State<OrderListScreen> {
                         );
                         if (o.paymentMethod == PaymentMethod.midtrans) {
                           try {
-                            await _service.refreshPaymentStatus(o.id);
+                            await _service.refreshPaymentStatusUntilSettled(
+                              o.id,
+                            );
                           } on ApiException {
                             // The list remains usable if the status endpoint is temporarily unavailable.
                           }
                         }
                       },
                       child: Text(
-                          o.paymentMethod == PaymentMethod.cod
-                              ? 'Konfirmasi'
-                              : 'Bayar',
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700)),
+                        o.paymentMethod == PaymentMethod.cod
+                            ? 'Konfirmasi'
+                            : 'Bayar',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     )
                   else
                     OutlinedButton(
@@ -261,12 +295,17 @@ class _OrderListScreenState extends State<OrderListScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         side: const BorderSide(color: OC.primary),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(11)),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
                       ),
                       onPressed: () => _openDetail(o),
-                      child: const Text('Lihat Detail',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700)),
+                      child: const Text(
+                        'Lihat Detail',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                 ],
               ),

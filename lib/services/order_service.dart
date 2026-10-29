@@ -5,9 +5,7 @@ import '../models/order.dart';
 import 'api_service.dart';
 
 class OrderService extends ChangeNotifier {
-  OrderService._internal() {
-    _seed();
-  }
+  OrderService._internal();
 
   static final OrderService _instance = OrderService._internal();
   factory OrderService() => _instance;
@@ -29,25 +27,126 @@ class OrderService extends ChangeNotifier {
     return null;
   }
 
+  Future<void> loadFromApi() async {
+    final data = await ApiService.get('pesanan/saya');
+    if (data is! List) {
+      throw ApiException('Format riwayat pesanan dari server tidak valid.');
+    }
+    _orders
+      ..clear()
+      ..addAll(
+        data.whereType<Map>().map(
+          (item) => Order.fromJson(Map<String, dynamic>.from(item)),
+        ),
+      );
+    NotificationService().syncOrders(_orders);
+    notifyListeners();
+  }
+
+  void clear() {
+    _orders.clear();
+    notifyListeners();
+  }
+
   Future<String?> refreshPaymentStatus(String orderId) async {
     final order = _require(orderId);
     final data = await ApiService.get('pesanan/saya/$orderId');
-    final paymentStatus = (data['payment_status'] ?? data['status_pembayaran'])
-        .toString()
-        .toLowerCase();
-    final status = paymentStatus == 'paid' || paymentStatus == 'settlement'
-        ? OrderStatus.reviewing
-        : paymentStatus == 'failed' ||
-              paymentStatus == 'deny' ||
-              paymentStatus == 'cancel' ||
-              paymentStatus == 'expire'
-        ? OrderStatus.cancelled
-        : order.status;
+    final paymentStatus = _effectivePaymentStatus(
+      data['payment_status'],
+      data['status_pembayaran'],
+    );
+    final orderStatus = data['status_pesanan']?.toString().toLowerCase();
+    final status = _statusFromPayment(
+      paymentStatus: paymentStatus,
+      orderStatus: orderStatus,
+      current: order.status,
+    );
     if (status != order.status) {
       _replace(order.copyWith(status: status));
     }
     notifyListeners();
     return paymentStatus;
+  }
+
+  Future<String?> refreshPaymentStatusUntilSettled(
+    String orderId, {
+    int attempts = 4,
+  }) async {
+    String? paymentStatus;
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(Duration(seconds: attempt == 1 ? 2 : 3));
+      }
+      paymentStatus = await refreshPaymentStatus(orderId);
+      if (paymentStatus == 'paid' ||
+          paymentStatus == 'settlement' ||
+          paymentStatus == 'capture' ||
+          paymentStatus == 'failed') {
+        return paymentStatus;
+      }
+    }
+    return paymentStatus;
+  }
+
+  static String _effectivePaymentStatus(Object? payment, Object? legacy) {
+    final values = [payment, legacy]
+        .map((value) => value?.toString().trim().toLowerCase() ?? '')
+        .where((value) => value.isNotEmpty)
+        .toList();
+    if (values.any(
+      (value) => value == 'paid' || value == 'settlement' || value == 'capture',
+    )) {
+      return 'paid';
+    }
+    if (values.any(
+      (value) =>
+          value == 'failed' ||
+          value == 'deny' ||
+          value == 'cancel' ||
+          value == 'expire',
+    )) {
+      return 'failed';
+    }
+    return values.firstOrNull ?? 'pending';
+  }
+
+  static OrderStatus _statusFromPayment({
+    required String paymentStatus,
+    required String? orderStatus,
+    required OrderStatus current,
+  }) {
+    if (paymentStatus == 'paid' ||
+        paymentStatus == 'settlement' ||
+        paymentStatus == 'capture') {
+      return OrderStatus.reviewing;
+    }
+    if (paymentStatus == 'failed' ||
+        paymentStatus == 'deny' ||
+        paymentStatus == 'cancel' ||
+        paymentStatus == 'expire') {
+      return OrderStatus.cancelled;
+    }
+
+    switch (orderStatus) {
+      case 'diterima':
+      case 'confirmed':
+        return OrderStatus.reviewing;
+      case 'diproses':
+      case 'processing':
+        return OrderStatus.processing;
+      case 'diantar':
+      case 'delivering':
+      case 'ready':
+        return OrderStatus.delivering;
+      case 'selesai':
+      case 'completed':
+        return OrderStatus.completed;
+      case 'ditolak':
+      case 'cancelled':
+        return OrderStatus.cancelled;
+      default:
+        return current;
+    }
   }
 
   PaymentAccount accountFor(String umkmId) {
@@ -410,90 +509,4 @@ class OrderService extends ChangeNotifier {
   static const Map<String, PaymentAccount> _accounts = {
     'umkm-bu-minten': _defaultAccount,
   };
-
-  void _seed() {
-    _orders.add(
-      Order(
-        id: 'ORD-20260915-001',
-        refId: '#DJN-20260915-001',
-        createdAt: DateTime(2026, 9, 15, 9, 15),
-        vendors: [
-          OrderVendor(
-            umkmId: 'umkm-bu-minten',
-            umkmName: 'Dapur Bu Minten',
-            umkmType: 'Spesialis Katering',
-            type: OrderType.preOrder,
-            items: const [
-              OrderItem(
-                productId: 'p-nasi-geprek',
-                productName: 'Nasi Kotak Ayam Geprek',
-                variant: 'Nasi kuning wangi, tempe bacem, lalapan segar',
-                unit: 'box',
-                imageUrl: SampleData.imgNasiGeprek,
-                quantity: 10,
-                price: 15000,
-              ),
-            ],
-            delivery: DeliveryMethod.courier,
-            deliveryFee: 5000,
-            pickupLocation: 'Dapur Bu Minten RT 01',
-            requiredAt: DateTime(2026, 9, 20, 11, 0),
-            purpose: 'Rapat Desa Kreyongan Atas',
-            note: 'Sambal dipisah pakai cup kecil, kemangi dipacking rapi kering.',
-          ),
-        ],
-        recipient: const Recipient(
-          name: 'Muhammad Rizki',
-          phone: '0812-3456-7890',
-          address: 'RT 03 / RW 02, Balai Pertemuan RW, Desa Kreyongan Atas',
-          addressNote: 'Rumah pagar hijau samping pos ronda kamling',
-        ),
-        paymentMethod: PaymentMethod.qris,
-        serviceFee: 1000,
-        discount: 5000,
-        status: OrderStatus.reviewing,
-        account: _defaultAccount,
-      ),
-    );
-  }
-}
-
-class SampleData {
-  static const String imgNasiGeprek =
-      'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=400&q=80';
-  static const String imgEsTeh =
-      'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&q=80';
-
-  static const List<CartLine> cart = [
-    CartLine(
-      productId: 'p-nasi-geprek',
-      productName: 'Nasi Kotak Ayam Geprek',
-      variant: 'Porsi Spesial Kenduri',
-      unit: 'Kotak',
-      imageUrl: imgNasiGeprek,
-      quantity: 10,
-      price: 15000,
-      type: OrderType.preOrder,
-      umkmId: 'umkm-bu-minten',
-      umkmName: 'Dapur Bu Minten',
-      umkmType: 'Spesialis Katering & Kotakan',
-      courierFee: 5000,
-      pickupLocation: 'Ke dapur Bu Minten RT 01',
-    ),
-    CartLine(
-      productId: 'p-es-teh',
-      productName: 'Es Teh Solo Original',
-      variant: 'Gula Asli, Cup Jumbo',
-      unit: 'Gelas',
-      imageUrl: imgEsTeh,
-      quantity: 5,
-      price: 5000,
-      type: OrderType.instant,
-      umkmId: 'umkm-pak-budi',
-      umkmName: 'Toko Pak Budi',
-      umkmType: 'Warung Kelontong & Es Tradisional',
-      courierFee: null,
-      pickupLocation: 'Toko Pak Budi',
-    ),
-  ];
 }

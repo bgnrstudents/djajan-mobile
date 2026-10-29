@@ -8,6 +8,7 @@ import 'register_screen.dart';
 import '../../services/umkm_data_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/api_service.dart';
+import '../../services/order_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = true;
   bool _loading = false;
 
-  @override 
+  @override
   void dispose() {
     _phoneOrEmailController.dispose();
     _passwordController.dispose();
@@ -40,22 +41,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final session = await context.read<AuthService>().login(
-            _phoneOrEmailController.text,
-            _passwordController.text,
-          );
+        _phoneOrEmailController.text,
+        _passwordController.text,
+      );
       if (!mounted) return;
       if (session.role == AuthRole.umkm) {
         final umkm = context.read<UmkmDataService>();
         umkm.loadProfileFromLogin(session.data);
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
       } else {
+        await context.read<OrderService>().loadFromApi();
         Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.pesan)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.pesan)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -85,13 +86,13 @@ class _LoginScreenState extends State<LoginScreen> {
         context.read<UmkmDataService>().loadProfileFromLogin(session.data);
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
       } else {
+        await context.read<OrderService>().loadFromApi();
         Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.pesan)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.pesan)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -107,8 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             const AuthHero(
               title: 'Selamat Datang',
-              subtitle:
-                  'Masuk untuk belanja kebutuhan harian dari UMKM warga Kreyongan Atas',
+              subtitle: 'Masuk untuk belanja kebutuhan harian dari UMKM warga Kreyongan Atas',
             ),
             Transform.translate(
               offset: const Offset(0, -34),
@@ -192,8 +192,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     onChanged: _loading
                                         ? null
                                         : (value) => setState(
-                                              () => _rememberMe = value ?? false,
-                                            ),
+                                            () => _rememberMe = value ?? false,
+                                          ),
                                     activeColor: AuthStyle.primary,
                                     side: const BorderSide(
                                       color: AuthStyle.border,
@@ -219,7 +219,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: _loading ? null : _openForgotPassword,
+                                  onPressed: _loading
+                                      ? null
+                                      : _openForgotPassword,
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 4,

@@ -282,6 +282,8 @@ menjadi bug terbuka untuk diperbaiki pada sesi berikutnya.
 - [ ] Pastikan redirect pembayaran tidak menampilkan halaman peringatan ngrok
   dan callback/status query selalu selesai sebelum pengguna kembali ke detail
   pesanan.
+- [ ] Pastikan daftar pesanan UMKM dan notifikasi hanya menampilkan data nyata
+  dari API atau aktivitas pengguna, tanpa data seed/demo.
 
 ### Catatan Bug Terbuka
 
@@ -291,6 +293,7 @@ menjadi bug terbuka untuk diperbaiki pada sesi berikutnya.
 - Perbaikan lanjutan dijadwalkan sebagai langkah pertama pada sesi berikutnya:
   telusuri status response backend, rehidrasi order dari API, dan pastikan
   navigasi kembali dari WebView memicu refresh detail serta daftar pesanan.
+- Data demo pada pesanan UMKM, pesanan pelanggan, dan notifikasi dihapus.
 
 ## Task 6 — Status Pesanan dan Riwayat Transaksi
 

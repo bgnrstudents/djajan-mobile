@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../models/order.dart';
+
 /// Jenis notifikasi yang tampil di aplikasi.
 enum AppNotificationType { order, payment, promo, info }
 
@@ -39,9 +41,7 @@ class AppNotification {
 ///
 /// In-memory untuk prototipe; nanti diganti push notification / API.
 class NotificationService extends ChangeNotifier {
-  NotificationService._internal() {
-    _seed();
-  }
+  NotificationService._internal();
 
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -85,6 +85,28 @@ class NotificationService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void syncOrders(List<Order> orders) {
+    final orderIds = orders.map((order) => order.id).toSet();
+    _items.removeWhere(
+      (item) => item.orderId != null && !orderIds.contains(item.orderId),
+    );
+    for (final order in orders) {
+      if (_items.any((item) => item.orderId == order.id)) continue;
+      push(
+        title: order.status == OrderStatus.waitingPayment
+            ? 'Menunggu Pembayaran'
+            : 'Pesanan Diperbarui',
+        message: order.status == OrderStatus.waitingPayment
+            ? 'Pesanan ${order.refId} menunggu pembayaran.'
+            : 'Status pesanan ${order.refId} adalah ${order.status.label}.',
+        type: order.status == OrderStatus.waitingPayment
+            ? AppNotificationType.payment
+            : AppNotificationType.order,
+        orderId: order.id,
+      );
+    }
+  }
+
   /// Menambah notifikasi baru (dipakai saat status pesanan berubah).
   AppNotification push({
     required String title,
@@ -104,48 +126,6 @@ class NotificationService extends ChangeNotifier {
     _items.add(item);
     notifyListeners();
     return item;
-  }
-
-  void _seed() {
-    final now = DateTime.now();
-    _items.addAll([
-      AppNotification(
-        id: 'NTF-seed-1',
-        title: 'Pesanan Sedang Ditinjau',
-        message:
-            'Dapur Bu Minten sedang memeriksa ketersediaan 10 Kotak Nasi Kotak Ayam Geprek untuk pesanan Anda.',
-        createdAt: now.subtract(const Duration(minutes: 12)),
-        type: AppNotificationType.order,
-        orderId: 'ORD-20260915-001',
-      ),
-      AppNotification(
-        id: 'NTF-seed-2',
-        title: 'Menunggu Pembayaran',
-        message:
-            'Selesaikan pembayaran pesanan Anda agar dapat segera diproses oleh UMKM.',
-        createdAt: now.subtract(const Duration(minutes: 30)),
-        type: AppNotificationType.payment,
-        orderId: 'ORD-20260915-001',
-      ),
-      AppNotification(
-        id: 'NTF-seed-3',
-        title: 'Gratis Ongkir Kurir Warga',
-        message:
-            'Promo gotong royong khusus pesanan hari ini di Desa Kreyongan Atas.',
-        createdAt: now.subtract(const Duration(days: 1, hours: 2)),
-        type: AppNotificationType.promo,
-        isRead: true,
-      ),
-      AppNotification(
-        id: 'NTF-seed-4',
-        title: 'Selamat Datang di Djajan',
-        message:
-            'Nikmati aneka jajanan & kuliner rumahan tetangga desa. Dukung UMKM Kreyongan Atas!',
-        createdAt: now.subtract(const Duration(days: 2, hours: 5)),
-        type: AppNotificationType.info,
-        isRead: true,
-      ),
-    ]);
   }
 }
 

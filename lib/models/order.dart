@@ -243,6 +243,87 @@ class Order {
     this.proofUploadedAt,
   });
 
+  factory Order.fromJson(Map<String, dynamic> json) {
+    final items = (json['items'] as List? ?? const []).whereType<Map>().map((
+      item,
+    ) {
+      final data = Map<String, dynamic>.from(item);
+      return OrderItem(
+        productId: (data['id_produk'] ?? '').toString(),
+        productName: (data['nama_produk'] ?? 'Produk').toString(),
+        variant: '',
+        unit: (data['satuan'] ?? 'pcs').toString(),
+        imageUrl: (data['gambar_url'] ?? '').toString(),
+        quantity: _asInt(data['jumlah'], fallback: 1),
+        price: _asDouble(data['harga_satuan']),
+      );
+    }).toList();
+    final vendor = OrderVendor(
+      umkmId: (json['id_umkm'] ?? '').toString(),
+      umkmName: (json['nama_umkm'] ?? 'UMKM').toString(),
+      umkmType: (json['spesialis_umkm'] ?? '').toString(),
+      type: OrderType.instant,
+      items: items,
+      delivery: (json['metode_pengiriman'] ?? '').toString() == 'kurir'
+          ? DeliveryMethod.courier
+          : DeliveryMethod.pickup,
+      deliveryFee: _asDouble(json['biaya_pengantaran']),
+      pickupLocation: (json['alamat_umkm'] ?? '').toString(),
+      requiredAt: _asDate(json['waktu_dibutuhkan']),
+      purpose: _asString(json['keperluan_acara']),
+      note: _asString(json['catatan']),
+    );
+    final paymentValues = [
+      json['payment_status'],
+      json['status_pembayaran'],
+    ].map((value) => value?.toString().toLowerCase() ?? '');
+    final paymentStatus =
+        paymentValues.any(
+          (value) =>
+              value == 'paid' || value == 'settlement' || value == 'capture',
+        )
+        ? 'paid'
+        : paymentValues.any(
+            (value) =>
+                value == 'failed' ||
+                value == 'deny' ||
+                value == 'cancel' ||
+                value == 'expire',
+          )
+        ? 'failed'
+        : 'pending';
+
+    return Order(
+      id: (json['id_pesanan'] ?? '').toString(),
+      refId: (json['id_pesanan'] ?? '').toString(),
+      createdAt: _asDate(json['tanggal_pesan']) ?? DateTime.now(),
+      vendors: [vendor],
+      recipient: Recipient(
+        name: (json['nama_pembeli'] ?? '').toString(),
+        phone: (json['no_telp'] ?? '').toString(),
+        address: (json['alamat_tujuan'] ?? '').toString(),
+      ),
+      paymentMethod: (json['metode_pembayaran'] ?? '').toString() == 'cod'
+          ? PaymentMethod.cod
+          : PaymentMethod.midtrans,
+      serviceFee: _asDouble(json['biaya_layanan']),
+      discount: 0,
+      status: _statusFromJson(
+        paymentStatus,
+        (json['status_pesanan'] ?? '').toString(),
+      ),
+      account: const PaymentAccount(
+        bank: 'BRI',
+        bankFullName: 'PT Bank Rakyat Indonesia',
+        number: '',
+        holder: '',
+      ),
+      paymentDeadline: _asDate(json['batas_konfirmasi']),
+      snapToken: _asString(json['snap_token']),
+      paymentUrl: _asString(json['payment_url']),
+    );
+  }
+
   double get subtotal => vendors.fold(0.0, (s, v) => s + v.subtotal);
   double get shippingTotal => vendors.fold(0.0, (s, v) => s + v.deliveryFee);
   double get total => subtotal + shippingTotal + serviceFee - discount;
@@ -282,9 +363,59 @@ class Order {
       paymentUrl: paymentUrl ?? this.paymentUrl,
       proofBytes: clearProof ? null : (proofBytes ?? this.proofBytes),
       proofName: clearProof ? null : (proofName ?? this.proofName),
-      proofUploadedAt:
-          clearProof ? null : (proofUploadedAt ?? this.proofUploadedAt),
+      proofUploadedAt: clearProof
+          ? null
+          : (proofUploadedAt ?? this.proofUploadedAt),
     );
+  }
+
+  static int _asInt(Object? value, {int fallback = 0}) =>
+      int.tryParse(value?.toString() ?? '') ?? fallback;
+
+  static double _asDouble(Object? value) =>
+      double.tryParse(value?.toString() ?? '') ?? 0;
+
+  static String? _asString(Object? value) {
+    final valueString = value?.toString().trim();
+    return valueString == null || valueString.isEmpty ? null : valueString;
+  }
+
+  static DateTime? _asDate(Object? value) {
+    final text = value?.toString();
+    return text == null ? null : DateTime.tryParse(text);
+  }
+
+  static OrderStatus _statusFromJson(String paymentStatus, String orderStatus) {
+    if (paymentStatus == 'paid' ||
+        paymentStatus == 'settlement' ||
+        paymentStatus == 'capture') {
+      return OrderStatus.reviewing;
+    }
+    if (paymentStatus == 'failed' ||
+        paymentStatus == 'deny' ||
+        paymentStatus == 'cancel' ||
+        paymentStatus == 'expire' ||
+        orderStatus == 'ditolak' ||
+        orderStatus == 'cancelled') {
+      return OrderStatus.cancelled;
+    }
+    switch (orderStatus.toLowerCase()) {
+      case 'diterima':
+      case 'confirmed':
+        return OrderStatus.reviewing;
+      case 'diproses':
+      case 'processing':
+        return OrderStatus.processing;
+      case 'diantar':
+      case 'delivering':
+      case 'ready':
+        return OrderStatus.delivering;
+      case 'selesai':
+      case 'completed':
+        return OrderStatus.completed;
+      default:
+        return OrderStatus.waitingPayment;
+    }
   }
 }
 
@@ -314,10 +445,22 @@ class OrderValidator {
   static const String _l = r'A-Za-z\u00C0-\u024F';
 
   static final RegExp _nameChars = RegExp("^[$_l .'\\-]+\$");
-  static final RegExp _addressChars = RegExp("^[$_l" r"0-9 .,/\-]+$");
-  static final RegExp _noteChars = RegExp("^[$_l" r"0-9 .,/\-']+$");
-  static final RegExp _purposeChars = RegExp("^[$_l" r"0-9 .,/\-'&()]+$");
-  static final RegExp _packChars = RegExp("^[$_l" r"""0-9 .,!?/\-'&()":;]+$""");
+  static final RegExp _addressChars = RegExp(
+    "^[$_l"
+    r"0-9 .,/\-]+$",
+  );
+  static final RegExp _noteChars = RegExp(
+    "^[$_l"
+    r"0-9 .,/\-']+$",
+  );
+  static final RegExp _purposeChars = RegExp(
+    "^[$_l"
+    r"0-9 .,/\-'&()]+$",
+  );
+  static final RegExp _packChars = RegExp(
+    "^[$_l"
+    r"""0-9 .,!?/\-'&()":;]+$""",
+  );
 
   static final RegExp _letter = RegExp('[$_l]');
   static final RegExp _repeat = RegExp(r'(.)\1{4,}');
@@ -356,7 +499,8 @@ class OrderValidator {
   static String? phone(String? v) {
     final raw = (v ?? '').trim();
     if (raw.isEmpty) return 'Nomor WhatsApp wajib diisi';
-    if (RegExp(r'[A-Za-z#\$%\^&\*_\+=\[\]\{\}\|<>\\~`@!().,/:;]').hasMatch(raw)) {
+    if (RegExp(r'[A-Za-z#\$%\^&\*_\+=\[\]\{\}\|<>\\~`@!().,/:;]')
+        .hasMatch(raw)) {
       return 'Nomor hanya boleh angka dan tanda plus (+62)';
     }
     if (!RegExp(r'^\+?[0-9][0-9\- ]*$').hasMatch(raw)) {
@@ -397,7 +541,10 @@ class OrderValidator {
   }
 
   static String? recipientError(Recipient r) =>
-      name(r.name) ?? phone(r.phone) ?? address(r.address) ?? landmark(r.addressNote);
+      name(r.name) ??
+      phone(r.phone) ??
+      address(r.address) ??
+      landmark(r.addressNote);
 
   static Recipient normalizeRecipient(Recipient r) {
     final note = clean(r.addressNote);

@@ -44,7 +44,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     try {
-      await _service.refreshPaymentStatus(widget.orderId);
+      await _service.refreshPaymentStatusUntilSettled(widget.orderId);
       if (mounted) setState(() {});
     } on ApiException {
       // The existing order view remains available if status sync is temporarily unavailable.
