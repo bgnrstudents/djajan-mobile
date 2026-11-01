@@ -409,6 +409,7 @@ dengan endpoint role UMKM.
 | GET | `/api/pelanggan/profil` | — | objek pelanggan |
 | POST | `/api/pelanggan/profil_update` | `nama`, `no_telp`, `email` | objek pelanggan |
 | POST | `/api/pelanggan/umkm_daftar` | `nama_usaha`, `spesialis`, `alamat`, `no_telp_usaha`, `email_usaha?` | pengajuan UMKM |
+| POST | `/api/pelanggan/umkm_hapus` | `konfirmasi=HAPUS`, `password`, `alasan` | status penghapusan |
 | POST | `/api/pelanggan/mode_umkm` | — | sesi UMKM terverifikasi + token |
 | POST | `/api/pelanggan/mode_pelanggan` | — | sesi pelanggan + token |
 
@@ -424,6 +425,11 @@ disimpan pada `umkm.id_pelanggan` dengan status `menunggu`; akun tetap berada
 di mode pelanggan sampai admin mengubah status menjadi `terverifikasi`.
 Setelah itu pelanggan memilih **Buka Mode UMKM** dari profil. Dari dashboard
 UMKM tersedia tombol **Mode Pelanggan** untuk kembali tanpa logout.
+
+Penghapusan UMKM membutuhkan password pelanggan, alasan minimal 10 karakter,
+dan konfirmasi tepat `HAPUS`. Produk UMKM dihapus, tetapi riwayat pesanan tetap
+dipertahankan. Status menjadi `dihapus` dan akun tersebut tidak dapat
+mengajukan pendaftaran UMKM lagi.
 
 ### 5.2 Buku Alamat (untuk menu "Alamat Pengiriman")
 | Method | Endpoint | Req |

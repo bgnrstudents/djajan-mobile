@@ -309,14 +309,20 @@ class _ProfilScreenState extends State<ProfilScreen> {
     if (_businessName != null && _businessStatus != 'terverifikasi')
       ProfileMenuItem(
         icon: Icons.hourglass_top_outlined,
-        title: 'Status Pengajuan UMKM',
-        subtitle: _businessStatus == 'ditolak'
+        title: _businessStatus == 'dihapus'
+            ? 'Akun UMKM Dihapus'
+            : 'Status Pengajuan UMKM',
+        subtitle: _businessStatus == 'dihapus'
+            ? 'Pendaftaran UMKM kembali tidak tersedia'
+            : _businessStatus == 'ditolak'
             ? 'Pengajuan ditolak, periksa kembali data usaha'
             : 'Menunggu verifikasi admin desa',
         iconColor: const Color(0xFFE67E22),
-        onTap: () => _openBusinessRegistration(editing: true),
+        onTap: _businessStatus == 'dihapus'
+            ? null
+            : () => _openBusinessRegistration(editing: true),
       ),
-    if (_businessName != null)
+    if (_businessName != null && _businessStatus != 'dihapus')
       ProfileMenuItem(
         icon: Icons.storefront_outlined,
         title: 'Hapus Status Mitra',
@@ -392,7 +398,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
             const SizedBox(height: 14),
             _PromoBanner(
               businessName: _businessName,
-              onTap: _businessStatus == 'terverifikasi'
+              onTap: _businessStatus == 'dihapus'
+                  ? null
+                  : _businessStatus == 'terverifikasi'
                   ? _switchToUmkm
                   : _openBusinessRegistration,
             ),
@@ -409,6 +417,17 @@ class _ProfilScreenState extends State<ProfilScreen> {
   void _editProfile() {
     if (_businessName == null) {
       _openAccountForm();
+      return;
+    }
+
+    if (_businessStatus == 'dihapus') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Akun UMKM ini sudah dihapus dan tidak dapat didaftarkan kembali.',
+          ),
+        ),
+      );
       return;
     }
 
@@ -629,31 +648,92 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Future<void> _confirmRemoveBusiness() async {
-    final shouldRemove = await showDialog<bool>(
+    final passwordController = TextEditingController();
+    final reasonController = TextEditingController();
+    final confirmationController = TextEditingController();
+    final result = await showDialog<Map<String, String>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus status mitra?'),
-        content: const Text(
-          'Usaha akan dihapus dari profil, tetapi akun tetap dapat digunakan sebagai pelanggan.',
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus akun UMKM permanen?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Semua produk akan dihapus. Riwayat pesanan tetap disimpan. '
+                'Akun ini tidak dapat mendaftar UMKM lagi.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                minLines: 2,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Alasan penghapusan',
+                  hintText: 'Minimal 10 karakter',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password pelanggan',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmationController,
+                decoration: const InputDecoration(
+                  labelText: 'Ketik HAPUS untuk konfirmasi',
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Batal'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus Usaha'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(dialogContext, {
+                'password': passwordController.text,
+                'alasan': reasonController.text,
+                'konfirmasi': confirmationController.text,
+              });
+            },
+            child: const Text('Hapus Permanen'),
           ),
         ],
       ),
     );
+    passwordController.dispose();
+    reasonController.dispose();
+    confirmationController.dispose();
 
-    if (shouldRemove == true && mounted) {
+    if (result == null || !mounted) return;
+    try {
+      await ApiService.post('pelanggan/umkm_hapus', result);
+      if (!mounted) return;
       setState(() {
-        _businessName = null;
-        _businessAddress = null;
+        _businessStatus = 'dihapus';
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Akun UMKM dihapus permanen. Anda tidak dapat mendaftar UMKM lagi.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.pesan)));
+      }
     }
   }
 
@@ -813,7 +893,7 @@ class _PromoBanner extends StatelessWidget {
   const _PromoBanner({required this.businessName, required this.onTap});
 
   final String? businessName;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
