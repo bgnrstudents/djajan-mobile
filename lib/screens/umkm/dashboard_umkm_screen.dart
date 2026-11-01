@@ -118,12 +118,12 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
 
   Future<void> _switchToCustomer() async {
     try {
+      context.read<UmkmDataService>().clearState();
       final session = await context.read<AuthService>().switchToCustomer();
       if (!mounted) return;
       if (session.role != AuthRole.pelanggan) {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
-      context.read<UmkmDataService>().logout();
       Navigator.of(context)
           .pushNamedAndRemoveUntil('/customer/home', (_) => false);
     } on ApiException catch (error) {

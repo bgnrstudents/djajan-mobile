@@ -77,6 +77,10 @@ class UmkmDataService extends ChangeNotifier {
 
   void logout() {
     ApiService.setToken(null);
+    clearState();
+  }
+
+  void clearState() {
     _profile = null;
     _produkList.clear();
     _pesananList.clear();

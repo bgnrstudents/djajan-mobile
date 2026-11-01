@@ -348,64 +348,254 @@ terintegrasi pada dashboard admin serta dashboard UMKM
 - [x] Data dibatasi sesuai role.
 - [x] Query agregat membatasi hasil produk terlaris dan laporan harian.
 
-## Rencana Berikutnya — Setting, Operasional, dan Pembayaran
+## Task 8 — Hardening Transaksi dan Pembayaran
 
-Rencana ini menjadi urutan kerja setelah Task 7. Implementasi dimulai setelah
-desain dan batasan bisnis pada bagian pembayaran disepakati.
+**Status:** Belum dimulai — prioritas tertinggi
 
-### Fase 1 — Setting Pelanggan
+Audit terakhir menemukan checkout dan Midtrans sudah berjalan pada happy path,
+tetapi aturan transaksi belum cukup konsisten untuk produksi. Task ini harus
+selesai sebelum menambah fitur rating, promo, atau notifikasi push.
 
-- [x] Ganti data dummy pada halaman Setting pelanggan dengan data API nyata.
-- [x] Hubungkan edit nama, email, dan nomor telepon ke database.
-- [x] Tambahkan penyimpanan dan pengelolaan alamat pengiriman.
-- [x] Hubungkan favorit produk dan UMKM ke penyimpanan database.
-- [x] Tangani loading, empty state, dan error pada data alamat/favorit.
+### Decision Gate
 
-### Fase 2 — Pengaturan UMKM
+- [ ] Tetapkan status pesanan final dan mapping mobile/backend.
+- [ ] Putuskan apakah pembayaran berhasil langsung menerima pesanan atau tetap
+  menunggu persetujuan UMKM.
+- [ ] Putuskan kapan stok dikurangi: checkout, pembayaran berhasil, atau saat
+  UMKM menerima pesanan.
+- [ ] Tetapkan aturan refund jika pesanan yang sudah dibayar ditolak UMKM.
+- [ ] Tetapkan batas waktu konfirmasi UMKM dan expiry pembayaran.
 
-- [x] Hubungkan profil usaha dan foto ke database.
-- [x] Hubungkan nama usaha, spesialisasi, alamat, dan kontak.
-- [x] Hubungkan toggle toko aktif/nonaktif.
-- [x] Tambahkan pengaturan akun dan password.
-- [x] Hubungkan pengaturan COD.
-- [x] Hubungkan pilihan pickup atau pengantaran.
-- [x] Hubungkan pengaturan ongkir dan kurir.
-- [x] Pastikan semua perubahan tersimpan dan terbaca ulang dari backend.
+### Cakupan Implementasi
 
-### Fase 3 — Konsep Pembayaran dan Pengiriman
+- [ ] Selaraskan enum status di migration, model, controller, mobile, dan
+  dokumentasi.
+- [ ] Jadikan callback Midtrans idempotent dan cegah status terminal mundur.
+- [ ] Validasi nominal callback sama dengan total pesanan di database.
+- [ ] Tolak callback jika server key belum dikonfigurasi.
+- [ ] Pisahkan pembuatan order database dari request ke Midtrans atau siapkan
+  mekanisme recovery jika salah satu sisi gagal.
+- [ ] Tambahkan pencatatan `dibayar_pada` dan status transaksi yang konsisten.
+- [ ] Lindungi pengecekan dan pengurangan stok dengan transaksi serta row lock.
+- [ ] Hilangkan kebocoran pesan exception internal ke response API.
 
-Kombinasi yang didukung:
+### Test Gate
 
-```text
-COD + Pickup
-COD + Diantar
-Midtrans + Pickup
-Midtrans + Diantar
-```
+- [ ] Test COD tidak membuat transaksi Midtrans.
+- [ ] Test Midtrans pending, settlement, deny, cancel, dan expire.
+- [ ] Test callback duplikat menghasilkan state yang sama.
+- [ ] Test callback dengan nominal berbeda ditolak.
+- [ ] Test pesanan tidak bisa kembali dari status terminal.
+- [ ] Test stok tidak oversell pada checkout bersamaan.
+- [ ] Test kegagalan Midtrans tidak meninggalkan order tanpa recovery.
 
-- COD tidak melewati Midtrans.
-- Midtrans menggunakan satu akun platform Djajan.
-- Dana Midtrans masuk ke akun merchant Djajan yang dipakai backend.
-- Sistem mencatat transaksi dan pendapatan masing-masing UMKM.
-- Pencairan dana ke UMKM dilakukan manual pada tahap awal.
-- Komisi belum dipotong sampai aturan bisnis ditentukan.
-- Akun Midtrans terpisah per UMKM belum digunakan pada tahap awal.
+## Task 9 — Integritas Histori Pesanan dan Pembatalan
 
-### Fase 4 — Validasi
+**Status:** Belum dimulai
 
-- [x] Uji API profil, alamat, favorit, dan pengaturan UMKM melalui test gate Laravel.
-- [x] Pastikan endpoint privat membatasi data berdasarkan token pelanggan/UMKM.
-- [x] Validasi aturan seluruh kombinasi metode pembayaran dan pengiriman di backend.
-- [x] Pastikan pembayaran Midtrans tidak mengubah alur COD.
-- [x] Jalankan test Laravel, Flutter analyzer, dan Flutter test.
-- [x] Perbarui dokumentasi API dan roadmap setelah setiap fase selesai.
+Riwayat transaksi harus tetap tersedia walaupun akun UMKM dihapus. Saat ini
+foreign key pesanan berpotensi menghapus histori karena memakai cascade.
 
-Catatan validasi:
+### Cakupan
 
-- Laravel: 1 test lulus; 24 deprecation warning PHP 8.5 dari suite bawaan.
-- Flutter analyzer: tidak ada error; masih ada 21 info lint yang sudah ada.
-- Flutter test: seluruh test lulus setelah assertion cart diselaraskan dengan
-  perilaku aktual bahwa keranjang tidak lagi berisi data demo otomatis.
+- [ ] Ubah aturan foreign key `pesanan.id_umkm` agar histori tidak ikut
+  terhapus ketika UMKM dihapus.
+- [ ] Pastikan produk UMKM tetap dapat dihapus tanpa merusak snapshot detail
+  pesanan (`nama_produk`, harga, dan jumlah).
+- [ ] Tambahkan endpoint pelanggan untuk membatalkan pesanan.
+- [ ] Tambahkan alasan pembatalan dan aktor pembatalan.
+- [ ] Tambahkan aturan pembatalan berdasarkan status dan pembayaran.
+- [ ] Kembalikan stok secara aman bila stok sudah dicadangkan.
+- [ ] Tambahkan expiry otomatis untuk pesanan yang tidak dibayar.
+- [ ] Sediakan flow refund atau status refund yang eksplisit untuk pembayaran
+  yang sudah berhasil.
+
+### Test Gate
+
+- [ ] Hapus UMKM tidak menghapus pesanan selesai.
+- [ ] Produk yang dihapus tetap menampilkan snapshot item pesanan.
+- [ ] Pembatalan ilegal ditolak.
+- [ ] Pembatalan valid mengubah status dan stok dengan benar.
+- [ ] Pesanan expired tidak dapat dibayar kembali.
+
+## Task 10 — Ongkir Berbasis Zona dan Lokasi
+
+**Status:** Belum dimulai
+
+Zona ongkir sudah dapat disimpan, tetapi checkout masih menggunakan tarif flat
+`biaya_pengantaran`. Perhitungan final harus dilakukan backend dan tidak boleh
+mempercayai nominal dari client.
+
+### Cakupan
+
+- [ ] Implementasikan endpoint `ongkir_hitung`.
+- [ ] Hitung jarak dari koordinat pelanggan ke koordinat UMKM.
+- [ ] Terapkan radius gratis, zona tarif, dan jarak maksimal.
+- [ ] Bedakan pickup tanpa ongkir dan kurir dengan ongkir.
+- [ ] Tolak checkout jika lokasi di luar radius pengantaran.
+- [ ] Simpan jarak/zona/ongkir yang dipakai pada snapshot pesanan.
+- [ ] Tampilkan hasil perhitungan ongkir yang sama di mobile dan checkout.
+- [ ] Hilangkan ketergantungan checkout pada `biaya_pengantaran` dari client.
+
+### Test Gate
+
+- [ ] Jarak dalam radius gratis menghasilkan biaya nol.
+- [ ] Boundary zona mengikuti aturan `> jarak_min` dan `<= jarak_max`.
+- [ ] Jarak di luar maksimum ditolak.
+- [ ] Pickup selalu menghasilkan ongkir nol.
+- [ ] Perubahan tarif setelah checkout tidak mengubah histori order.
+
+## Task 11 — Strategi Checkout Multi-UMKM
+
+**Status:** Menunggu keputusan
+
+Keranjang mobile dapat berisi beberapa UMKM, tetapi backend saat ini hanya
+menerima satu UMKM per checkout. Perilaku ini harus dibuat eksplisit.
+
+### Decision Gate
+
+- [ ] Pilih strategi: pecah otomatis menjadi satu pesanan per UMKM
+  (rekomendasi), atau batasi keranjang hanya satu UMKM.
+- [ ] Jika dipecah, tetapkan `kode_checkout` untuk mengelompokkan pesanan.
+- [ ] Tetapkan apakah pembayaran Midtrans memakai satu transaksi gabungan atau
+  satu transaksi per pesanan.
+- [ ] Tetapkan aturan ongkir dan kegagalan parsial antar-UMKM.
+
+### Cakupan Jika Memilih Pecah Otomatis
+
+- [ ] Backend mengelompokkan item berdasarkan UMKM secara atomik.
+- [ ] Setiap UMKM memiliki status, ongkir, dan batas konfirmasi sendiri.
+- [ ] Mobile menampilkan status per pesanan dan ringkasan checkout.
+- [ ] Pembatalan/refund dapat dilakukan per UMKM tanpa merusak order lain.
+- [ ] Dashboard UMKM hanya menerima pesanan miliknya.
+
+### Test Gate
+
+- [ ] Keranjang satu UMKM tetap berfungsi seperti sebelumnya.
+- [ ] Keranjang beberapa UMKM menghasilkan order yang benar.
+- [ ] Harga dan ongkir tiap UMKM tidak tercampur.
+- [ ] Kegagalan satu UMKM tidak membuat data order setengah jadi.
+
+## Task 12 — Session, Role Guard, dan Sinkronisasi Akun
+
+**Status:** Belum dimulai
+
+### Cakupan
+
+- [ ] Restore token dan role dari storage saat aplikasi dibuka kembali.
+- [ ] Hapus sesi lokal otomatis saat API mengembalikan `401`.
+- [ ] Tambahkan guard role pelanggan pada seluruh endpoint pelanggan.
+- [ ] Tambahkan guard role UMKM pada seluruh endpoint UMKM.
+- [ ] Pastikan perpindahan mode tidak menghapus token baru.
+- [ ] Sinkronkan favorit setelah login dan saat berganti akun.
+- [ ] Bersihkan order, favorit, notifikasi, dan state mode saat logout.
+- [ ] Gunakan secure storage untuk token jika kompatibel dengan target device.
+
+### Test Gate
+
+- [ ] Sesi tetap aktif setelah aplikasi ditutup dan dibuka kembali.
+- [ ] Token pelanggan tidak dapat mengakses endpoint UMKM.
+- [ ] Token UMKM tidak dapat mengakses endpoint pelanggan.
+- [ ] Perpindahan mode lalu membuka Setting tidak menghasilkan error.
+- [ ] Logout akun A tidak menampilkan data akun B.
+
+## Task 13 — Notifikasi Persisten
+
+**Status:** Belum dimulai
+
+Notifikasi mobile saat ini masih in-memory dan dibuat dari sinkronisasi order.
+Fitur ini perlu backend agar riwayat notifikasi tidak hilang setelah aplikasi
+ditutup.
+
+### Cakupan
+
+- [ ] Buat tabel dan model notifikasi.
+- [ ] Buat endpoint daftar notifikasi.
+- [ ] Buat endpoint tandai satu atau semua sebagai dibaca.
+- [ ] Buat notifikasi untuk order baru, status berubah, pembayaran, pembatalan,
+  dan refund.
+- [ ] Sinkronkan `NotificationService` dengan API.
+- [ ] Tangani duplikasi notifikasi berdasarkan event/order/status.
+- [ ] Evaluasi push notification setelah notifikasi API stabil.
+
+### Test Gate
+
+- [ ] Notifikasi tersimpan setelah restart aplikasi.
+- [ ] Badge unread sesuai database.
+- [ ] Menandai dibaca hanya memengaruhi akun yang benar.
+- [ ] Event duplikat tidak membuat notifikasi ganda.
+
+## Task 14 — Rating dan Ulasan
+
+**Status:** Belum dimulai
+
+Katalog saat ini mengembalikan rating `0.0` dan jumlah ulasan belum berasal dari
+data nyata.
+
+### Cakupan
+
+- [ ] Buat tabel ulasan dengan relasi pelanggan, UMKM, produk, dan pesanan.
+- [ ] Izinkan ulasan hanya untuk pesanan selesai milik pelanggan.
+- [ ] Batasi satu ulasan per item/pesanan sesuai keputusan bisnis.
+- [ ] Tambahkan endpoint buat, ubah, dan lihat ulasan.
+- [ ] Hitung rating agregat dan jumlah ulasan.
+- [ ] Tampilkan rating nyata pada katalog, detail UMKM, dan detail produk.
+- [ ] Tambahkan moderasi atau penghapusan ulasan yang melanggar aturan.
+
+### Test Gate
+
+- [ ] Pelanggan tidak dapat mengulas order orang lain.
+- [ ] Pesanan belum selesai tidak dapat diulas.
+- [ ] Rating di katalog sama dengan agregasi database.
+- [ ] Ulasan duplikat ditolak.
+
+## Task 15 — Penghapusan Data Dummy dan Sinkronisasi Kontrak
+
+**Status:** Belum dimulai
+
+### Cakupan
+
+- [ ] Hilangkan fallback `SampleCatalog` dari alur production.
+- [ ] Tampilkan empty/error state jika API gagal, bukan data dummy.
+- [ ] Audit semua endpoint yang dipanggil mobile terhadap `routes/api.php`.
+- [ ] Perbarui [docs/api-contract.md](docs/api-contract.md) sesuai route aktual.
+- [ ] Hapus endpoint rancangan yang belum tersedia atau tandai eksplisit sebagai
+  backlog.
+- [ ] Dokumentasikan format status final, ongkir, pembayaran, dan multi-UMKM.
+- [ ] Perbarui roadmap setiap task selesai.
+
+### Test Gate
+
+- [ ] Tidak ada produk/order/notifikasi demo pada alur aplikasi.
+- [ ] Semua endpoint yang dipakai mobile memiliki test kontrak.
+- [ ] Response sukses dan error mengikuti envelope API.
+- [ ] Dokumentasi tidak mengklaim fitur yang belum diimplementasikan.
+
+## Task 16 — Production Readiness
+
+**Status:** Belum dimulai
+
+### Cakupan
+
+- [ ] Validasi konfigurasi `.env` saat deployment.
+- [ ] Pastikan URL callback Midtrans dapat diakses dari internet.
+- [ ] Tambahkan rate limit login, register, checkout, dan callback.
+- [ ] Tambahkan idempotency key untuk checkout.
+- [ ] Audit authorization dan ownership seluruh endpoint.
+- [ ] Audit upload file, ukuran, MIME type, dan nama file.
+- [ ] Tambahkan logging terstruktur tanpa token atau data sensitif.
+- [ ] Tambahkan backup database dan prosedur restore.
+- [ ] Jalankan integration test pada perangkat Android nyata.
+- [ ] Siapkan checklist release dan rollback.
+
+### Test Gate
+
+- [ ] Laravel test suite lulus.
+- [ ] Flutter analyze lulus.
+- [ ] Flutter test suite lulus.
+- [ ] Test API end-to-end pada backend yang sama dengan perangkat.
+- [ ] Uji pembayaran Sandbox dari awal sampai callback/status final.
+- [ ] Uji logout, session restore, pembatalan, dan refund.
 
 ## Definition of Done
 
@@ -419,11 +609,17 @@ Satu task dianggap selesai apabila:
 
 ## Urutan Eksekusi Saat Ini
 
-1. Mulai **Task 0 — Audit Kondisi Proyek**.
-2. Jalankan seluruh test gate Task 0.
-3. Catat hasil audit dan error baseline.
-4. Jangan mulai Task 1 sebelum Task 0 dinyatakan lulus.
-5. Task 0, Task 1, Task 2, Task 3, Task 4, dan implementasi utama Task 5 sudah
-   selesai.
-6. Task 5, Task 6, dan Task 7 selesai; berikutnya dapat difokuskan pada
-   pengujian operasional dan penyempurnaan laporan.
+1. Selesaikan decision gate **Task 8** tentang status pesanan, stok, approval,
+   refund, dan expiry.
+2. Implementasikan **Task 8 — Hardening Transaksi dan Pembayaran**.
+3. Implementasikan **Task 9 — Integritas Histori Pesanan dan Pembatalan**.
+4. Implementasikan **Task 10 — Ongkir Berbasis Zona dan Lokasi**.
+5. Putuskan dan implementasikan **Task 11 — Strategi Checkout Multi-UMKM**.
+6. Implementasikan **Task 12 — Session, Role Guard, dan Sinkronisasi Akun**.
+7. Implementasikan **Task 13 — Notifikasi Persisten**.
+8. Implementasikan **Task 14 — Rating dan Ulasan**.
+9. Bersihkan data dummy dan sinkronkan dokumentasi pada **Task 15**.
+10. Tutup dengan audit keamanan, deployment, dan release gate pada **Task 16**.
+
+Task tidak boleh diberi status selesai hanya karena happy path berhasil. Semua
+decision gate, test gate, edge case, dan dokumentasi terkait harus terpenuhi.
