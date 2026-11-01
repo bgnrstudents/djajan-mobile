@@ -408,12 +408,22 @@ dengan endpoint role UMKM.
 | POST | `/api/pelanggan/logout` | — | `null` |
 | GET | `/api/pelanggan/profil` | — | objek pelanggan |
 | POST | `/api/pelanggan/profil_update` | `nama`, `no_telp`, `email` | objek pelanggan |
+| POST | `/api/pelanggan/umkm_daftar` | `nama_usaha`, `spesialis`, `alamat`, `no_telp_usaha`, `email_usaha?` | pengajuan UMKM |
+| POST | `/api/pelanggan/mode_umkm` | — | sesi UMKM terverifikasi + token |
+| POST | `/api/pelanggan/mode_pelanggan` | — | sesi pelanggan + token |
 
 Objek pelanggan:
 ```json
 { "id_pelanggan": 3, "nama": "Muhammad Rizki", "email": "rizki@mail.com",
-  "no_telp": "081234567890", "alamat": "RT 03 Desa Kreyongan Atas" }
+  "no_telp": "081234567890", "alamat": "RT 03 Desa Kreyongan Atas",
+  "umkm": { "status_verifikasi": "menunggu", "nama_usaha": "Dapur Warga" } }
 ```
+
+Satu akun dapat memiliki mode pelanggan dan UMKM. Pengajuan dari pelanggan
+disimpan pada `umkm.id_pelanggan` dengan status `menunggu`; akun tetap berada
+di mode pelanggan sampai admin mengubah status menjadi `terverifikasi`.
+Setelah itu pelanggan memilih **Buka Mode UMKM** dari profil. Dari dashboard
+UMKM tersedia tombol **Mode Pelanggan** untuk kembali tanpa logout.
 
 ### 5.2 Buku Alamat (untuk menu "Alamat Pengiriman")
 | Method | Endpoint | Req |

@@ -11,6 +11,7 @@ import '../../../services/order_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/customer_settings_service.dart';
 import '../../../services/api_service.dart';
+import '../../../services/umkm_data_service.dart';
 import '../../../models/customer_settings_models.dart';
 import '../order/order_widgets.dart';
 
@@ -180,6 +181,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
   bool _notificationsEnabled = true;
   String? _businessName;
   String? _businessAddress;
+  String? _businessStatus;
+  String? _businessSpecialty;
 
   ProfileUser _user = const ProfileUser(name: '', phoneNumber: '');
 
@@ -196,6 +199,24 @@ class _ProfilScreenState extends State<ProfilScreen> {
       );
     }
     _settings.load();
+    _loadBusinessApplication();
+  }
+
+  Future<void> _loadBusinessApplication() async {
+    try {
+      final data =
+          await ApiService.get('pelanggan/profil') as Map<String, dynamic>;
+      final umkm = data['umkm'];
+      if (!mounted || umkm is! Map) return;
+      setState(() {
+        _businessName = umkm['nama_usaha']?.toString();
+        _businessAddress = umkm['alamat']?.toString();
+        _businessSpecialty = umkm['spesialis']?.toString();
+        _businessStatus = umkm['status_verifikasi']?.toString();
+      });
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _settings.errorMessage = error.pesan);
+    }
   }
 
   List<ProfileFormField> get _accountFields => [
@@ -228,6 +249,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
       label: 'Nama Pemilik',
       initialValue: _user.name,
       prefixIcon: Icons.badge_outlined,
+    ),
+    ProfileFormField(
+      label: 'Spesialisasi Usaha',
+      initialValue: _businessSpecialty ?? '',
+      prefixIcon: Icons.category_outlined,
     ),
     ProfileFormField(
       label: 'Nomor Handphone',
@@ -272,6 +298,24 @@ class _ProfilScreenState extends State<ProfilScreen> {
         onChanged: _setNotificationsEnabled,
       ),
     ),
+    if (_businessName != null && _businessStatus == 'terverifikasi')
+      ProfileMenuItem(
+        icon: Icons.storefront_outlined,
+        title: 'Buka Mode UMKM',
+        subtitle: 'Kelola usaha melalui dashboard UMKM',
+        iconColor: AppConfig.primaryColor,
+        onTap: _switchToUmkm,
+      ),
+    if (_businessName != null && _businessStatus != 'terverifikasi')
+      ProfileMenuItem(
+        icon: Icons.hourglass_top_outlined,
+        title: 'Status Pengajuan UMKM',
+        subtitle: _businessStatus == 'ditolak'
+            ? 'Pengajuan ditolak, periksa kembali data usaha'
+            : 'Menunggu verifikasi admin desa',
+        iconColor: const Color(0xFFE67E22),
+        onTap: () => _openBusinessRegistration(editing: true),
+      ),
     if (_businessName != null)
       ProfileMenuItem(
         icon: Icons.storefront_outlined,
@@ -348,7 +392,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
             const SizedBox(height: 14),
             _PromoBanner(
               businessName: _businessName,
-              onTap: _openBusinessRegistration,
+              onTap: _businessStatus == 'terverifikasi'
+                  ? _switchToUmkm
+                  : _openBusinessRegistration,
             ),
             const SizedBox(height: 14),
             _ProfileMenu(items: _menuItems),
@@ -366,7 +412,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
       return;
     }
 
-    _openBusinessRegistration(editing: true);
+    if (_businessStatus == 'terverifikasi') {
+      _switchToUmkm();
+    } else {
+      _openBusinessRegistration(editing: true);
+    }
   }
 
   Future<void> _openAccountForm() async {
@@ -530,10 +580,52 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
     if (values == null || !mounted) return;
 
-    setState(() {
-      _businessName = values['Nama Usaha'];
-      _businessAddress = values['Alamat Usaha di Kreongan'];
-    });
+    try {
+      final data = await ApiService.post('pelanggan/umkm_daftar', {
+        'nama_usaha': values['Nama Usaha'],
+        'spesialis': values['Spesialisasi Usaha'],
+        'alamat': values['Alamat Usaha di Kreongan'],
+        'no_telp_usaha': values['Nomor Handphone'],
+        'email_usaha': _user.email,
+      }) as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _businessName = data['nama_usaha']?.toString();
+        _businessAddress = data['alamat']?.toString();
+        _businessSpecialty = data['spesialis']?.toString();
+        _businessStatus = data['status_verifikasi']?.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pengajuan UMKM berhasil dikirim. Menunggu verifikasi admin.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.pesan)));
+      }
+    }
+  }
+
+  Future<void> _switchToUmkm() async {
+    try {
+      final session = await context.read<AuthService>().switchToUmkm();
+      if (!mounted) return;
+      context.read<UmkmDataService>().loadProfileFromLogin(session.data);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.umkmDashboard,
+        (_) => false,
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.pesan)));
+      }
+    }
   }
 
   Future<void> _confirmRemoveBusiness() async {

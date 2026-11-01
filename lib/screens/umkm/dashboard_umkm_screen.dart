@@ -9,7 +9,6 @@ import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import 'detail_pesanan_screen.dart';
-import '../../screens/auth/login_screen.dart';
 import '../../screens/customer/order/order_widgets.dart';
 import '../../widgets/umkm_bottom_navigation.dart';
 import 'tambah_produk_screen.dart';
@@ -40,40 +39,6 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
 
   Future<void> _refresh() =>
       context.read<UmkmDataService>().muatSemua(tampilkanLoading: false);
-
-  void _keluar() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Keluar dari Akun?'),
-        content: const Text('Anda perlu masuk kembali untuk mengelola warung.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              minimumSize: const Size(110, 44),
-            ),
-            onPressed: () async {
-              await context.read<AuthService>().logout();
-              if (!context.mounted) return;
-              context.read<UmkmDataService>().logout();
-              Navigator.pop(ctx);
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-              );
-            },
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildDynamicHeader(UmkmProfile profile, UmkmDataService service) {
     switch (_tab) {
@@ -124,9 +89,9 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
             ],
           ),
           rightAction: IconButton(
-            icon: const Icon(Icons.logout_rounded, color: OC.muted),
-            tooltip: 'Keluar',
-            onPressed: _keluar,
+            icon: const Icon(Icons.swap_horiz_rounded, color: OC.muted),
+            tooltip: 'Mode Pelanggan',
+            onPressed: _switchToCustomer,
           ),
         );
       case 1:
@@ -148,6 +113,24 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
           title: 'Pengaturan Usaha',
           subtitle: 'Kelola profil, operasional, & ongkir',
         );
+    }
+  }
+
+  Future<void> _switchToCustomer() async {
+    try {
+      final session = await context.read<AuthService>().switchToCustomer();
+      if (!mounted) return;
+      if (session.role != AuthRole.pelanggan) {
+        throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
+      }
+      context.read<UmkmDataService>().logout();
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/customer/home', (_) => false);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.pesan)));
+      }
     }
   }
 
@@ -358,17 +341,27 @@ class _TabBeranda extends StatelessWidget {
                   const SizedBox(height: 12),
                   const Text('Produk terlaris', style: OT.item),
                   const SizedBox(height: 6),
-                  ...r.produkTerlaris.take(3).map(
-                    (produk) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          Expanded(child: Text(produk.namaProduk, style: OT.secondary)),
-                          Text('${produk.jumlahTerjual} terjual', style: OT.caption),
-                        ],
+                  ...r.produkTerlaris
+                      .take(3)
+                      .map(
+                        (produk) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  produk.namaProduk,
+                                  style: OT.secondary,
+                                ),
+                              ),
+                              Text(
+                                '${produk.jumlahTerjual} terjual',
+                                style: OT.caption,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                 ],
               ],
             ),

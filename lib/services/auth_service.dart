@@ -52,6 +52,16 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<AuthSession> switchToUmkm() async {
+    final data = await ApiService.post('pelanggan/mode_umkm', {});
+    return _setSession(data as Map<String, dynamic>);
+  }
+
+  Future<AuthSession> switchToCustomer() async {
+    final data = await ApiService.post('pelanggan/mode_pelanggan', {});
+    return _setSession(data as Map<String, dynamic>);
+  }
+
   Future<AuthSession> login(String identifier, String password) async {
     return _run(() async {
       try {
