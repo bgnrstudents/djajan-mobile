@@ -17,8 +17,8 @@ class _ZonaBaris {
   final TextEditingController tarifCtrl;
 
   _ZonaBaris({required String sampai, required String tarif})
-      : sampaiCtrl = TextEditingController(text: sampai),
-        tarifCtrl = TextEditingController(text: tarif);
+    : sampaiCtrl = TextEditingController(text: sampai),
+      tarifCtrl = TextEditingController(text: tarif);
 
   void dispose() {
     sampaiCtrl.dispose();
@@ -49,11 +49,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   late bool _pickupAktif;
   late bool _kurirAktif;
 
-  // --- Lokasi dapur & ongkir berbasis zona jarak ---
-  // Koordinat lokasi hardcode ke "Desa Kreongan Atas, Jember" (-8.156515, 113.712613)
-  final String _kreonganLat = '-8.156515';
-  final String _kreonganLon = '113.712613';
-
   late TextEditingController _radiusCtrl;
   final List<_ZonaBaris> _zonaBaris = [];
 
@@ -74,14 +69,17 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     _tokoAktif = p.tokoAktif;
     _transferAktif = p.transferBankAktif;
     _codAktif = p.codAktif;
-    _skemaPO = _skemaOptions.contains(p.skemaPO) ? p.skemaPO : _skemaOptions.first;
+    _skemaPO = _skemaOptions.contains(p.skemaPO)
+        ? p.skemaPO
+        : _skemaOptions.first;
     _pickupAktif = p.pickupAktif;
     _kurirAktif = p.kurirWargaAktif;
 
     _radiusCtrl = TextEditingController(text: _fmtKm(p.radiusGratisKm));
     for (final z in p.zonaOngkir) {
       _zonaBaris.add(
-          _ZonaBaris(sampai: _fmtKm(z.jarakMax), tarif: z.biaya.toString()));
+        _ZonaBaris(sampai: _fmtKm(z.jarakMax), tarif: z.biaya.toString()),
+      );
     }
   }
 
@@ -139,7 +137,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: spesialisCtrl,
-                decoration: const InputDecoration(labelText: 'Spesialis / Slogan'),
+                decoration: const InputDecoration(
+                  labelText: 'Spesialis / Slogan',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -150,15 +150,18 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               TextField(
                 controller: telpCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Nomor WhatsApp Usaha'),
+                decoration: const InputDecoration(
+                  labelText: 'Nomor WhatsApp Usaha',
+                ),
               ),
             ],
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(minimumSize: const Size(110, 44)),
             onPressed: () => Navigator.pop(ctx, true),
@@ -208,12 +211,16 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               TextField(
                 controller: bankKodeCtrl,
                 textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(labelText: 'Kode Bank (mis. BRI)'),
+                decoration: const InputDecoration(
+                  labelText: 'Kode Bank (mis. BRI)',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: bankNamaCtrl,
-                decoration: const InputDecoration(labelText: 'Nama Bank Lengkap'),
+                decoration: const InputDecoration(
+                  labelText: 'Nama Bank Lengkap',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -230,8 +237,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(minimumSize: const Size(110, 44)),
             onPressed: () => Navigator.pop(ctx, true),
@@ -256,33 +264,104 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     }
   }
 
+  Future<void> _ubahPassword() async {
+    final lama = TextEditingController();
+    final baru = TextEditingController();
+    final konfirmasi = TextEditingController();
+    final simpan = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ubah Kata Sandi'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: lama,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Kata sandi lama'),
+            ),
+            TextField(
+              controller: baru,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Kata sandi baru (min. 8 karakter)',
+              ),
+            ),
+            TextField(
+              controller: konfirmasi,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Konfirmasi kata sandi baru',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+    if (simpan != true) return;
+    try {
+      final pesan = await context.read<UmkmDataService>().ubahPassword(
+        passwordLama: lama.text,
+        passwordBaru: baru.text,
+        konfirmasi: konfirmasi.text,
+      );
+      if (mounted) pesanSukses(context, pesan);
+    } on ApiException catch (e) {
+      if (mounted) pesanGagal(context, e.pesan);
+    }
+  }
+
   // ---------------------------------------------------- simpan pengaturan
   Future<void> _simpanPengaturan() async {
     FocusScope.of(context).unfocus();
 
-    // Lokasi pengantaran tetap berada di Desa Kreongan Atas, Jember.
+    // Lokasi pengantaran memakai koordinat yang tersimpan di profil UMKM.
     final radiusGratis = double.tryParse(_radiusCtrl.text.replaceAll(',', '.'));
     if (radiusGratis == null || radiusGratis < 0) {
-      if (mounted) pesanGagal(context, 'Radius gratis ongkir harus berupa angka dan tidak boleh negatif.');
+      if (mounted)
+        pesanGagal(
+          context,
+          'Radius gratis ongkir harus berupa angka dan tidak boleh negatif.',
+        );
       return;
     }
 
     final List<ZonaOngkir> zonaBaru = [];
     double batas = radiusGratis;
     for (var i = 0; i < _zonaBaris.length; i++) {
-      final sampai =
-          double.tryParse(_zonaBaris[i].sampaiCtrl.text.replaceAll(',', '.'));
+      final sampai = double.tryParse(
+        _zonaBaris[i].sampaiCtrl.text.replaceAll(',', '.'),
+      );
       final tarif = int.tryParse(_zonaBaris[i].tarifCtrl.text);
       if (sampai == null || tarif == null) {
-        if (mounted) pesanGagal(context, 'Isi jarak & tarif zona ke-${i + 1} dengan angka yang benar.');
+        if (mounted)
+          pesanGagal(
+            context,
+            'Isi jarak & tarif zona ke-${i + 1} dengan angka yang benar.',
+          );
         return;
       }
       if (sampai <= batas) {
-        if (mounted) pesanGagal(context, 'Jarak akhir zona ke-${i + 1} harus lebih besar dari ${_fmtKm(batas)} KM (batas zona sebelumnya).');
+        if (mounted)
+          pesanGagal(
+            context,
+            'Jarak akhir zona ke-${i + 1} harus lebih besar dari ${_fmtKm(batas)} KM (batas zona sebelumnya).',
+          );
         return;
       }
       if (tarif < 0) {
-        if (mounted) pesanGagal(context, 'Tarif zona ke-${i + 1} tidak boleh negatif.');
+        if (mounted)
+          pesanGagal(context, 'Tarif zona ke-${i + 1} tidak boleh negatif.');
         return;
       }
       zonaBaru.add(ZonaOngkir(jarakMin: batas, jarakMax: sampai, biaya: tarif));
@@ -310,8 +389,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       );
 
       await service.simpanOngkir(
-        latitude: double.parse(_kreonganLat),
-        longitude: double.parse(_kreonganLon),
+        latitude: service.profile.latitude,
+        longitude: service.profile.longitude,
         radiusGratisKm: radiusGratis,
         jarakMaksimalKm: jarakMaksimal,
         zonaOngkir: zonaBaru,
@@ -335,7 +414,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-              color: OC.box, borderRadius: BorderRadius.circular(10)),
+            color: OC.box,
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: Icon(ikon, color: OC.primary, size: 20),
         ),
         const SizedBox(width: 10),
@@ -343,12 +424,17 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(judul,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 16.5)),
-              Text(subjudul,
-                  style: const TextStyle(
-                      color: OC.muted, fontSize: 12.5)),
+              Text(
+                judul,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16.5,
+                ),
+              ),
+              Text(
+                subjudul,
+                style: const TextStyle(color: OC.muted, fontSize: 12.5),
+              ),
             ],
           ),
         ),
@@ -382,9 +468,10 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       child: Text(
                         judul,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: OC.ink),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: OC.ink,
+                        ),
                       ),
                     ),
                     if (badge != null) ...[
@@ -424,8 +511,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final jarakMaksimal = _zonaBaris.isEmpty
         ? radiusGratis
         : (double.tryParse(
-                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.')) ??
-            radiusGratis);
+                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.'),
+              ) ??
+              radiusGratis);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -439,15 +527,16 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(10)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: const Row(
               children: [
-                Icon(Icons.location_on_outlined,
-                    size: 18, color: OC.primary),
+                Icon(Icons.location_on_outlined, size: 18, color: OC.primary),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Lokasi pengantara: Desa Kreongan Atas, Jember. Ongkir dihitung otomatis dari alamat pembeli.',
+                    'Lokasi dapur diambil dari profil usaha. Ongkir dihitung otomatis dari alamat pembeli.',
                     style: TextStyle(fontSize: 11.5, color: OC.muted),
                   ),
                 ),
@@ -460,17 +549,27 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           Row(
             children: [
               const Expanded(
-                child: Text('Jarak Maksimal Pengantaran',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                child: Text(
+                  'Jarak Maksimal Pengantaran',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Text('${_fmtKm(jarakMaksimal)} KM',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, color: OC.primary)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${_fmtKm(jarakMaksimal)} KM',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: OC.primary,
+                  ),
+                ),
               ),
             ],
           ),
@@ -493,276 +592,262 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final profile = context.watch<UmkmDataService>().profile;
 
     final bodyContent = ListView(
-      padding: EdgeInsets.fromLTRB(16, widget.isTab ? 8 : 4, 16, widget.isTab ? 110 : 30),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        widget.isTab ? 8 : 4,
+        16,
+        widget.isTab ? 110 : 30,
+      ),
       children: [
         // ==================== PROFIL USAHA + FOTO ====================
         KartuPutih(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        GambarJaringan(
-                          url: profile.fotoProfilUrl,
-                          width: 72,
-                          height: 72,
-                          radius: 36,
-                          ikonKosong: Icons.storefront,
-                          cacheBuster:
-                              DateTime.now().millisecondsSinceEpoch.toString(),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      GambarJaringan(
+                        url: profile.fotoProfilUrl,
+                        width: 72,
+                        height: 72,
+                        radius: 36,
+                        ikonKosong: Icons.storefront,
+                        cacheBuster: DateTime.now().millisecondsSinceEpoch
+                            .toString(),
+                      ),
+                      GestureDetector(
+                        onTap: _mengunggahFoto ? null : _gantiFoto,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: OC.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: _mengunggahFoto
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.photo_camera,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                         ),
-                        GestureDetector(
-                          onTap: _mengunggahFoto ? null : _gantiFoto,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: OC.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            child: _mengunggahFoto
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Icon(Icons.photo_camera,
-                                    size: 14, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          profile.namaUsaha,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (profile.terverifikasi)
+                          const MiniBadge(
+                            'Mitra Terverifikasi',
+                            bg: OC.mint,
+                            fg: OC.primary,
+                            ikon: Icons.verified,
+                          )
+                        else
+                          const MiniBadge(
+                            'Menunggu Verifikasi',
+                            bg: OC.peach,
+                            fg: OC.amber,
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          profile.spesialis,
+                          style: const TextStyle(
+                            color: OC.muted,
+                            fontSize: 12.5,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(profile.namaUsaha,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 17)),
-                          const SizedBox(height: 4),
-                          if (profile.terverifikasi)
-                            const MiniBadge('Mitra Terverifikasi',
-                                bg: OC.mint,
-                                fg: OC.primary,
-                                ikon: Icons.verified)
-                          else
-                            const MiniBadge('Menunggu Verifikasi',
-                                bg: OC.peach,
-                                fg: OC.amber),
-                          const SizedBox(height: 4),
-                          Text(profile.spesialis,
-                              style: const TextStyle(
-                                  color: OC.muted, fontSize: 12.5)),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _editIdentitas,
-                      icon: const Icon(Icons.edit_outlined,
-                          color: OC.primary),
-                      tooltip: 'Ubah identitas usaha',
-                    ),
-                  ],
-                ),
-                const Divider(height: 24),
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Status Toko',
-                              style: TextStyle(fontWeight: FontWeight.w700)),
-                          Text(
-                              'Matikan bila dapur sedang libur / tidak menerima pesanan',
-                              style: TextStyle(
-                                  color: OC.muted, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: _tokoAktif,
-                      activeThumbColor: OC.primary,
-                      onChanged: (v) => setState(() => _tokoAktif = v),
-                    ),
-                  ],
-                ),
-                if (profile.alamat.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.place_outlined,
-                          size: 16, color: OC.muted),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(profile.alamat,
-                            style: const TextStyle(
-                                fontSize: 12.5, color: OC.muted)),
-                      ),
-                    ],
+                  ),
+                  IconButton(
+                    onPressed: _editIdentitas,
+                    icon: const Icon(Icons.edit_outlined, color: OC.primary),
+                    tooltip: 'Ubah identitas usaha',
                   ),
                 ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // =================== KEBIJAKAN PEMBAYARAN ===================
-          _judulSeksi(
-              Icons.account_balance_wallet_outlined,
-              'Kebijakan Pembayaran',
-              'Atur metode terima uang dari pelanggan warga'),
-          const SizedBox(height: 10),
-          _toggleTile(
-            judul: 'Transfer Bank Manual',
-            badge: 'Utama',
-            subjudul:
-                'Pelanggan mengunggah bukti transfer ke rekening mitra',
-            nilai: _transferAktif,
-            onChanged: (v) => setState(() => _transferAktif = v),
-          ),
-          if (_transferAktif) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: OC.box,
-                borderRadius: BorderRadius.circular(14),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const Divider(height: 24),
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6)),
-                        child: Text(profile.bankKode,
-                            style: const TextStyle(
-                                color: OC.primary,
-                                fontWeight: FontWeight.w800)),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Bank ${profile.bankKode}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700)),
-                            Text(profile.bankNama,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    color: OC.muted, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _editRekening,
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        tooltip: 'Ubah rekening',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14)),
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('NOMOR REKENING',
-                            style: TextStyle(
-                                fontSize: 10.5,
-                                color: OC.muted,
-                                fontWeight: FontWeight.w700)),
                         Text(
-                          profile.noRekening.isEmpty
-                              ? 'Belum diisi'
-                              : profile.noRekening,
-                          style: const TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800),
+                          'Status Toko',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          'Matikan bila dapur sedang libur / tidak menerima pesanan',
+                          style: TextStyle(color: OC.muted, fontSize: 12),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text.rich(TextSpan(children: [
-                    const TextSpan(
-                        text: 'Atas Nama (A.N): ',
-                        style: TextStyle(
-                            color: OC.muted, fontSize: 12.5)),
-                    TextSpan(
-                        text: profile.atasNama.isEmpty ? '-' : profile.atasNama,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 12.5)),
-                  ])),
+                  Switch(
+                    value: _tokoAktif,
+                    activeThumbColor: OC.primary,
+                    onChanged: (v) => setState(() => _tokoAktif = v),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 14),
-          ],
-          _toggleTile(
-            judul: 'COD (Bayar di Tempat)',
-            subjudul:
-                'Titip uang tunai ke kurir warga desa saat pesanan sampai',
-            nilai: _codAktif,
-            onChanged: (v) => setState(() => _codAktif = v),
+              if (profile.alamat.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.place_outlined, size: 16, color: OC.muted),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        profile.alamat,
+                        style: const TextStyle(fontSize: 12.5, color: OC.muted),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 14),
+        ),
+        const SizedBox(height: 20),
+
+        // =================== KEBIJAKAN PEMBAYARAN ===================
+        _judulSeksi(
+          Icons.account_balance_wallet_outlined,
+          'Kebijakan Pembayaran',
+          'Atur metode terima uang dari pelanggan warga',
+        ),
+        const SizedBox(height: 10),
+        _toggleTile(
+          judul: 'Transfer Bank Manual',
+          badge: 'Utama',
+          subjudul: 'Pelanggan mengunggah bukti transfer ke rekening mitra',
+          nilai: _transferAktif,
+          onChanged: (v) => setState(() => _transferAktif = v),
+        ),
+        if (_transferAktif) ...[
+          const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: OC.box,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.garis),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Skema Pembayaran Pre-Order (PO)',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-                const Text(
-                    'Aturan uang muka saat warga pesan katering atau tumpeng porsi besar',
-                    style: TextStyle(color: OC.muted, fontSize: 12.5)),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        profile.bankKode,
+                        style: const TextStyle(
+                          color: OC.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bank ${profile.bankKode}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            profile.bankNama,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: OC.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _editRekening,
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      tooltip: 'Ubah rekening',
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _skemaPO,
-                  isExpanded: true,
-                  items: _skemaOptions
-                      .map((s) => DropdownMenuItem(
-                          value: s,
-                          child: Text(s, overflow: TextOverflow.ellipsis)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _skemaPO = v!),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'NOMOR REKENING',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: OC.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        profile.noRekening.isEmpty
+                            ? 'Belum diisi'
+                            : profile.noRekening,
+                        style: const TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                      color: OC.box,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: const Row(
+                Text.rich(
+                  TextSpan(
                     children: [
-                      Icon(Icons.info_outline,
-                          size: 16, color: OC.muted),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Pesanan otomatis masuk jadwal dapur setelah DP terverifikasi',
-                          style: TextStyle(
-                              fontSize: 12, color: OC.muted),
+                      const TextSpan(
+                        text: 'Atas Nama (A.N): ',
+                        style: TextStyle(color: OC.muted, fontSize: 12.5),
+                      ),
+                      TextSpan(
+                        text: profile.atasNama.isEmpty ? '-' : profile.atasNama,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
@@ -771,74 +856,149 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 22),
-
-          // ================== LAYANAN & ONGKIR ==================
-          _judulSeksi(
-              Icons.local_shipping_outlined,
-              'Layanan & Ongkir Pengiriman',
-              'Kelola cara pengambilan & jangkauan kurir lokal'),
-          const SizedBox(height: 10),
-          _toggleTile(
-            judul: 'Pickup / Ambil Sendiri di Dapur',
-            subjudul:
-                'Pelanggan mengambil langsung ke alamat dapur Anda',
-            nilai: _pickupAktif,
-            onChanged: (v) => setState(() => _pickupAktif = v),
-          ),
-          const SizedBox(height: 10),
-          _toggleTile(
-            judul: 'Diantar UMKM / Kurir Warga',
-            subjudul:
-                'Pengantaran mandiri atau bantuan pemuda karang taruna sekitar',
-            nilai: _kurirAktif,
-            onChanged: (v) => setState(() => _kurirAktif = v),
-          ),
-          if (_kurirAktif) ...[
-            const SizedBox(height: 10),
-            _kartuOngkirZona(),
-          ],
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(12)),
-            child: const Row(
-              children: [
-                Icon(Icons.shield_outlined, color: OC.primary),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Semua perubahan disimpan ke database dan langsung sinkron ke halaman etalase pembeli.',
-                    style: TextStyle(fontSize: 12.5, color: OC.muted),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (widget.isTab) ...[
-            const SizedBox(height: 18),
-            ElevatedButton.icon(
-              onPressed: _menyimpan ? null : _simpanPengaturan,
-              icon: _menyimpan
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.check_circle_outline),
-              label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),
-            ),
-          ],
+          const SizedBox(height: 14),
         ],
-      );
+        _toggleTile(
+          judul: 'COD (Bayar di Tempat)',
+          subjudul: 'Titip uang tunai ke kurir warga desa saat pesanan sampai',
+          nilai: _codAktif,
+          onChanged: (v) => setState(() => _codAktif = v),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.garis),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Skema Pembayaran Pre-Order (PO)',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const Text(
+                'Aturan uang muka saat warga pesan katering atau tumpeng porsi besar',
+                style: TextStyle(color: OC.muted, fontSize: 12.5),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                initialValue: _skemaPO,
+                isExpanded: true,
+                items: _skemaOptions
+                    .map(
+                      (s) => DropdownMenuItem(
+                        value: s,
+                        child: Text(s, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _skemaPO = v!),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: OC.box,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: OC.muted),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Pesanan otomatis masuk jadwal dapur setelah DP terverifikasi',
+                        style: TextStyle(fontSize: 12, color: OC.muted),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+
+        _judulSeksi(
+          Icons.lock_outline,
+          'Keamanan Akun',
+          'Kelola kata sandi akun UMKM',
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: _ubahPassword,
+          icon: const Icon(Icons.password_outlined),
+          label: const Text('Ubah Kata Sandi'),
+        ),
+        const SizedBox(height: 22),
+
+        // ================== LAYANAN & ONGKIR ==================
+        _judulSeksi(
+          Icons.local_shipping_outlined,
+          'Layanan & Ongkir Pengiriman',
+          'Kelola cara pengambilan & jangkauan kurir lokal',
+        ),
+        const SizedBox(height: 10),
+        _toggleTile(
+          judul: 'Pickup / Ambil Sendiri di Dapur',
+          subjudul: 'Pelanggan mengambil langsung ke alamat dapur Anda',
+          nilai: _pickupAktif,
+          onChanged: (v) => setState(() => _pickupAktif = v),
+        ),
+        const SizedBox(height: 10),
+        _toggleTile(
+          judul: 'Diantar UMKM / Kurir Warga',
+          subjudul:
+              'Pengantaran mandiri atau bantuan pemuda karang taruna sekitar',
+          nilai: _kurirAktif,
+          onChanged: (v) => setState(() => _kurirAktif = v),
+        ),
+        if (_kurirAktif) ...[const SizedBox(height: 10), _kartuOngkirZona()],
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: OC.primary),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Semua perubahan disimpan ke database dan langsung sinkron ke halaman etalase pembeli.',
+                  style: TextStyle(fontSize: 12.5, color: OC.muted),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (widget.isTab) ...[
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: _menyimpan ? null : _simpanPengaturan,
+            icon: _menyimpan
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.check_circle_outline),
+            label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),
+          ),
+        ],
+      ],
+    );
 
     if (widget.isTab) {
-      return Scaffold(
-        backgroundColor: OC.bg,
-        body: bodyContent,
-      );
+      return Scaffold(backgroundColor: OC.bg, body: bodyContent);
     }
 
     return Scaffold(
@@ -868,7 +1028,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.check_circle_outline),
             label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),

@@ -300,6 +300,11 @@ Update parsial — kirim hanya field yang berubah:
 `atas_nama`, `foto_profil?` (file).
 Res `data` = objek `umkm` terbaru. `400` bila tidak ada field berubah.
 
+### 4.5.1 `POST /api/profil_password` (privat)
+Req: `password_lama`, `password_baru`, `password_baru_confirmation`.
+Password baru minimal 8 karakter dan hanya dapat diubah oleh UMKM dari token
+yang sedang aktif.
+
 ### 4.6 `POST /api/ongkir_simpan` (privat)
 Req: `latitude`, `longitude`, `radius_gratis_km`, `jarak_maksimal_km`,
 `zona` = **JSON string** berisi array `[{"jarak_min":0,"jarak_max":1,"biaya":0}, ...]`

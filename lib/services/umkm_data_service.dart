@@ -375,6 +375,19 @@ class UmkmDataService extends ChangeNotifier {
     return 'Foto profil usaha berhasil diperbarui.';
   }
 
+  Future<String> ubahPassword({
+    required String passwordLama,
+    required String passwordBaru,
+    required String konfirmasi,
+  }) async {
+    await ApiService.post('profil_password', {
+      'password_lama': passwordLama,
+      'password_baru': passwordBaru,
+      'password_baru_confirmation': konfirmasi,
+    });
+    return 'Kata sandi berhasil diperbarui.';
+  }
+
   // ==================================================== PESANAN
 
   /// Menerima pesanan: status berubah di database & stok otomatis berkurang.

@@ -363,14 +363,14 @@ desain dan batasan bisnis pada bagian pembayaran disepakati.
 
 ### Fase 2 — Pengaturan UMKM
 
-- [ ] Hubungkan profil usaha dan foto ke database.
-- [ ] Hubungkan nama usaha, spesialisasi, alamat, dan kontak.
-- [ ] Hubungkan toggle toko aktif/nonaktif.
-- [ ] Tambahkan pengaturan akun dan password.
-- [ ] Hubungkan pengaturan COD.
-- [ ] Hubungkan pilihan pickup atau pengantaran.
-- [ ] Hubungkan pengaturan ongkir dan kurir.
-- [ ] Pastikan semua perubahan tersimpan dan terbaca ulang dari backend.
+- [x] Hubungkan profil usaha dan foto ke database.
+- [x] Hubungkan nama usaha, spesialisasi, alamat, dan kontak.
+- [x] Hubungkan toggle toko aktif/nonaktif.
+- [x] Tambahkan pengaturan akun dan password.
+- [x] Hubungkan pengaturan COD.
+- [x] Hubungkan pilihan pickup atau pengantaran.
+- [x] Hubungkan pengaturan ongkir dan kurir.
+- [x] Pastikan semua perubahan tersimpan dan terbaca ulang dari backend.
 
 ### Fase 3 — Konsep Pembayaran dan Pengiriman
 
