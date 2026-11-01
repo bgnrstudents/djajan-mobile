@@ -16,6 +16,8 @@ class Product {
   final String unit;
   final double? courierFee;
   final String pickupLocation;
+  final bool codAvailable;
+  final bool pickupAvailable;
 
   const Product({
     this.id = '',
@@ -33,6 +35,8 @@ class Product {
     this.unit = 'Porsi',
     this.courierFee = 5000,
     this.pickupLocation = 'Desa Kreyongan Atas',
+    this.codAvailable = true,
+    this.pickupAvailable = true,
   });
 
   bool get isPreOrder => orderType.toLowerCase().contains('pre');
@@ -62,6 +66,8 @@ class Product {
       umkmType: umkmType,
       courierFee: courierFee,
       pickupLocation: pickupLocation,
+      codAvailable: codAvailable,
+      pickupAvailable: pickupAvailable,
     );
   }
 
@@ -83,9 +89,11 @@ class Product {
       description: (json['description'] ?? json['deskripsi']) as String? ?? '',
       variant: json['variant'] as String? ?? 'Pilihan Terbaik',
       unit: json['unit'] as String? ?? 'Porsi',
-      courierFee: (json['courier_fee'] as num?)?.toDouble() ?? 5000,
+      courierFee: (json['courier_fee'] as num?)?.toDouble(),
       pickupLocation:
           json['pickup_location'] as String? ?? 'Desa Kreyongan Atas',
+      codAvailable: json['cod_available'] as bool? ?? true,
+      pickupAvailable: json['pickup_available'] as bool? ?? true,
     );
   }
 
@@ -106,6 +114,8 @@ class Product {
       'unit': unit,
       'courier_fee': courierFee,
       'pickup_location': pickupLocation,
+      'cod_available': codAvailable,
+      'pickup_available': pickupAvailable,
     };
   }
 }

@@ -39,6 +39,8 @@ class _VendorDraft {
   final bool isPreOrder;
   final double? courierFee;
   final String pickupLocation;
+  final bool codAvailable;
+  final bool pickupAvailable;
 
   DeliveryMethod delivery;
   DateTime? requiredAt;
@@ -53,8 +55,12 @@ class _VendorDraft {
     required this.isPreOrder,
     required this.courierFee,
     required this.pickupLocation,
+    required this.codAvailable,
+    required this.pickupAvailable,
   }) : delivery =
-            courierFee != null ? DeliveryMethod.courier : DeliveryMethod.pickup;
+            courierFee != null
+                ? DeliveryMethod.courier
+                : DeliveryMethod.pickup;
 
   double get subtotal => lines.fold(0.0, (s, l) => s + l.subtotal);
   double get fee => delivery == DeliveryMethod.courier ? (courierFee ?? 0) : 0;
@@ -93,7 +99,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         isPreOrder: po,
         courierFee: f.courierFee,
         pickupLocation: f.pickupLocation,
+        codAvailable: f.codAvailable,
+        pickupAvailable: f.pickupAvailable,
       );
+      if (!d.pickupAvailable && d.courierFee != null) {
+        d.delivery = DeliveryMethod.courier;
+      }
       if (po) {
         final base = DateTime.now().add(const Duration(days: 3));
         d.requiredAt = DateTime(base.year, base.month, base.day, 11, 0);
@@ -102,6 +113,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       }
       return d;
     }).toList();
+    if (_vendors.length == 1 &&
+        _method == PaymentMethod.cod &&
+        !_vendors.single.codAvailable) {
+      _method = PaymentMethod.midtrans;
+    }
   }
 
   @override
@@ -408,15 +424,14 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             ),
             const SizedBox(height: 8),
           ],
-          _deliveryOption(
-            selected: v.delivery == DeliveryMethod.pickup,
-            title: v.courierFee != null
-                ? 'Ambil Sendiri (Pickup)'
-                : 'Pickup (Ambil Sendiri di Toko)',
-            subtitle: v.courierFee != null ? v.pickupLocation : null,
-            price: rupiah(0),
-            onTap: () => setState(() => v.delivery = DeliveryMethod.pickup),
-          ),
+          if (v.pickupAvailable)
+            _deliveryOption(
+              selected: v.delivery == DeliveryMethod.pickup,
+              title: 'Ambil Sendiri (Pickup)',
+              subtitle: v.pickupLocation,
+              price: rupiah(0),
+              onTap: () => setState(() => v.delivery = DeliveryMethod.pickup),
+            ),
           const SizedBox(height: 10),
           const Divider(height: 1, color: OC.line),
           const SizedBox(height: 10),
@@ -709,13 +724,15 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             title: 'Metode Pembayaran',
           ),
           const SizedBox(height: 10),
-          _methodRow(
-            method: PaymentMethod.cod,
-            icon: Icons.handshake_outlined,
-            title: 'Bayar di Tempat (COD)',
-            subtitle: 'Titip tunai ke kurir warga',
-          ),
-          const SizedBox(height: 8),
+          if (_vendors.length == 1 && _vendors.first.codAvailable) ...[
+            _methodRow(
+              method: PaymentMethod.cod,
+              icon: Icons.handshake_outlined,
+              title: 'Bayar di Tempat (COD)',
+              subtitle: 'Bayar saat pesanan diterima',
+            ),
+            const SizedBox(height: 8),
+          ],
           _methodRow(
             method: PaymentMethod.midtrans,
             icon: Icons.bolt_rounded,

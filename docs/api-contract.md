@@ -456,6 +456,11 @@ UMKM ringkas:
   "rating": 4.8, "jumlah_ulasan": 24, "jarak_km": 1.2 }
 ```
 
+Respons produk katalog juga memuat `courier_fee`, `cod_available`, dan
+`pickup_available`. Nilai `courier_fee` adalah `null` jika kurir warga tidak
+tersedia. Pilihan pembayaran dan pengiriman harus mengikuti flag tersebut;
+backend tetap memvalidasinya saat checkout.
+
 ### 5.4 Ongkir (berbasis zona jarak)
 `POST /api/ongkir_hitung`
 Req: `id_umkm`, `latitude`, `longitude` (lokasi pelanggan).
@@ -466,6 +471,11 @@ Res `data`:
 ```
 
 ### 5.5 Pesanan (Pelanggan)
+Endpoint aktual aplikasi: `POST /api/pesanan/checkout` (privat). Kombinasi yang
+didukung adalah `cod` atau `midtrans` dengan `pickup` atau `kurir`. COD tidak
+memanggil Midtrans. Harga item dan biaya pengantaran dihitung ulang dari
+database, sehingga nilai harga/biaya dari client tidak dipercaya.
+
 > **Keputusan penting:** satu checkout bisa berisi produk dari **beberapa UMKM**,
 > sedangkan tabel `pesanan` hanya punya satu `id_umkm`. Lihat §9.1.
 

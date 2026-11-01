@@ -58,6 +58,8 @@ class CartLine {
 
   final double? courierFee;
   final String pickupLocation;
+  final bool codAvailable;
+  final bool pickupAvailable;
 
   const CartLine({
     required this.productId,
@@ -73,6 +75,8 @@ class CartLine {
     required this.umkmType,
     this.courierFee,
     required this.pickupLocation,
+    this.codAvailable = true,
+    this.pickupAvailable = true,
   });
 
   double get subtotal => quantity * price;
@@ -91,6 +95,8 @@ class CartLine {
     String? umkmType,
     double? courierFee,
     String? pickupLocation,
+    bool? codAvailable,
+    bool? pickupAvailable,
   }) {
     return CartLine(
       productId: productId ?? this.productId,
@@ -106,6 +112,8 @@ class CartLine {
       umkmType: umkmType ?? this.umkmType,
       courierFee: courierFee ?? this.courierFee,
       pickupLocation: pickupLocation ?? this.pickupLocation,
+      codAvailable: codAvailable ?? this.codAvailable,
+      pickupAvailable: pickupAvailable ?? this.pickupAvailable,
     );
   }
 }
