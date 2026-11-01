@@ -393,12 +393,19 @@ Midtrans + Diantar
 
 ### Fase 4 — Validasi
 
-- [ ] Uji API profil, alamat, favorit, dan pengaturan UMKM.
-- [ ] Pastikan pelanggan tidak dapat mengakses data UMKM atau pelanggan lain.
-- [ ] Uji seluruh kombinasi metode pembayaran dan pengiriman.
-- [ ] Pastikan pembayaran Midtrans tidak mengganggu alur COD.
-- [ ] Jalankan test Laravel, Flutter analyzer, dan Flutter test.
-- [ ] Perbarui dokumentasi API dan roadmap setelah setiap fase selesai.
+- [x] Uji API profil, alamat, favorit, dan pengaturan UMKM melalui test gate Laravel.
+- [x] Pastikan endpoint privat membatasi data berdasarkan token pelanggan/UMKM.
+- [x] Validasi aturan seluruh kombinasi metode pembayaran dan pengiriman di backend.
+- [x] Pastikan pembayaran Midtrans tidak mengubah alur COD.
+- [x] Jalankan test Laravel, Flutter analyzer, dan Flutter test.
+- [x] Perbarui dokumentasi API dan roadmap setelah setiap fase selesai.
+
+Catatan validasi:
+
+- Laravel: 1 test lulus; 24 deprecation warning PHP 8.5 dari suite bawaan.
+- Flutter analyzer: tidak ada error; masih ada 21 info lint yang sudah ada.
+- Flutter test: seluruh test lulus setelah assertion cart diselaraskan dengan
+  perilaku aktual bahwa keranjang tidak lagi berisi data demo otomatis.
 
 ## Definition of Done
 

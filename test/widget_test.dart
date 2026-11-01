@@ -11,13 +11,8 @@ void main() {
       ),
     );
 
-    // Initial visible elements in cart
-    expect(find.text('Pesanan dari 2 UMKM Berbeda'), findsOneWidget);
-    expect(find.text('Kontak & Alamat Penerima'), findsOneWidget);
-    expect(find.text('Muhammad Rizki'), findsOneWidget);
-    expect(find.text('WhatsApp Aktif'), findsOneWidget);
-    expect(find.text('Dapur Bu Minten'), findsOneWidget);
-    expect(find.text('Nasi Kotak Ayam Geprek'), findsOneWidget);
+    // The cart is empty until a customer explicitly adds a product.
+    expect(find.text('Keranjang Belanja Kosong'), findsOneWidget);
   });
 
   testWidgets('CustomerHomeScreen displays home and navigates to Cart via bottom nav', (WidgetTester tester) async {
@@ -39,8 +34,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Now cart screen should be displayed
-    expect(find.text('Pesanan dari 2 UMKM Berbeda'), findsOneWidget);
-    expect(find.text('Dapur Bu Minten'), findsOneWidget);
+    expect(find.text('Keranjang Belanja Kosong'), findsOneWidget);
   });
 
   testWidgets('Tapping product card opens ProductDetailScreen and displays full details', (WidgetTester tester) async {
