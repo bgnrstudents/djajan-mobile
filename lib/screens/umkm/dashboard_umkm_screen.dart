@@ -50,11 +50,14 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
         content: const Text('Anda perlu masuk kembali untuk mengelola warung.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                minimumSize: const Size(110, 44)),
+              backgroundColor: AppColors.danger,
+              minimumSize: const Size(110, 44),
+            ),
             onPressed: () async {
               await context.read<AuthService>().logout();
               if (!context.mounted) return;
@@ -111,7 +114,9 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                       profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
                       bg: profile.tokoAktif ? OC.mint : OC.box,
                       fg: profile.tokoAktif ? OC.mintText : OC.muted,
-                      ikon: profile.tokoAktif ? Icons.check_circle : Icons.do_not_disturb_on,
+                      ikon: profile.tokoAktif
+                          ? Icons.check_circle
+                          : Icons.do_not_disturb_on,
                     ),
                   ],
                 ),
@@ -163,50 +168,52 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
           children: [
             _buildDynamicHeader(profile, service),
             Expanded(
-              child: service.memuat &&
+              child:
+                  service.memuat &&
                       service.produkList.isEmpty &&
                       service.pesananList.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : service.pesanError != null && service.produkList.isEmpty
-                      ? TampilanError(
-                          pesan: service.pesanError!,
-                          onCobaLagi: () => service.muatSemua(),
-                        )
-                      : IndexedStack(
-                          index: _tab,
-                          children: [
-                            _TabBeranda(
-                              service: service,
-                              onPindahTab: (i) => setState(() => _tab = i),
-                              onRefresh: _refresh,
-                            ),
-                            _TabProduk(
-                              service: service,
-                              kataKunci: _kataKunci,
-                              onCari: (v) => setState(() => _kataKunci = v),
-                              onRefresh: _refresh,
-                            ),
-                            _TabPesanan(service: service, onRefresh: _refresh),
-                            const PengaturanScreen(isTab: true),
-                          ],
+                  ? TampilanError(
+                      pesan: service.pesanError!,
+                      onCobaLagi: () => service.muatSemua(),
+                    )
+                  : IndexedStack(
+                      index: _tab,
+                      children: [
+                        _TabBeranda(
+                          service: service,
+                          onPindahTab: (i) => setState(() => _tab = i),
+                          onRefresh: _refresh,
                         ),
+                        _TabProduk(
+                          service: service,
+                          kataKunci: _kataKunci,
+                          onCari: (v) => setState(() => _kataKunci = v),
+                          onRefresh: _refresh,
+                        ),
+                        _TabPesanan(service: service, onRefresh: _refresh),
+                        const PengaturanScreen(isTab: true),
+                      ],
+                    ),
             ),
           ],
         ),
       ),
       floatingActionButton: _tab == 1
-            ? FloatingActionButton.extended(
-                backgroundColor: OC.primary,
-                foregroundColor: Colors.white,
-                onPressed: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const TambahProdukScreen()));
-                  if (mounted) _refresh();
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Tambah Produk'),
-              )
-            : null,
+          ? FloatingActionButton.extended(
+              backgroundColor: OC.primary,
+              foregroundColor: Colors.white,
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TambahProdukScreen()),
+                );
+                if (mounted) _refresh();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Produk'),
+            )
+          : null,
       bottomNavigationBar: UmkmBottomNavigation(
         currentIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
@@ -261,12 +268,17 @@ class _TabBeranda extends StatelessWidget {
                             color: OC.mintSoft,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.account_balance_wallet_outlined,
-                              size: 16, color: OC.primary),
+                          child: const Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 16,
+                            color: OC.primary,
+                          ),
                         ),
                         const SizedBox(width: 8),
-                        Text('TOTAL PENDAPATAN',
-                            style: OT.label.copyWith(letterSpacing: 0.8)),
+                        Text(
+                          'TOTAL PENDAPATAN',
+                          style: OT.label.copyWith(letterSpacing: 0.8),
+                        ),
                       ],
                     ),
                     MiniBadge(
@@ -330,6 +342,39 @@ class _TabBeranda extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
+          KartuPutih(
+            radius: 16,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Ringkasan periode ini', style: OT.cardTitle),
+                const SizedBox(height: 8),
+                Text(
+                  '${r.totalPesananPeriode} pesanan • ${rupiah(r.omzetPeriode)} omzet',
+                  style: OT.secondary,
+                ),
+                if (r.produkTerlaris.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text('Produk terlaris', style: OT.item),
+                  const SizedBox(height: 6),
+                  ...r.produkTerlaris.take(3).map(
+                    (produk) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(produk.namaProduk, style: OT.secondary)),
+                          Text('${produk.jumlahTerjual} terjual', style: OT.caption),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
           // 3. PERINGATAN STOK HABIS (JIKA ADA)
           if (stokHabis > 0) ...[
             InkWell(
@@ -345,15 +390,20 @@ class _TabBeranda extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        color: OC.amber, size: 22),
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: OC.amber,
+                      size: 22,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Peringatan Stok Habis',
-                              style: OT.item.copyWith(color: OC.amber)),
+                          Text(
+                            'Peringatan Stok Habis',
+                            style: OT.item.copyWith(color: OC.amber),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             '$stokHabis produk butuh restock agar tetap tayang di etalase.',
@@ -379,8 +429,11 @@ class _TabBeranda extends StatelessWidget {
                   label: 'Tambah Produk',
                   warnaIkon: OC.primary,
                   onTap: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const TambahProdukScreen()));
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const TambahProdukScreen(),
+                      ),
+                    );
                     onRefresh();
                   },
                 ),
@@ -415,11 +468,13 @@ class _TabBeranda extends StatelessWidget {
               if (service.pesananList.isNotEmpty)
                 TextButton(
                   onPressed: () => onPindahTab(2),
-                  child: Text('Lihat Semua',
-                      style: OT.caption.copyWith(
-                        color: OC.primary,
-                        fontWeight: FontWeight.w700,
-                      )),
+                  child: Text(
+                    'Lihat Semua',
+                    style: OT.caption.copyWith(
+                      color: OC.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -440,70 +495,80 @@ class _TabBeranda extends StatelessWidget {
               ),
             )
           else
-            ...pesananTerbaru.map((p) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () async {
-                      await Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) =>
-                              DetailPesananScreen(idPesanan: p.idPesanan)));
-                      await onRefresh();
-                    },
-                    child: KartuPutih(
-                      radius: 16,
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: const BoxDecoration(
-                              color: OC.box,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.receipt_outlined,
-                                size: 20, color: OC.muted),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text('#${p.idPesanan}', style: OT.item),
-                                    const Spacer(),
-                                    Text(rupiah(p.totalDiterimaMitra),
-                                        style: OT.money
-                                            .copyWith(color: OC.primary)),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Text(
-                                        '${p.namaPembeli} • ${p.totalPorsi} porsi',
-                                        style: OT.caption),
-                                    const Spacer(),
-                                    MiniBadge(
-                                      p.status.label,
-                                      bg: p.status == StatusPesanan.poBaru
-                                          ? OC.peach
-                                          : OC.mintSoft,
-                                      fg: p.status == StatusPesanan.poBaru
-                                          ? OC.amber
-                                          : OC.primary,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+            ...pesananTerbaru.map(
+              (p) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            DetailPesananScreen(idPesanan: p.idPesanan),
                       ),
+                    );
+                    await onRefresh();
+                  },
+                  child: KartuPutih(
+                    radius: 16,
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: const BoxDecoration(
+                            color: OC.box,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.receipt_outlined,
+                            size: 20,
+                            color: OC.muted,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text('#${p.idPesanan}', style: OT.item),
+                                  const Spacer(),
+                                  Text(
+                                    rupiah(p.totalDiterimaMitra),
+                                    style: OT.money.copyWith(color: OC.primary),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Text(
+                                    '${p.namaPembeli} • ${p.totalPorsi} porsi',
+                                    style: OT.caption,
+                                  ),
+                                  const Spacer(),
+                                  MiniBadge(
+                                    p.status.label,
+                                    bg: p.status == StatusPesanan.poBaru
+                                        ? OC.peach
+                                        : OC.mintSoft,
+                                    fg: p.status == StatusPesanan.poBaru
+                                        ? OC.amber
+                                        : OC.primary,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                )),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -544,7 +609,8 @@ class _TabProdukState extends State<_TabProduk> {
 
     // Filter berdasarkan kata kunci & kategori
     final produkList = semua.where((p) {
-      final cocokKunci = widget.kataKunci.isEmpty ||
+      final cocokKunci =
+          widget.kataKunci.isEmpty ||
           p.namaProduk.toLowerCase().contains(widget.kataKunci.toLowerCase()) ||
           p.kategori.toLowerCase().contains(widget.kataKunci.toLowerCase());
       final cocokKategori =
@@ -582,8 +648,10 @@ class _TabProdukState extends State<_TabProduk> {
                       hintStyle: TextStyle(color: OC.faint, fontSize: 13.5),
                       prefixIcon: Icon(Icons.search, color: OC.muted, size: 22),
                       border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -603,7 +671,9 @@ class _TabProdukState extends State<_TabProduk> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: terpilih ? OC.primary : Colors.white,
                               borderRadius: BorderRadius.circular(20),
@@ -640,8 +710,11 @@ class _TabProdukState extends State<_TabProduk> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            color: OC.amber, size: 20),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: OC.amber,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -660,10 +733,14 @@ class _TabProdukState extends State<_TabProduk> {
                     padding: const EdgeInsets.only(top: 40),
                     child: TampilanKosong(
                       ikon: Icons.inventory_2_outlined,
-                      judul: widget.kataKunci.isEmpty && _kategoriDipilih == 'Semua'
+                      judul:
+                          widget.kataKunci.isEmpty &&
+                              _kategoriDipilih == 'Semua'
                           ? 'Belum Ada Produk'
                           : 'Produk Tidak Ditemukan',
-                      pesan: widget.kataKunci.isEmpty && _kategoriDipilih == 'Semua'
+                      pesan:
+                          widget.kataKunci.isEmpty &&
+                              _kategoriDipilih == 'Semua'
                           ? 'Tekan tombol "Tambah Produk" untuk mulai berjualan di Djajan.'
                           : 'Coba kata kunci atau filter kategori lain.',
                     ),
@@ -671,14 +748,16 @@ class _TabProdukState extends State<_TabProduk> {
                 else
                   Column(
                     children: produkList
-                        .map((p) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _KartuProduk(
-                                produk: p,
-                                service: widget.service,
-                                onRefresh: widget.onRefresh,
-                              ),
-                            ))
+                        .map(
+                          (p) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _KartuProduk(
+                              produk: p,
+                              service: widget.service,
+                              onRefresh: widget.onRefresh,
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
               ],
@@ -722,21 +801,28 @@ class _KartuStatistik extends StatelessWidget {
                 color: soroti ? OC.peachSoft : OC.primarySoft,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(ikon,
-                  color: soroti ? OC.amber : OC.primary, size: 18),
+              child: Icon(
+                ikon,
+                color: soroti ? OC.amber : OC.primary,
+                size: 18,
+              ),
             ),
             const SizedBox(height: 10),
-            Text(nilai,
-                style: OT.cardTitle.copyWith(
-                  color: soroti ? OC.amber : OC.primary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                )),
+            Text(
+              nilai,
+              style: OT.cardTitle.copyWith(
+                color: soroti ? OC.amber : OC.primary,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: OT.caption,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+            Text(
+              label,
+              style: OT.caption,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
@@ -769,9 +855,11 @@ class _TombolShortcut extends StatelessWidget {
           children: [
             Icon(ikon, color: warnaIkon, size: 22),
             const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: OT.caption.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: OT.caption.copyWith(fontWeight: FontWeight.w600),
+            ),
           ],
         ),
       ),
@@ -815,14 +903,18 @@ class _KartuProdukState extends State<_KartuProduk> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Hapus Produk?'),
         content: Text(
-            '"${widget.produk.namaProduk}" akan dihapus permanen dari database beserta fotonya.'),
+          '"${widget.produk.namaProduk}" akan dihapus permanen dari database beserta fotonya.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                minimumSize: const Size(110, 44)),
+              backgroundColor: AppColors.danger,
+              minimumSize: const Size(110, 44),
+            ),
             onPressed: () async {
               Navigator.pop(ctx);
               await _jalankan(() async {
@@ -866,8 +958,8 @@ class _KartuProdukState extends State<_KartuProduk> {
                           width: 80,
                           height: 80,
                           radius: 14,
-                          cacheBuster:
-                              DateTime.now().millisecondsSinceEpoch.toString(),
+                          cacheBuster: DateTime.now().millisecondsSinceEpoch
+                              .toString(),
                         ),
                       ),
                     ),
@@ -876,7 +968,9 @@ class _KartuProdukState extends State<_KartuProduk> {
                       left: 4,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: p.modePenjualan == ModePenjualan.ready
                               ? OC.mint
@@ -884,7 +978,9 @@ class _KartuProdukState extends State<_KartuProduk> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          p.modePenjualan == ModePenjualan.ready ? 'Ready' : 'PO',
+                          p.modePenjualan == ModePenjualan.ready
+                              ? 'Ready'
+                              : 'PO',
                           style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w800,
@@ -928,8 +1024,11 @@ class _KartuProdukState extends State<_KartuProduk> {
                                   },
                             child: const Padding(
                               padding: EdgeInsets.all(4),
-                              child: Icon(Icons.edit_outlined,
-                                  size: 19, color: OC.muted),
+                              child: Icon(
+                                Icons.edit_outlined,
+                                size: 19,
+                                color: OC.muted,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -938,8 +1037,11 @@ class _KartuProdukState extends State<_KartuProduk> {
                             onTap: _sibuk ? null : _konfirmasiHapus,
                             child: const Padding(
                               padding: EdgeInsets.all(4),
-                              child: Icon(Icons.delete_outline,
-                                  size: 19, color: AppColors.danger),
+                              child: Icon(
+                                Icons.delete_outline,
+                                size: 19,
+                                color: AppColors.danger,
+                              ),
                             ),
                           ),
                         ],
@@ -958,7 +1060,9 @@ class _KartuProdukState extends State<_KartuProduk> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: OC.box,
                               borderRadius: BorderRadius.circular(6),
@@ -966,9 +1070,10 @@ class _KartuProdukState extends State<_KartuProduk> {
                             child: Text(
                               p.kategori,
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: OC.muted,
-                                  fontWeight: FontWeight.w600),
+                                fontSize: 11,
+                                color: OC.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const Spacer(),
@@ -997,15 +1102,18 @@ class _KartuProdukState extends State<_KartuProduk> {
                       color: OC.box,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     child: Row(
                       children: [
                         InkWell(
                           onTap: _sibuk || p.stok == 0
                               ? null
                               : () => _jalankan(
-                                  () => widget.service.ubahStok(p, p.stok - 1)),
+                                  () => widget.service.ubahStok(p, p.stok - 1),
+                                ),
                           borderRadius: BorderRadius.circular(8),
                           child: Padding(
                             padding: const EdgeInsets.all(4),
@@ -1031,12 +1139,16 @@ class _KartuProdukState extends State<_KartuProduk> {
                           onTap: _sibuk
                               ? null
                               : () => _jalankan(
-                                  () => widget.service.ubahStok(p, p.stok + 1)),
+                                  () => widget.service.ubahStok(p, p.stok + 1),
+                                ),
                           borderRadius: BorderRadius.circular(8),
                           child: const Padding(
                             padding: EdgeInsets.all(4),
-                            child: Icon(Icons.add_rounded,
-                                size: 18, color: OC.primary),
+                            child: Icon(
+                              Icons.add_rounded,
+                              size: 18,
+                              color: OC.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -1046,20 +1158,28 @@ class _KartuProdukState extends State<_KartuProduk> {
                   const Flexible(
                     child: Row(
                       children: [
-                        Icon(Icons.event_seat_outlined,
-                            size: 15, color: OC.muted),
+                        Icon(
+                          Icons.event_seat_outlined,
+                          size: 15,
+                          color: OC.muted,
+                        ),
                         SizedBox(width: 5),
-                        Text('Porsi sesuai PO acara',
-                            style: TextStyle(fontSize: 12, color: OC.muted)),
+                        Text(
+                          'Porsi sesuai PO acara',
+                          style: TextStyle(fontSize: 12, color: OC.muted),
+                        ),
                       ],
                     ),
                   ),
                 const Spacer(),
-                const Text('Tayangkan',
-                    style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: OC.muted)),
+                const Text(
+                  'Tayangkan',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: OC.muted,
+                  ),
+                ),
                 const SizedBox(width: 6),
                 Transform.scale(
                   scale: 0.82,
@@ -1069,7 +1189,8 @@ class _KartuProdukState extends State<_KartuProduk> {
                     onChanged: _sibuk
                         ? null
                         : (v) => _jalankan(
-                            () => widget.service.ubahStatusTayang(p, v)),
+                            () => widget.service.ubahStatusTayang(p, v),
+                          ),
                   ),
                 ),
               ],
@@ -1093,7 +1214,7 @@ class _TabPesanan extends StatefulWidget {
 }
 
 class _TabPesananState extends State<_TabPesanan> {
-  int _filterIndex = 0; // 0: Semua, 1: Perlu Konfirmasi, 2: Diterima, 3: Selesai
+  int _filterIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -1103,12 +1224,22 @@ class _TabPesananState extends State<_TabPesanan> {
     final pesananTersaring = switch (_filterIndex) {
       1 => semua.where((p) => p.status == StatusPesanan.poBaru).toList(),
       2 => semua.where((p) => p.status == StatusPesanan.diterima).toList(),
-      3 => semua.where((p) => p.status == StatusPesanan.selesai).toList(),
+      3 =>
+        semua
+            .where(
+              (p) =>
+                  p.status == StatusPesanan.diproses ||
+                  p.status == StatusPesanan.diantar,
+            )
+            .toList(),
+      4 => semua.where((p) => p.status == StatusPesanan.selesai).toList(),
+      5 => semua.where((p) => p.status == StatusPesanan.ditolak).toList(),
       _ => semua,
     };
 
-    final jumlahPoBaru =
-        semua.where((p) => p.status == StatusPesanan.poBaru).length;
+    final jumlahPoBaru = semua
+        .where((p) => p.status == StatusPesanan.poBaru)
+        .length;
 
     return RefreshIndicator(
       color: OC.primary,
@@ -1125,22 +1256,48 @@ class _TabPesananState extends State<_TabPesanan> {
                 children: [
                   _filterButton('Semua', 0, semua.length),
                   const SizedBox(width: 8),
-                  _filterButton('Perlu Konfirmasi', 1, jumlahPoBaru,
-                      dangerBadge: jumlahPoBaru > 0),
+                  _filterButton(
+                    'Perlu Konfirmasi',
+                    1,
+                    jumlahPoBaru,
+                    dangerBadge: jumlahPoBaru > 0,
+                  ),
                   const SizedBox(width: 8),
                   _filterButton(
-                      'Diterima',
-                      2,
-                      semua
-                          .where((p) => p.status == StatusPesanan.diterima)
-                          .length),
+                    'Diterima',
+                    2,
+                    semua
+                        .where((p) => p.status == StatusPesanan.diterima)
+                        .length,
+                  ),
                   const SizedBox(width: 8),
                   _filterButton(
-                      'Selesai',
-                      3,
-                      semua
-                          .where((p) => p.status == StatusPesanan.selesai)
-                          .length),
+                    'Berjalan',
+                    3,
+                    semua
+                        .where(
+                          (p) =>
+                              p.status == StatusPesanan.diproses ||
+                              p.status == StatusPesanan.diantar,
+                        )
+                        .length,
+                  ),
+                  const SizedBox(width: 8),
+                  _filterButton(
+                    'Selesai',
+                    4,
+                    semua
+                        .where((p) => p.status == StatusPesanan.selesai)
+                        .length,
+                  ),
+                  const SizedBox(width: 8),
+                  _filterButton(
+                    'Ditolak',
+                    5,
+                    semua
+                        .where((p) => p.status == StatusPesanan.ditolak)
+                        .length,
+                  ),
                 ],
               ),
             ),
@@ -1153,8 +1310,7 @@ class _TabPesananState extends State<_TabPesanan> {
                       TampilanKosong(
                         ikon: Icons.receipt_long_outlined,
                         judul: 'Tidak Ada Pesanan',
-                        pesan:
-                            'Pesanan pelanggan untuk kategori filter ini belum ada.',
+                        pesan: 'Pesanan pelanggan untuk kategori filter ini belum ada.',
                       ),
                     ],
                   )
@@ -1188,7 +1344,9 @@ class _TabPesananState extends State<_TabPesanan> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: OC.box,
                                       borderRadius: BorderRadius.circular(8),
@@ -1242,8 +1400,11 @@ class _TabPesananState extends State<_TabPesanan> {
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(color: OC.line),
                                       ),
-                                      child: const Icon(Icons.fastfood_outlined,
-                                          color: OC.muted, size: 24),
+                                      child: const Icon(
+                                        Icons.fastfood_outlined,
+                                        color: OC.muted,
+                                        size: 24,
+                                      ),
                                     ),
 
                                   Expanded(
@@ -1294,9 +1455,13 @@ class _TabPesananState extends State<_TabPesanan> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Pendapatan Bersih',
-                                          style: TextStyle(
-                                              fontSize: 11, color: OC.muted)),
+                                      const Text(
+                                        'Pendapatan Bersih',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: OC.muted,
+                                        ),
+                                      ),
                                       Text(
                                         formatRupiah(p.totalDiterimaMitra),
                                         style: const TextStyle(
@@ -1311,15 +1476,20 @@ class _TabPesananState extends State<_TabPesanan> {
                                   if (p.status == StatusPesanan.poBaru)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 6),
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: OC.peachSoft,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Row(
                                         children: [
-                                          Icon(Icons.timer_outlined,
-                                              size: 14, color: OC.amber),
+                                          Icon(
+                                            Icons.timer_outlined,
+                                            size: 14,
+                                            color: OC.amber,
+                                          ),
                                           SizedBox(width: 4),
                                           Text(
                                             'Konfirmasi Segera',
@@ -1343,8 +1513,11 @@ class _TabPesananState extends State<_TabPesanan> {
                                           ),
                                         ),
                                         const SizedBox(width: 4),
-                                        const Icon(Icons.chevron_right,
-                                            size: 18, color: OC.muted),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          size: 18,
+                                          color: OC.muted,
+                                        ),
                                       ],
                                     ),
                                 ],
@@ -1361,8 +1534,12 @@ class _TabPesananState extends State<_TabPesanan> {
     );
   }
 
-  Widget _filterButton(String label, int index, int count,
-      {bool dangerBadge = false}) {
+  Widget _filterButton(
+    String label,
+    int index,
+    int count, {
+    bool dangerBadge = false,
+  }) {
     final terpilih = _filterIndex == index;
     return InkWell(
       onTap: () => setState(() => _filterIndex = index),
@@ -1393,8 +1570,8 @@ class _TabPesananState extends State<_TabPesanan> {
                 color: terpilih
                     ? Colors.white.withValues(alpha: 0.25)
                     : dangerBadge
-                        ? AppColors.dangerBg
-                        : OC.box,
+                    ? AppColors.dangerBg
+                    : OC.box,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -1405,8 +1582,8 @@ class _TabPesananState extends State<_TabPesanan> {
                   color: terpilih
                       ? Colors.white
                       : dangerBadge
-                          ? AppColors.danger
-                          : OC.muted,
+                      ? AppColors.danger
+                      : OC.muted,
                 ),
               ),
             ),
@@ -1417,9 +1594,11 @@ class _TabPesananState extends State<_TabPesanan> {
   }
 
   (Color, Color) _warnaStatus(StatusPesanan s) => switch (s) {
-        StatusPesanan.poBaru => (OC.peach, OC.amber),
-        StatusPesanan.diterima => (OC.mint, OC.primary),
-        StatusPesanan.selesai => (OC.mint, OC.primary),
-        StatusPesanan.ditolak => (AppColors.dangerBg, AppColors.danger),
-      };
+    StatusPesanan.poBaru => (OC.peach, OC.amber),
+    StatusPesanan.diterima => (OC.mint, OC.primary),
+    StatusPesanan.diproses => (OC.banner, OC.mintText),
+    StatusPesanan.diantar => (OC.banner, OC.mintText),
+    StatusPesanan.selesai => (OC.mint, OC.primary),
+    StatusPesanan.ditolak => (AppColors.dangerBg, AppColors.danger),
+  };
 }

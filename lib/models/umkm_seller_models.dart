@@ -71,37 +71,38 @@ class UmkmProfile {
   bool get lokasiTersedia => latitude != null && longitude != null;
 
   factory UmkmProfile.fromJson(Map<String, dynamic> j) => UmkmProfile(
-        idUmkm: _int(j['id_umkm']),
-        namaUsaha: _str(j['nama_usaha']),
-        spesialis: _str(j['spesialis']),
-        deskripsiUsaha: _str(j['deskripsi_usaha']),
-        alamat: _str(j['alamat']),
-        noTelpUsaha: _str(j['no_telp_usaha']),
-        emailUsaha: _str(j['email_usaha']),
-        fotoProfilUrl: _strOrNull(j['foto_profil_url']) ??
-            (_strOrNull(j['foto_profil']) == null
-                ? null
-                : 'file_gambar/profil/${_strOrNull(j['foto_profil'])}'),
-        statusVerifikasi: _str(j['status_verifikasi'], 'terverifikasi'),
-        tokoAktif: _bool(j['toko_aktif']),
-        transferBankAktif: _bool(j['transfer_bank_aktif']),
-        bankKode: _str(j['bank_kode'], 'BRI'),
-        bankNama: _str(j['bank_nama']),
-        noRekening: _str(j['no_rekening']),
-        atasNama: _str(j['atas_nama']),
-        codAktif: _bool(j['cod_aktif']),
-        skemaPO: _str(j['skema_po']),
-        pickupAktif: _bool(j['pickup_aktif']),
-        kurirWargaAktif: _bool(j['kurir_warga_aktif']),
-        biayaPengantaran: _int(j['biaya_pengantaran']),
-        latitude: _doubleOrNull(j['latitude']),
-        longitude: _doubleOrNull(j['longitude']),
-        radiusGratisKm: _double(j['radius_gratis_km']),
-        jarakMaksimalKm: _doubleOrNull(j['jarak_maksimal_km']),
-        zonaOngkir: ((j['zona_ongkir'] as List?) ?? [])
-            .map((e) => ZonaOngkir.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    idUmkm: _int(j['id_umkm']),
+    namaUsaha: _str(j['nama_usaha']),
+    spesialis: _str(j['spesialis']),
+    deskripsiUsaha: _str(j['deskripsi_usaha']),
+    alamat: _str(j['alamat']),
+    noTelpUsaha: _str(j['no_telp_usaha']),
+    emailUsaha: _str(j['email_usaha']),
+    fotoProfilUrl:
+        _strOrNull(j['foto_profil_url']) ??
+        (_strOrNull(j['foto_profil']) == null
+            ? null
+            : 'file_gambar/profil/${_strOrNull(j['foto_profil'])}'),
+    statusVerifikasi: _str(j['status_verifikasi'], 'terverifikasi'),
+    tokoAktif: _bool(j['toko_aktif']),
+    transferBankAktif: _bool(j['transfer_bank_aktif']),
+    bankKode: _str(j['bank_kode'], 'BRI'),
+    bankNama: _str(j['bank_nama']),
+    noRekening: _str(j['no_rekening']),
+    atasNama: _str(j['atas_nama']),
+    codAktif: _bool(j['cod_aktif']),
+    skemaPO: _str(j['skema_po']),
+    pickupAktif: _bool(j['pickup_aktif']),
+    kurirWargaAktif: _bool(j['kurir_warga_aktif']),
+    biayaPengantaran: _int(j['biaya_pengantaran']),
+    latitude: _doubleOrNull(j['latitude']),
+    longitude: _doubleOrNull(j['longitude']),
+    radiusGratisKm: _double(j['radius_gratis_km']),
+    jarakMaksimalKm: _doubleOrNull(j['jarak_maksimal_km']),
+    zonaOngkir: ((j['zona_ongkir'] as List?) ?? [])
+        .map((e) => ZonaOngkir.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 // ====================================================== ZONA ONGKIR
@@ -123,18 +124,18 @@ class ZonaOngkir {
   });
 
   factory ZonaOngkir.fromJson(Map<String, dynamic> j) => ZonaOngkir(
-        idZona: j['id_zona'] == null ? null : _int(j['id_zona']),
-        jarakMin: _double(j['jarak_min']),
-        jarakMax: _double(j['jarak_max']),
-        biaya: _int(j['biaya']),
-      );
+    idZona: j['id_zona'] == null ? null : _int(j['id_zona']),
+    jarakMin: _double(j['jarak_min']),
+    jarakMax: _double(j['jarak_max']),
+    biaya: _int(j['biaya']),
+  );
 
   /// Bentuk yang dikirim ke `ongkir_simpan.php` (di dalam array `zona`).
   Map<String, dynamic> toJson() => {
-        'jarak_min': jarakMin,
-        'jarak_max': jarakMax,
-        'biaya': biaya,
-      };
+    'jarak_min': jarakMin,
+    'jarak_max': jarakMax,
+    'biaya': biaya,
+  };
 }
 
 // ============================================================= PRODUK
@@ -143,22 +144,22 @@ enum ModePenjualan { ready, preOrder, keduanya }
 extension ModePenjualanX on ModePenjualan {
   /// Nilai yang disimpan pada kolom ENUM `mode_penjualan` di MySQL.
   String get kodeDb => switch (this) {
-        ModePenjualan.ready => 'ready',
-        ModePenjualan.preOrder => 'pre_order',
-        ModePenjualan.keduanya => 'keduanya',
-      };
+    ModePenjualan.ready => 'ready',
+    ModePenjualan.preOrder => 'pre_order',
+    ModePenjualan.keduanya => 'keduanya',
+  };
 
   String get label => switch (this) {
-        ModePenjualan.ready => 'Ready',
-        ModePenjualan.preOrder => 'Pre-Order',
-        ModePenjualan.keduanya => 'Ready + PO',
-      };
+    ModePenjualan.ready => 'Ready',
+    ModePenjualan.preOrder => 'Pre-Order',
+    ModePenjualan.keduanya => 'Ready + PO',
+  };
 
   static ModePenjualan dariDb(String? kode) => switch (kode) {
-        'ready' => ModePenjualan.ready,
-        'pre_order' => ModePenjualan.preOrder,
-        _ => ModePenjualan.keduanya,
-      };
+    'ready' => ModePenjualan.ready,
+    'pre_order' => ModePenjualan.preOrder,
+    _ => ModePenjualan.keduanya,
+  };
 }
 
 class Produk {
@@ -195,49 +196,56 @@ class Produk {
   bool get punyaFoto => gambarUrl != null && gambarUrl!.isNotEmpty;
 
   factory Produk.fromJson(Map<String, dynamic> j) => Produk(
-        idProduk: _int(j['id_produk']),
-        idUmkm: _int(j['id_umkm']),
-        idKategori: j['id_kategori'] == null ? null : _int(j['id_kategori']),
-        namaProduk: _str(j['nama_produk']),
-        kategori: _str(j['kategori']),
-        harga: _int(j['harga']),
-        deskripsi: _str(j['deskripsi']),
-        modePenjualan: ModePenjualanX.dariDb(j['mode_penjualan'] as String?),
-        stok: _int(j['stok']),
-        minOrderPO: _int(j['min_order_po']),
-        waktuMasakPO: _str(j['waktu_masak_po'], 'H-2 Hari'),
-        tampilkanDiWarung: _bool(j['status_ketersediaan']),
-        gambarUrl: _strOrNull(j['gambar_url']) ??
-            (_strOrNull(j['gambar_produk']) == null
-                ? null
-                : 'uploads/produk/${_strOrNull(j['gambar_produk'])}'),
-      );
+    idProduk: _int(j['id_produk']),
+    idUmkm: _int(j['id_umkm']),
+    idKategori: j['id_kategori'] == null ? null : _int(j['id_kategori']),
+    namaProduk: _str(j['nama_produk']),
+    kategori: _str(j['kategori']),
+    harga: _int(j['harga']),
+    deskripsi: _str(j['deskripsi']),
+    modePenjualan: ModePenjualanX.dariDb(j['mode_penjualan'] as String?),
+    stok: _int(j['stok']),
+    minOrderPO: _int(j['min_order_po']),
+    waktuMasakPO: _str(j['waktu_masak_po'], 'H-2 Hari'),
+    tampilkanDiWarung: _bool(j['status_ketersediaan']),
+    gambarUrl:
+        _strOrNull(j['gambar_url']) ??
+        (_strOrNull(j['gambar_produk']) == null
+            ? null
+            : 'uploads/produk/${_strOrNull(j['gambar_produk'])}'),
+  );
 }
 
 // ============================================================ PESANAN
-enum StatusPesanan { poBaru, diterima, ditolak, selesai }
+enum StatusPesanan { poBaru, diterima, diproses, diantar, ditolak, selesai }
 
 extension StatusPesananX on StatusPesanan {
   String get kodeDb => switch (this) {
-        StatusPesanan.poBaru => 'po_baru',
-        StatusPesanan.diterima => 'diterima',
-        StatusPesanan.ditolak => 'ditolak',
-        StatusPesanan.selesai => 'selesai',
-      };
+    StatusPesanan.poBaru => 'po_baru',
+    StatusPesanan.diterima => 'diterima',
+    StatusPesanan.diproses => 'diproses',
+    StatusPesanan.diantar => 'diantar',
+    StatusPesanan.ditolak => 'ditolak',
+    StatusPesanan.selesai => 'selesai',
+  };
 
   String get label => switch (this) {
-        StatusPesanan.poBaru => 'PO Baru',
-        StatusPesanan.diterima => 'Diterima',
-        StatusPesanan.ditolak => 'Ditolak',
-        StatusPesanan.selesai => 'Selesai',
-      };
+    StatusPesanan.poBaru => 'PO Baru',
+    StatusPesanan.diterima => 'Diterima',
+    StatusPesanan.diproses => 'Diproses',
+    StatusPesanan.diantar => 'Diantar',
+    StatusPesanan.ditolak => 'Ditolak',
+    StatusPesanan.selesai => 'Selesai',
+  };
 
   static StatusPesanan dariDb(String? kode) => switch (kode) {
-        'diterima' => StatusPesanan.diterima,
-        'ditolak' => StatusPesanan.ditolak,
-        'selesai' => StatusPesanan.selesai,
-        _ => StatusPesanan.poBaru,
-      };
+    'diterima' => StatusPesanan.diterima,
+    'diproses' => StatusPesanan.diproses,
+    'diantar' => StatusPesanan.diantar,
+    'ditolak' => StatusPesanan.ditolak,
+    'selesai' => StatusPesanan.selesai,
+    _ => StatusPesanan.poBaru,
+  };
 }
 
 class ItemPesanan {
@@ -258,13 +266,13 @@ class ItemPesanan {
   });
 
   factory ItemPesanan.fromJson(Map<String, dynamic> j) => ItemPesanan(
-        namaProduk: _str(j['nama_produk']),
-        satuan: _str(j['satuan'], 'Porsi'),
-        jumlah: _int(j['jumlah']),
-        hargaSatuan: _int(j['harga_satuan']),
-        subtotal: _int(j['subtotal']),
-        gambarUrl: _strOrNull(j['gambar_url']),
-      );
+    namaProduk: _str(j['nama_produk']),
+    satuan: _str(j['satuan'], 'Porsi'),
+    jumlah: _int(j['jumlah']),
+    hargaSatuan: _int(j['harga_satuan']),
+    subtotal: _int(j['subtotal']),
+    gambarUrl: _strOrNull(j['gambar_url']),
+  );
 }
 
 class Pesanan {
@@ -323,27 +331,27 @@ class Pesanan {
   }
 
   factory Pesanan.fromJson(Map<String, dynamic> j) => Pesanan(
-        idPesanan: _str(j['id_pesanan']),
-        namaPembeli: _str(j['nama_pembeli'], 'Pelanggan'),
-        noTelp: _str(j['no_telp']),
-        tanggalPesan: _tanggal(j['tanggal_pesan']) ?? DateTime.now(),
-        waktuDibutuhkan: _tanggal(j['waktu_dibutuhkan']),
-        batasKonfirmasi: _tanggal(j['batas_konfirmasi']),
-        keperluanAcara: _str(j['keperluan_acara'], '-'),
-        metodePengiriman: _str(j['metode_pengiriman'], '-'),
-        alamatTujuan: _str(j['alamat_tujuan'], '-'),
-        catatan: _str(j['catatan']),
-        metodePembayaran: _str(j['metode_pembayaran'], '-'),
-        statusPembayaran: _str(j['status_pembayaran'], 'belum_bayar'),
-        biayaPengantaran: _int(j['biaya_pengantaran']),
-        biayaLayanan: _int(j['biaya_layanan']),
-        subtotal: _int(j['subtotal']),
-        totalHarga: _int(j['total_harga']),
-        status: StatusPesananX.dariDb(j['status_pesanan'] as String?),
-        items: ((j['items'] as List?) ?? [])
-            .map((e) => ItemPesanan.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    idPesanan: _str(j['id_pesanan']),
+    namaPembeli: _str(j['nama_pembeli'], 'Pelanggan'),
+    noTelp: _str(j['no_telp']),
+    tanggalPesan: _tanggal(j['tanggal_pesan']) ?? DateTime.now(),
+    waktuDibutuhkan: _tanggal(j['waktu_dibutuhkan']),
+    batasKonfirmasi: _tanggal(j['batas_konfirmasi']),
+    keperluanAcara: _str(j['keperluan_acara'], '-'),
+    metodePengiriman: _str(j['metode_pengiriman'], '-'),
+    alamatTujuan: _str(j['alamat_tujuan'], '-'),
+    catatan: _str(j['catatan']),
+    metodePembayaran: _str(j['metode_pembayaran'], '-'),
+    statusPembayaran: _str(j['status_pembayaran'], 'belum_bayar'),
+    biayaPengantaran: _int(j['biaya_pengantaran']),
+    biayaLayanan: _int(j['biaya_layanan']),
+    subtotal: _int(j['subtotal']),
+    totalHarga: _int(j['total_harga']),
+    status: StatusPesananX.dariDb(j['status_pesanan'] as String?),
+    items: ((j['items'] as List?) ?? [])
+        .map((e) => ItemPesanan.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 // ========================================================== RINGKASAN
@@ -354,6 +362,11 @@ class RingkasanDashboard {
   final int pesananBaru;
   final int pesananDiterima;
   final int omzetDiterima;
+  final String periodeMulai;
+  final String periodeAkhir;
+  final int totalPesananPeriode;
+  final int omzetPeriode;
+  final List<ProdukTerlaris> produkTerlaris;
 
   const RingkasanDashboard({
     this.totalProduk = 0,
@@ -362,6 +375,11 @@ class RingkasanDashboard {
     this.pesananBaru = 0,
     this.pesananDiterima = 0,
     this.omzetDiterima = 0,
+    this.periodeMulai = '',
+    this.periodeAkhir = '',
+    this.totalPesananPeriode = 0,
+    this.omzetPeriode = 0,
+    this.produkTerlaris = const [],
   });
 
   factory RingkasanDashboard.fromJson(Map<String, dynamic> j) =>
@@ -372,6 +390,31 @@ class RingkasanDashboard {
         pesananBaru: _int(j['pesanan_baru']),
         pesananDiterima: _int(j['pesanan_diterima']),
         omzetDiterima: _int(j['omzet_diterima']),
+        periodeMulai: j['periode_mulai']?.toString() ?? '',
+        periodeAkhir: j['periode_akhir']?.toString() ?? '',
+        totalPesananPeriode: _int(j['total_pesanan_periode']),
+        omzetPeriode: _int(j['omzet_periode']),
+        produkTerlaris: ((j['produk_terlaris'] as List?) ?? [])
+            .map((e) => ProdukTerlaris.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+class ProdukTerlaris {
+  final String namaProduk;
+  final int jumlahTerjual;
+  final int omzet;
+
+  const ProdukTerlaris({
+    required this.namaProduk,
+    required this.jumlahTerjual,
+    required this.omzet,
+  });
+
+  factory ProdukTerlaris.fromJson(Map<String, dynamic> j) => ProdukTerlaris(
+        namaProduk: j['nama_produk']?.toString() ?? '',
+        jumlahTerjual: _int(j['jumlah_terjual']),
+        omzet: _int(j['omzet']),
       );
 }
 

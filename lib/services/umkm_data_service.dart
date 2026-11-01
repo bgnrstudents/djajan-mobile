@@ -98,26 +98,37 @@ class UmkmDataService extends ChangeNotifier {
 
     try {
       final hasil = await Future.wait([
-        ApiService.get('produk_list',
-            query: {'id_umkm': '${_profile!.idUmkm}'}),
-        ApiService.get('pesanan_list',
-            query: {'id_umkm': '${_profile!.idUmkm}'}),
+        ApiService.get(
+          'produk_list',
+          query: {'id_umkm': '${_profile!.idUmkm}'},
+        ),
+        ApiService.get(
+          'pesanan_list',
+          query: {'id_umkm': '${_profile!.idUmkm}'},
+        ),
         ApiService.get('ringkasan', query: {'id_umkm': '${_profile!.idUmkm}'}),
         ApiService.get('profil_get', query: {'id_umkm': '${_profile!.idUmkm}'}),
       ]);
 
       _produkList
         ..clear()
-        ..addAll((hasil[0] as List)
-            .map((e) => Produk.fromJson(e as Map<String, dynamic>)));
+        ..addAll(
+          (hasil[0] as List).map(
+            (e) => Produk.fromJson(e as Map<String, dynamic>),
+          ),
+        );
 
       _pesananList
         ..clear()
-        ..addAll((hasil[1] as List)
-            .map((e) => Pesanan.fromJson(e as Map<String, dynamic>)));
+        ..addAll(
+          (hasil[1] as List).map(
+            (e) => Pesanan.fromJson(e as Map<String, dynamic>),
+          ),
+        );
 
-      _ringkasan =
-          RingkasanDashboard.fromJson(hasil[2] as Map<String, dynamic>);
+      _ringkasan = RingkasanDashboard.fromJson(
+        hasil[2] as Map<String, dynamic>,
+      );
       _profile = UmkmProfile.fromJson(hasil[3] as Map<String, dynamic>);
       _pesanError = null;
     } on ApiException catch (e) {
@@ -138,8 +149,9 @@ class UmkmDataService extends ChangeNotifier {
     );
     _produkList
       ..clear()
-      ..addAll((data as List)
-          .map((e) => Produk.fromJson(e as Map<String, dynamic>)));
+      ..addAll(
+        (data as List).map((e) => Produk.fromJson(e as Map<String, dynamic>)),
+      );
     await _muatRingkasan();
   }
 
@@ -150,8 +162,9 @@ class UmkmDataService extends ChangeNotifier {
     );
     _pesananList
       ..clear()
-      ..addAll((data as List)
-          .map((e) => Pesanan.fromJson(e as Map<String, dynamic>)));
+      ..addAll(
+        (data as List).map((e) => Pesanan.fromJson(e as Map<String, dynamic>)),
+      );
     await _muatRingkasan();
   }
 
@@ -179,23 +192,19 @@ class UmkmDataService extends ChangeNotifier {
     required bool tampilkanDiWarung,
     XFile? gambar,
   }) async {
-    final data = await ApiService.postDenganGambar(
-      'produk_create',
-      {
-        'id_umkm': _profile!.idUmkm,
-        'id_kategori': idKategori,
-        'nama_produk': namaProduk,
-        'kategori': kategori,
-        'harga': harga,
-        'deskripsi': deskripsi,
-        'mode_penjualan': modePenjualan.kodeDb,
-        'stok': stok,
-        'min_order_po': minOrderPO,
-        'waktu_masak_po': waktuMasakPO,
-        'status_ketersediaan': tampilkanDiWarung,
-      },
-      gambar: gambar,
-    );
+    final data = await ApiService.postDenganGambar('produk_create', {
+      'id_umkm': _profile!.idUmkm,
+      'id_kategori': idKategori,
+      'nama_produk': namaProduk,
+      'kategori': kategori,
+      'harga': harga,
+      'deskripsi': deskripsi,
+      'mode_penjualan': modePenjualan.kodeDb,
+      'stok': stok,
+      'min_order_po': minOrderPO,
+      'waktu_masak_po': waktuMasakPO,
+      'status_ketersediaan': tampilkanDiWarung,
+    }, gambar: gambar);
 
     await _muatProduk();
     notifyListeners();
@@ -217,23 +226,19 @@ class UmkmDataService extends ChangeNotifier {
     required bool tampilkanDiWarung,
     XFile? gambarBaru,
   }) async {
-    await ApiService.postDenganGambar(
-      'produk_update',
-      {
-        'id_produk': idProduk,
-        'id_kategori': idKategori,
-        'nama_produk': namaProduk,
-        'kategori': kategori,
-        'harga': harga,
-        'deskripsi': deskripsi,
-        'mode_penjualan': modePenjualan.kodeDb,
-        'stok': stok,
-        'min_order_po': minOrderPO,
-        'waktu_masak_po': waktuMasakPO,
-        'status_ketersediaan': tampilkanDiWarung,
-      },
-      gambar: gambarBaru,
-    );
+    await ApiService.postDenganGambar('produk_update', {
+      'id_produk': idProduk,
+      'id_kategori': idKategori,
+      'nama_produk': namaProduk,
+      'kategori': kategori,
+      'harga': harga,
+      'deskripsi': deskripsi,
+      'mode_penjualan': modePenjualan.kodeDb,
+      'stok': stok,
+      'min_order_po': minOrderPO,
+      'waktu_masak_po': waktuMasakPO,
+      'status_ketersediaan': tampilkanDiWarung,
+    }, gambar: gambarBaru);
 
     await _muatProduk();
     notifyListeners();
@@ -395,13 +400,30 @@ class UmkmDataService extends ChangeNotifier {
   }
 
   Future<String> selesaikanPesanan(String idPesanan) async {
-    await ApiService.post('pesanan_status', {
-      'id_pesanan': idPesanan,
-      'status': StatusPesanan.selesai.kodeDb,
-    });
+    await _ubahStatusPesanan(idPesanan, StatusPesanan.selesai);
     await _muatPesanan();
     notifyListeners();
     return 'Pesanan $idPesanan ditandai selesai.';
   }
 
+  Future<String> prosesPesanan(String idPesanan) async {
+    await _ubahStatusPesanan(idPesanan, StatusPesanan.diproses);
+    await _muatPesanan();
+    notifyListeners();
+    return 'Pesanan $idPesanan sedang diproses.';
   }
+
+  Future<String> antarPesanan(String idPesanan) async {
+    await _ubahStatusPesanan(idPesanan, StatusPesanan.diantar);
+    await _muatPesanan();
+    notifyListeners();
+    return 'Pesanan $idPesanan sedang diantar.';
+  }
+
+  Future<void> _ubahStatusPesanan(String idPesanan, StatusPesanan status) {
+    return ApiService.post('pesanan_status', {
+      'id_pesanan': idPesanan,
+      'status': status.kodeDb,
+    });
+  }
+}

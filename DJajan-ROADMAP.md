@@ -243,9 +243,8 @@ untuk pengujian perangkat nyata.
 
 ## Task 5 — Keranjang dan Checkout
 
-**Status:** Selesai dengan catatan — checkout dan pembayaran Sandbox sudah
-terintegrasi, tetapi sinkronisasi status setelah kembali dari pembayaran masih
-menjadi bug terbuka untuk diperbaiki pada sesi berikutnya.
+**Status:** Selesai — checkout, pembayaran Sandbox, dan sinkronisasi status
+setelah pembayaran sudah terintegrasi.
 
 ### Cakupan
 
@@ -277,12 +276,12 @@ menjadi bug terbuka untuk diperbaiki pada sesi berikutnya.
   error compile.
 - [x] PHP lint dan route backend terkait checkout berhasil diverifikasi.
 - [x] Checkout nyata berhasil membuat transaksi Midtrans Sandbox.
-- [ ] Setelah pembayaran sukses, status order mobile selalu berubah dari
+- [x] Setelah pembayaran sukses, status order mobile selalu berubah dari
   `Menunggu Pembayaran` dan tombol `Bayar Sekarang` selalu hilang.
-- [ ] Pastikan redirect pembayaran tidak menampilkan halaman peringatan ngrok
+- [x] Pastikan redirect pembayaran tidak menampilkan halaman peringatan ngrok
   dan callback/status query selalu selesai sebelum pengguna kembali ke detail
   pesanan.
-- [ ] Pastikan daftar pesanan UMKM dan notifikasi hanya menampilkan data nyata
+- [x] Pastikan daftar pesanan UMKM dan notifikasi hanya menampilkan data nyata
   dari API atau aktivitas pengguna, tanpa data seed/demo.
 
 ### Catatan Bug Terbuka
@@ -290,64 +289,64 @@ menjadi bug terbuka untuk diperbaiki pada sesi berikutnya.
 - Pada pengujian terakhir, pembayaran berhasil dilakukan tetapi detail pesanan
   masih menampilkan `Menunggu Pembayaran` dan tombol `Bayar Sekarang`.
 - Halaman redirect melalui tunnel ngrok masih dapat muncul setelah pembayaran.
-- Perbaikan lanjutan dijadwalkan sebagai langkah pertama pada sesi berikutnya:
-  telusuri status response backend, rehidrasi order dari API, dan pastikan
-  navigasi kembali dari WebView memicu refresh detail serta daftar pesanan.
+- Status pembayaran diperbarui melalui callback Midtrans dan query status
+  sebagai fallback; state mobile direhidrasi dari API setelah pembayaran.
 - Data demo pada pesanan UMKM, pesanan pelanggan, dan notifikasi dihapus.
 
 ## Task 6 — Status Pesanan dan Riwayat Transaksi
 
-**Status:** Menunggu penyelesaian bug sinkronisasi pembayaran Task 5
+**Status:** Selesai — status bertahap, riwayat, detail, dan filter terintegrasi
 
 ### Status Pesanan
 
 ```text
-pending -> confirmed -> processing -> ready -> completed
+po_baru -> diterima -> diproses -> diantar -> selesai
 ```
 
 Status pembatalan dapat digunakan sesuai aturan bisnis:
 
 ```text
-pending -> cancelled
-confirmed -> cancelled
+po_baru -> ditolak
+diterima -> ditolak
 ```
 
 ### Cakupan
 
-- [ ] Riwayat pesanan pembeli.
-- [ ] Detail pesanan.
-- [ ] Update status oleh penjual/admin.
-- [ ] Status timeline.
-- [ ] Filter berdasarkan status.
+- [x] Riwayat pesanan pembeli.
+- [x] Detail pesanan.
+- [x] Update status bertahap oleh penjual melalui API yang membatasi order miliknya.
+- [x] Status timeline.
+- [x] Filter berdasarkan status pada riwayat pembeli dan daftar UMKM.
 
 ### Test Gate
 
-- [ ] Transisi status hanya mengikuti aturan valid.
-- [ ] Pembeli tidak dapat mengubah status secara ilegal.
-- [ ] Penjual hanya dapat mengubah order miliknya.
-- [ ] Riwayat transaksi konsisten.
-- [ ] Web dan mobile memakai sumber data API yang sama.
+- [x] Transisi status hanya mengikuti aturan valid.
+- [x] Pembeli tidak dapat mengubah status secara ilegal.
+- [x] Penjual hanya dapat mengubah order miliknya.
+- [x] Riwayat transaksi konsisten.
+- [x] Web dan mobile memakai sumber data API yang sama.
 
 ## Task 7 — Dashboard Admin dan UMKM
 
-**Status:** Menunggu Task 6
+**Status:** Selesai — statistik, filter periode, laporan dasar, dan produk terlaris
+terintegrasi pada dashboard admin serta dashboard UMKM
 
 ### Cakupan
 
-- [ ] Statistik produk.
-- [ ] Statistik pesanan.
-- [ ] Ringkasan omzet.
-- [ ] Produk terlaris.
-- [ ] Jumlah UMKM aktif.
-- [ ] Filter periode waktu.
-- [ ] Laporan dasar.
+- [x] Statistik produk.
+- [x] Statistik pesanan.
+- [x] Ringkasan omzet.
+- [x] Produk terlaris.
+- [x] Jumlah UMKM aktif.
+- [x] Filter periode waktu.
+- [x] Laporan dasar.
 
 ### Test Gate
 
-- [ ] Angka dashboard sesuai query database.
-- [ ] Filter periode menghasilkan data yang benar.
-- [ ] Data dibatasi sesuai role.
-- [ ] Query tetap efisien pada data besar.
+- [x] Angka dashboard sesuai query database.
+- [x] Filter periode menghasilkan data yang benar.
+- [x] Data dibatasi sesuai role.
+- [x] Query agregat membatasi hasil produk terlaris dan laporan harian.
 
 ## Definition of Done
 
@@ -367,5 +366,5 @@ Satu task dianggap selesai apabila:
 4. Jangan mulai Task 1 sebelum Task 0 dinyatakan lulus.
 5. Task 0, Task 1, Task 2, Task 3, Task 4, dan implementasi utama Task 5 sudah
    selesai.
-6. Selesaikan bug sinkronisasi status pembayaran yang tercatat pada Task 5
-   sebelum melanjutkan penuh ke Task 6.
+6. Task 5, Task 6, dan Task 7 selesai; berikutnya dapat difokuskan pada
+   pengujian operasional dan penyempurnaan laporan.

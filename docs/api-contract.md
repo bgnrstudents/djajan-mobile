@@ -162,7 +162,7 @@ Tabel yang **sudah ada** (migrasi Laravel di `Djajan-Website`):
 | Kolom | Default di migrasi | Nilai yang dipakai controller/model | Rekomendasi |
 |---|---|---|---|
 | `produk.mode_penjualan` | `reguler` | `ready` / `pre_order` / `keduanya` | samakan ke 3 nilai controller |
-| `pesanan.status_pesanan` | `menunggu_konfirmasi` | `po_baru` / `diterima` / `ditolak` / `selesai` | perlu enum baru (lihat §6) |
+| `pesanan.status_pesanan` | `menunggu_konfirmasi` | `po_baru` / `diterima` / `diproses` / `diantar` / `ditolak` / `selesai` | transisi dibatasi backend |
 | `umkm.status_verifikasi` | `menunggu` | register menulis `pending`; login menerima `terverifikasi` | standarkan: `menunggu`/`terverifikasi`/`ditolak` |
 
 ---
@@ -334,7 +334,7 @@ Res `data` = objek produk terbaru.
 Req: `id_produk`. Res `data: { "id_produk": 12 }`.
 
 ### 4.11 `GET /api/pesanan_list` (privat)
-Res `data` = array pesanan (urut `po_baru → diterima → selesai → ditolak`):
+Res `data` = array pesanan (urut `po_baru → diterima → diproses → diantar → selesai → ditolak`):
 ```json
 [{
   "id_pesanan": "PO-20260915", "id_pelanggan": 3,
@@ -360,16 +360,30 @@ Res `data` = array pesanan (urut `po_baru → diterima → selesai → ditolak`)
 Query: `id_pesanan`. Res `data` = satu objek pesanan (bentuk sama 4.11).
 
 ### 4.13 `POST /api/pesanan_status` (privat)
-Req: `id_pesanan`, `status` ∈ `po_baru|diterima|ditolak|selesai`.
+Req: `id_pesanan`, `status` ∈ `diterima|diproses|diantar|ditolak|selesai`.
 Status `diterima` **otomatis mengurangi stok** produk terkait.
-Res `data` = objek pesanan terbaru. `409` bila pesanan sudah diproses (kecuali → `selesai`).
+Transisi valid: `po_baru → diterima|ditolak`, `diterima → diproses|ditolak`,
+`diproses → diantar`, dan `diantar → selesai`. Res `data` = objek pesanan
+terbaru; transisi lain mengembalikan `409`.
 
 ### 4.14 `GET /api/ringkasan` (privat)
+Query opsional: `mulai=YYYY-MM-DD&akhir=YYYY-MM-DD`. Data hanya milik UMKM
+yang sedang login. Tanpa query, periode dimulai dari awal bulan berjalan sampai
+hari ini.
+
 Res `data`:
 ```json
 {
   "total_produk": 8, "produk_tayang": 6, "stok_habis": 1,
-  "pesanan_baru": 3, "pesanan_diterima": 5, "omzet_diterima": 750000
+  "pesanan_baru": 3, "pesanan_diterima": 5, "omzet_diterima": 750000,
+  "periode_mulai": "2026-11-01", "periode_akhir": "2026-11-01",
+  "total_pesanan_periode": 5, "omzet_periode": 750000,
+  "produk_terlaris": [
+    {"id_produk": 2, "nama_produk": "Nasi Geprek", "jumlah_terjual": 12, "omzet": 180000}
+  ],
+  "laporan_harian": [
+    {"tanggal": "2026-11-01", "jumlah_pesanan": 5, "omzet": 750000}
+  ]
 }
 ```
 
@@ -506,8 +520,9 @@ Mobile (`OrderStatus`) vs backend saat ini (`status_pesanan`):
 | `completed` | `selesai` | UMKM |
 | `cancelled` | `dibatalkan` | pelanggan / sistem |
 
-> Endpoint role UMKM (§4.13) saat ini hanya menerima `po_baru|diterima|ditolak|selesai`.
-> **Perlu diselaraskan** — lihat §9.2.
+> Endpoint role UMKM (§4.13) menerima transisi bertahap
+> `po_baru → diterima → diproses → diantar → selesai`, dengan penolakan hanya
+> dari `po_baru` atau `diterima`.
 
 ---
 
