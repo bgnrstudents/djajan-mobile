@@ -348,6 +348,58 @@ terintegrasi pada dashboard admin serta dashboard UMKM
 - [x] Data dibatasi sesuai role.
 - [x] Query agregat membatasi hasil produk terlaris dan laporan harian.
 
+## Rencana Berikutnya — Setting, Operasional, dan Pembayaran
+
+Rencana ini menjadi urutan kerja setelah Task 7. Implementasi dimulai setelah
+desain dan batasan bisnis pada bagian pembayaran disepakati.
+
+### Fase 1 — Setting Pelanggan
+
+- [x] Ganti data dummy pada halaman Setting pelanggan dengan data API nyata.
+- [x] Hubungkan edit nama, email, dan nomor telepon ke database.
+- [x] Tambahkan penyimpanan dan pengelolaan alamat pengiriman.
+- [x] Hubungkan favorit produk dan UMKM ke penyimpanan database.
+- [x] Tangani loading, empty state, dan error pada data alamat/favorit.
+
+### Fase 2 — Pengaturan UMKM
+
+- [ ] Hubungkan profil usaha dan foto ke database.
+- [ ] Hubungkan nama usaha, spesialisasi, alamat, dan kontak.
+- [ ] Hubungkan toggle toko aktif/nonaktif.
+- [ ] Tambahkan pengaturan akun dan password.
+- [ ] Hubungkan pengaturan COD.
+- [ ] Hubungkan pilihan pickup atau pengantaran.
+- [ ] Hubungkan pengaturan ongkir dan kurir.
+- [ ] Pastikan semua perubahan tersimpan dan terbaca ulang dari backend.
+
+### Fase 3 — Konsep Pembayaran dan Pengiriman
+
+Kombinasi yang didukung:
+
+```text
+COD + Pickup
+COD + Diantar
+Midtrans + Pickup
+Midtrans + Diantar
+```
+
+- COD tidak melewati Midtrans.
+- Midtrans menggunakan satu akun platform Djajan.
+- Dana Midtrans masuk ke akun merchant Djajan yang dipakai backend.
+- Sistem mencatat transaksi dan pendapatan masing-masing UMKM.
+- Pencairan dana ke UMKM dilakukan manual pada tahap awal.
+- Komisi belum dipotong sampai aturan bisnis ditentukan.
+- Akun Midtrans terpisah per UMKM belum digunakan pada tahap awal.
+
+### Fase 4 — Validasi
+
+- [ ] Uji API profil, alamat, favorit, dan pengaturan UMKM.
+- [ ] Pastikan pelanggan tidak dapat mengakses data UMKM atau pelanggan lain.
+- [ ] Uji seluruh kombinasi metode pembayaran dan pengiriman.
+- [ ] Pastikan pembayaran Midtrans tidak mengganggu alur COD.
+- [ ] Jalankan test Laravel, Flutter analyzer, dan Flutter test.
+- [ ] Perbarui dokumentasi API dan roadmap setelah setiap fase selesai.
+
 ## Definition of Done
 
 Satu task dianggap selesai apabila:

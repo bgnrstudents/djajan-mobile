@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../config/app_config.dart';
-import '../../../data/sample_catalog.dart';
 import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../widgets/favorite_button.dart';
@@ -11,6 +11,7 @@ import '../../../services/cart_service.dart';
 import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
 import '../../../services/favorite_service.dart';
+import '../../../services/catalog_service.dart';
 
 /// Halaman daftar favorit pengguna: produk dan UMKM yang disimpan.
 class FavoriteScreen extends StatefulWidget {
@@ -40,18 +41,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         action: SnackBarAction(
           label: 'Lihat',
           textColor: const Color(0xFFFFBE25),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CartScreen()),
-          ),
+          onPressed: () =>
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const CartScreen())),
         ),
       ),
     );
   }
 
   void _openStorefront(Umkm umkm) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)));
   }
 
   @override
@@ -113,10 +114,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         body: AnimatedBuilder(
           animation: _favorites,
           builder: (context, _) => TabBarView(
-            children: [
-              _buildProductsTab(),
-              _buildUmkmTab(),
-            ],
+            children: [_buildProductsTab(context), _buildUmkmTab(context)],
           ),
         ),
       ),
@@ -124,15 +122,15 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   }
 
   // --------------------------------------------------------------- Produk
-  Widget _buildProductsTab() {
-    final products = _favorites.favoriteProducts;
+  Widget _buildProductsTab(BuildContext context) {
+    final catalog = context.watch<CatalogService>();
+    final products = _favorites.favoriteProductsFrom(catalog.products);
 
     if (products.isEmpty) {
       return _emptyState(
         icon: Icons.favorite_border,
         title: 'Belum ada produk favorit',
-        message:
-            'Tekan ikon hati pada produk untuk menyimpannya di sini.',
+        message: 'Tekan ikon hati pada produk untuk menyimpannya di sini.',
       );
     }
 
@@ -147,7 +145,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       ),
       itemBuilder: (context, index) {
         final product = products[index];
-        final umkm = SampleCatalog.umkmById(product.umkmId);
+        final umkm = catalog.umkmById(product.umkmId);
         return ProductCard(
           product: product,
           onTap: () => Navigator.of(context).push(
@@ -163,8 +161,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   }
 
   // ----------------------------------------------------------------- UMKM
-  Widget _buildUmkmTab() {
-    final umkms = _favorites.favoriteUmkms;
+  Widget _buildUmkmTab(BuildContext context) {
+    final catalog = context.watch<CatalogService>();
+    final umkms = _favorites.favoriteUmkmsFrom(catalog.umkms);
 
     if (umkms.isEmpty) {
       return _emptyState(
@@ -189,7 +188,10 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   }
 
   Widget _umkmCard(Umkm umkm) {
-    final productCount = SampleCatalog.productsOf(umkm.id).length;
+    final productCount = context
+        .read<CatalogService>()
+        .productsOf(umkm.id)
+        .length;
 
     return Material(
       color: Colors.white,
@@ -258,8 +260,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   ),
                   if (umkm.isVerified) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.verified,
-                        size: 14, color: Color(0xFF16A34A)),
+                    const Icon(
+                      Icons.verified,
+                      size: 14,
+                      color: Color(0xFF16A34A),
+                    ),
                   ],
                 ],
               ),
@@ -287,10 +292,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   const SizedBox(width: 8),
                   Text(
                     '$productCount produk',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: textMuted,
-                    ),
+                    style: const TextStyle(fontSize: 11.5, color: textMuted),
                   ),
                 ],
               ),

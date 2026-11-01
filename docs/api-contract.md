@@ -418,7 +418,23 @@ Objek pelanggan:
 | POST | `/api/pelanggan/alamat_hapus` | `id_alamat` |
 | POST | `/api/pelanggan/alamat_utama` | `id_alamat` |
 
-### 5.3 Katalog & Pencarian (boleh diakses tanpa login)
+Respons alamat menggunakan field `id_alamat`, `label`, `nama_penerima`,
+`no_telp`, `alamat`, `catatan`, dan `utama`. Semua endpoint alamat membatasi
+data berdasarkan pelanggan yang sedang login.
+
+### 5.3 Profil dan Favorit Pelanggan
+
+| Method | Endpoint | Req | Res `data` |
+|---|---|---|---|
+| GET | `/api/pelanggan/profil` | — | profil pelanggan |
+| POST | `/api/pelanggan/profil_update` | `nama`, `email?`, `no_telp` | profil pelanggan |
+| GET | `/api/pelanggan/favorit` | — | `{produk: [], umkm: []}` |
+| POST | `/api/pelanggan/favorit_toggle` | `tipe=produk\|umkm`, `id_item`, `favorit` | `null` |
+
+Favorit disimpan di database, bukan seed atau state demo lokal. Detail produk
+dan UMKM favorit dirender dari katalog API menggunakan ID yang tersimpan.
+
+### 5.4 Katalog & Pencarian (boleh diakses tanpa login)
 | Method | Endpoint | Query/Req | Res `data` |
 |---|---|---|---|
 | GET | `/api/katalog/umkm_list` | `cari`, `kategori`, `hanya_aktif=1` | array UMKM ringkas |

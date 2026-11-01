@@ -9,6 +9,9 @@ import '../../../services/favorite_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/order_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/customer_settings_service.dart';
+import '../../../services/api_service.dart';
+import '../../../models/customer_settings_models.dart';
 import '../order/order_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';
@@ -16,8 +19,13 @@ const String kreonganKeyword = 'kreongan';
 class ProfileUser {
   final String name;
   final String phoneNumber;
+  final String email;
 
-  const ProfileUser({required this.name, required this.phoneNumber});
+  const ProfileUser({
+    required this.name,
+    required this.phoneNumber,
+    this.email = '',
+  });
 }
 
 class ProfileFormField {
@@ -168,16 +176,27 @@ class ProfilScreen extends StatefulWidget {
 }
 
 class _ProfilScreenState extends State<ProfilScreen> {
+  final CustomerSettingsService _settings = CustomerSettingsService();
   bool _notificationsEnabled = true;
-  String _addressLabel = 'Kantor';
-  String _address = 'RT 02 / RW 01 Kreongan';
   String? _businessName;
   String? _businessAddress;
 
-  ProfileUser _user = const ProfileUser(
-    name: 'Della',
-    phoneNumber: '0812-3456-7890',
-  );
+  ProfileUser _user = const ProfileUser(name: '', phoneNumber: '');
+
+  @override
+  void initState() {
+    super.initState();
+    final session = context.read<AuthService>().session;
+    final data = session?.data;
+    if (data != null) {
+      _user = ProfileUser(
+        name: data['nama']?.toString() ?? '',
+        phoneNumber: data['no_telp']?.toString() ?? '',
+        email: data['email']?.toString() ?? '',
+      );
+    }
+    _settings.load();
+  }
 
   List<ProfileFormField> get _accountFields => [
     ProfileFormField(
@@ -191,31 +210,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
       keyboardType: TextInputType.phone,
       prefixIcon: Icons.phone_outlined,
     ),
-    const ProfileFormField(
+    ProfileFormField(
       label: 'Email',
-      initialValue: 'della@email.com',
+      initialValue: _user.email,
       keyboardType: TextInputType.emailAddress,
       prefixIcon: Icons.email_outlined,
-    ),
-  ];
-
-  List<ProfileFormField> get _addressFields => [
-    ProfileFormField(
-      label: 'Label Alamat',
-      initialValue: _addressLabel,
-      prefixIcon: Icons.label_outline,
-    ),
-    ProfileFormField(
-      label: 'Alamat Lengkap',
-      initialValue: _address,
-      maxLines: 3,
-      prefixIcon: Icons.location_on_outlined,
-    ),
-    const ProfileFormField(
-      label: 'Patokan',
-      initialValue: '',
-      requiredField: false,
-      prefixIcon: Icons.near_me_outlined,
     ),
   ];
 
@@ -257,7 +256,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
     ProfileMenuItem(
       icon: Icons.location_on_outlined,
       title: 'Daftar Alamat Pengiriman',
-      subtitle: '$_addressLabel: $_address',
+      subtitle: _settings.primaryAddress == null
+          ? 'Belum ada alamat tersimpan'
+          : '${_settings.primaryAddress!.label}: ${_settings.primaryAddress!.address}',
       iconColor: const Color(0xFF45B7C8),
       onTap: _openAddressForm,
     ),
@@ -313,12 +314,21 @@ class _ProfilScreenState extends State<ProfilScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: FavoriteService(),
+      animation: Listenable.merge([FavoriteService(), _settings]),
       builder: (context, _) => SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_settings.loading) const LinearProgressIndicator(minHeight: 2),
+            if (_settings.errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  _settings.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             const DjajanPageHeader(
               title: 'Profil Saya',
               subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
@@ -369,28 +379,143 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
     if (values == null || !mounted) return;
 
-    setState(() {
-      _user = ProfileUser(
+    try {
+      await context.read<AuthService>().updateCustomerProfile(
         name: values['Nama Lengkap']!,
-        phoneNumber: values['Nomor Handphone']!,
+        phone: values['Nomor Handphone']!,
+        email: values['Email']!,
       );
-    });
+      if (!mounted) return;
+      setState(() {
+        _user = ProfileUser(
+          name: values['Nama Lengkap']!,
+          phoneNumber: values['Nomor Handphone']!,
+          email: values['Email']!,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil berhasil diperbarui.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.pesan)));
+    }
   }
 
   Future<void> _openAddressForm() async {
+    int? selectedId = _settings.primaryAddress?.id;
+    if (_settings.addresses.isNotEmpty) {
+      selectedId = await showModalBottomSheet<int>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            children: [
+              const Text(
+                'Pilih alamat pengiriman',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ..._settings.addresses.map(
+                (address) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    address.primary
+                        ? Icons.radio_button_checked
+                        : Icons.location_on_outlined,
+                    color: AppConfig.primaryColor,
+                  ),
+                  title: Text(
+                    '${address.label}${address.primary ? ' • Utama' : ''}',
+                  ),
+                  subtitle: Text(address.address),
+                  onTap: () => Navigator.pop(context, address.id),
+                  trailing: IconButton(
+                    tooltip: 'Hapus alamat',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () async {
+                      await _settings.deleteAddress(address.id);
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context, -1),
+                icon: const Icon(Icons.add),
+                label: const Text('Tambah alamat baru'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (selectedId == null) return;
+      if (selectedId == -1) selectedId = null;
+    }
+
+    CustomerAddress? selected;
+    for (final address in _settings.addresses) {
+      if (address.id == selectedId) selected = address;
+    }
     final values = await _openFormPage(
       title: 'Alamat Pengiriman',
       subtitle: 'Pastikan alamat akurat untuk pengantaran',
       icon: Icons.location_on_outlined,
-      fields: _addressFields,
+      fields: [
+        ProfileFormField(
+          label: 'Label Alamat',
+          initialValue: selected?.label ?? '',
+          prefixIcon: Icons.label_outline,
+        ),
+        ProfileFormField(
+          label: 'Alamat Lengkap',
+          initialValue: selected?.address ?? '',
+          maxLines: 3,
+          prefixIcon: Icons.location_on_outlined,
+        ),
+        ProfileFormField(
+          label: 'Nama Penerima',
+          initialValue: selected?.recipient ?? _user.name,
+          prefixIcon: Icons.person_outline,
+        ),
+        ProfileFormField(
+          label: 'Nomor Handphone',
+          initialValue: selected?.phone ?? _user.phoneNumber,
+          keyboardType: TextInputType.phone,
+          prefixIcon: Icons.phone_outlined,
+        ),
+        ProfileFormField(
+          label: 'Patokan',
+          initialValue: selected?.note ?? '',
+          requiredField: false,
+          prefixIcon: Icons.near_me_outlined,
+        ),
+      ],
     );
 
     if (values == null || !mounted) return;
 
-    setState(() {
-      _addressLabel = values['Label Alamat']!;
-      _address = values['Alamat Lengkap']!;
-    });
+    try {
+      await _settings.saveAddress(
+        id: selected?.id,
+        label: values['Label Alamat']!,
+        address: values['Alamat Lengkap']!,
+        recipient: values['Nama Penerima']!,
+        phone: values['Nomor Handphone']!,
+        note: values['Patokan']!,
+        primary: true,
+      );
+      if (!mounted) return;
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.pesan)));
+    }
   }
 
   Future<void> _openBusinessRegistration({bool editing = false}) async {

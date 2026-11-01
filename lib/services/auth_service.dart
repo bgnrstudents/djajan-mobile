@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../config/api_config.dart';
 
 import 'api_service.dart';
+import 'favorite_service.dart';
 
 enum AuthRole { pelanggan, umkm }
 
@@ -19,10 +21,10 @@ class AuthService extends ChangeNotifier {
   static const _tokenKey = 'djajan_auth_token';
   static const _roleKey = 'djajan_auth_role';
 
- final GoogleSignIn _googleSignIn = GoogleSignIn(
-  serverClientId: ApiConfig.googleServerClientId,
-  scopes: ['email', 'profile'],
-);
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: ApiConfig.googleServerClientId,
+    scopes: ['email', 'profile'],
+  );
   bool _loading = false;
   String? _errorMessage;
   AuthSession? _session;
@@ -30,6 +32,25 @@ class AuthService extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
   AuthSession? get session => _session;
+
+  Future<void> updateCustomerProfile({
+    required String name,
+    required String email,
+    required String phone,
+  }) async {
+    final data = await ApiService.post('pelanggan/profil_update', {
+      'nama': name.trim(),
+      'email': email.trim(),
+      'no_telp': phone.trim(),
+    }) as Map<String, dynamic>;
+    if (_session != null) {
+      _session = AuthSession(
+        role: _session!.role,
+        data: {..._session!.data, ...data},
+      );
+      notifyListeners();
+    }
+  }
 
   Future<AuthSession> login(String identifier, String password) async {
     return _run(() async {
@@ -95,8 +116,9 @@ class AuthService extends ChangeNotifier {
           throw ApiException('Google tidak memberikan ID token yang valid.');
         }
 
-        final data =
-            await ApiService.post('auth/google', {'id_token': idToken});
+        final data = await ApiService.post('auth/google', {
+          'id_token': idToken,
+        });
         return _setSession(data as Map<String, dynamic>);
       } on ApiException {
         rethrow;
@@ -118,19 +140,22 @@ class AuthService extends ChangeNotifier {
       case 'network_error':
         return 'Google Login membutuhkan koneksi internet.';
       default:
-        return 'Google Login gagal (${error.code}). ${error.message ?? ''}'.trim();
+        return 'Google Login gagal (${error.code}). ${error.message ?? ''}'
+            .trim();
     }
   }
 
   Future<void> logout() async {
     try {
       if (ApiService.hasToken) {
-        final endpoint =
-            _session?.role == AuthRole.umkm ? 'logout' : 'pelanggan/logout';
+        final endpoint = _session?.role == AuthRole.umkm
+            ? 'logout'
+            : 'pelanggan/logout';
         await ApiService.post(endpoint, {});
       }
     } finally {
       await _googleSignIn.signOut();
+      FavoriteService().clear();
       await _clearSession();
     }
   }

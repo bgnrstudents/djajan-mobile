@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/favorite_service.dart';
+import '../services/api_service.dart';
 
 /// Tombol hati (favorit) yang otomatis memperbarui diri saat status berubah.
 ///
@@ -18,9 +19,9 @@ class FavoriteButton extends StatelessWidget {
     this.size = 18,
     this.backgroundColor,
   }) : assert(
-          (productId != null) ^ (umkmId != null),
-          'Isi salah satu: productId atau umkmId.',
-        );
+         (productId != null) ^ (umkmId != null),
+         'Isi salah satu: productId atau umkmId.',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -38,34 +39,61 @@ class FavoriteButton extends StatelessWidget {
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
-            onTap: () {
+            onTap: () async {
               final nowFavorite = productId != null
                   ? favorites.toggleProduct(productId!)
                   : favorites.toggleUmkm(umkmId!);
 
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    nowFavorite
-                        ? 'Ditambahkan ke favorit'
-                        : 'Dihapus dari favorit',
-                  ),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
+              try {
+                if (!ApiService.hasToken) {
+                  _showFavoriteSnackBar(context, nowFavorite);
+                  return;
+                }
+                if (productId != null) {
+                  await favorites.syncProduct(productId!, nowFavorite);
+                } else {
+                  await favorites.syncUmkm(umkmId!, nowFavorite);
+                }
+              } on ApiException catch (error) {
+                if (productId != null) {
+                  favorites.toggleProduct(productId!);
+                } else {
+                  favorites.toggleUmkm(umkmId!);
+                }
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(error.pesan)));
+                return;
+              }
+
+              _showFavoriteSnackBar(context, nowFavorite);
             },
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: Icon(
                 isFav ? Icons.favorite : Icons.favorite_border,
                 size: size,
-                color: isFav ? const Color(0xFFE11D48) : const Color(0xFF64748B),
+                color: isFav
+                    ? const Color(0xFFE11D48)
+                    : const Color(0xFF64748B),
               ),
             ),
           ),
         );
       },
     );
+  }
+
+  void _showFavoriteSnackBar(BuildContext context, bool favorite) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            favorite ? 'Ditambahkan ke favorit' : 'Dihapus dari favorit',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
   }
 }
