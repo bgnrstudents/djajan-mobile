@@ -249,6 +249,7 @@ setelah pembayaran sudah terintegrasi.
 ### Cakupan
 
 - [x] Tambah produk ke keranjang.
+- [x] Pilih item keranjang dengan checkbox sebelum checkout.
 - [x] Ubah jumlah dan hapus item.
 - [x] Validasi stok.
 - [x] Perhitungan subtotal dan total.
@@ -350,7 +351,7 @@ terintegrasi pada dashboard admin serta dashboard UMKM
 
 ## Task 8 — Hardening Transaksi dan Pembayaran
 
-**Status:** Belum dimulai — prioritas tertinggi
+**Status:** Berjalan — fondasi pembayaran dan keranjang sudah diperbaiki
 
 Audit terakhir menemukan checkout dan Midtrans sudah berjalan pada happy path,
 tetapi aturan transaksi belum cukup konsisten untuk produksi. Task ini harus
@@ -358,26 +359,28 @@ selesai sebelum menambah fitur rating, promo, atau notifikasi push.
 
 ### Decision Gate
 
-- [ ] Tetapkan status pesanan final dan mapping mobile/backend.
-- [ ] Putuskan apakah pembayaran berhasil langsung menerima pesanan atau tetap
-  menunggu persetujuan UMKM.
-- [ ] Putuskan kapan stok dikurangi: checkout, pembayaran berhasil, atau saat
-  UMKM menerima pesanan.
-- [ ] Tetapkan aturan refund jika pesanan yang sudah dibayar ditolak UMKM.
-- [ ] Tetapkan batas waktu konfirmasi UMKM dan expiry pembayaran.
+- [x] Status pembayaran berhasil tetap menunggu persetujuan UMKM.
+- [x] Stok dikurangi saat UMKM menerima pesanan.
+- [x] Refund manual digunakan pada tahap awal jika pesanan berbayar ditolak.
+- [x] Pembayaran Midtrans kedaluwarsa setelah 2 jam.
+- [ ] Tetapkan mapping final status pesanan mobile/backend.
 
 ### Cakupan Implementasi
 
 - [ ] Selaraskan enum status di migration, model, controller, mobile, dan
   dokumentasi.
-- [ ] Jadikan callback Midtrans idempotent dan cegah status terminal mundur.
-- [ ] Validasi nominal callback sama dengan total pesanan di database.
-- [ ] Tolak callback jika server key belum dikonfigurasi.
+- [x] Callback Midtrans tidak otomatis menerima pesanan; pesanan tetap menunggu
+  persetujuan UMKM.
+- [x] Validasi nominal callback sama dengan total pesanan di database.
+- [x] Tolak callback jika server key belum dikonfigurasi.
 - [ ] Pisahkan pembuatan order database dari request ke Midtrans atau siapkan
   mekanisme recovery jika salah satu sisi gagal.
-- [ ] Tambahkan pencatatan `dibayar_pada` dan status transaksi yang konsisten.
+- [x] Tambahkan pencatatan `dibayar_pada` dan status transaksi yang konsisten.
+- [x] Atur expiry transaksi Midtrans menjadi 2 jam.
 - [ ] Lindungi pengecekan dan pengurangan stok dengan transaksi serta row lock.
 - [ ] Hilangkan kebocoran pesan exception internal ke response API.
+- [x] Keranjang menampilkan card produk dan hanya item terpilih yang dikirim ke
+  checkout.
 
 ### Test Gate
 
@@ -447,46 +450,49 @@ mempercayai nominal dari client.
 
 ## Task 11 — Strategi Checkout Multi-UMKM
 
-**Status:** Menunggu keputusan
+**Status:** Berjalan — checkout group dan pembayaran gabungan sudah dibuat
 
 Keranjang mobile dapat berisi beberapa UMKM, tetapi backend saat ini hanya
 menerima satu UMKM per checkout. Perilaku ini harus dibuat eksplisit.
 
 ### Decision Gate
 
-- [ ] Pilih strategi: pecah otomatis menjadi satu pesanan per UMKM
-  (rekomendasi), atau batasi keranjang hanya satu UMKM.
-- [ ] Jika dipecah, tetapkan `kode_checkout` untuk mengelompokkan pesanan.
-- [ ] Tetapkan apakah pembayaran Midtrans memakai satu transaksi gabungan atau
-  satu transaksi per pesanan.
-- [ ] Tetapkan aturan ongkir dan kegagalan parsial antar-UMKM.
+- [x] Izinkan item terpilih berasal dari beberapa UMKM dalam satu checkout.
+- [x] Buat satu `checkout_group` sebagai induk pembayaran.
+- [x] Buat satu pesanan internal per UMKM.
+- [x] Gunakan satu transaksi Midtrans gabungan untuk seluruh checkout group.
+- [x] Hitung opsi pengiriman dan ongkir per UMKM.
+- [x] Sediakan status terpisah; penolakan satu UMKM tidak membatalkan pesanan
+  UMKM lainnya.
 
-### Cakupan Jika Memilih Pecah Otomatis
+### Cakupan Implementasi
 
-- [ ] Backend mengelompokkan item berdasarkan UMKM secara atomik.
-- [ ] Setiap UMKM memiliki status, ongkir, dan batas konfirmasi sendiri.
-- [ ] Mobile menampilkan status per pesanan dan ringkasan checkout.
+- [x] Backend mengelompokkan item berdasarkan UMKM secara atomik.
+- [x] Setiap UMKM memiliki status, ongkir, dan batas konfirmasi sendiri.
+- [x] Mobile mengirim pilihan item dan opsi per UMKM dalam satu checkout.
+- [ ] Mobile menampilkan ringkasan group dengan status per pesanan setelah reload.
 - [ ] Pembatalan/refund dapat dilakukan per UMKM tanpa merusak order lain.
-- [ ] Dashboard UMKM hanya menerima pesanan miliknya.
+- [x] Dashboard UMKM hanya menerima pesanan miliknya.
 
 ### Test Gate
 
-- [ ] Keranjang satu UMKM tetap berfungsi seperti sebelumnya.
-- [ ] Keranjang beberapa UMKM menghasilkan order yang benar.
-- [ ] Harga dan ongkir tiap UMKM tidak tercampur.
-- [ ] Kegagalan satu UMKM tidak membuat data order setengah jadi.
+- [x] Keranjang satu UMKM tetap berfungsi seperti sebelumnya.
+- [x] Keranjang beberapa UMKM dikirim sebagai satu checkout group.
+- [x] Harga dan ongkir tiap UMKM dihitung terpisah.
+- [x] Kegagalan validasi satu UMKM membatalkan transaksi secara atomik.
+- [ ] Uji end-to-end pembayaran gabungan dan callback pada beberapa UMKM.
 
 ## Task 12 — Session, Role Guard, dan Sinkronisasi Akun
 
-**Status:** Belum dimulai
+**Status:** Berjalan — restore session dan role guard dasar sudah dibuat
 
 ### Cakupan
 
-- [ ] Restore token dan role dari storage saat aplikasi dibuka kembali.
+- [x] Restore token dan role dari storage saat aplikasi dibuka kembali.
 - [ ] Hapus sesi lokal otomatis saat API mengembalikan `401`.
-- [ ] Tambahkan guard role pelanggan pada seluruh endpoint pelanggan.
-- [ ] Tambahkan guard role UMKM pada seluruh endpoint UMKM.
-- [ ] Pastikan perpindahan mode tidak menghapus token baru.
+- [x] Tambahkan guard role pelanggan pada seluruh endpoint pelanggan.
+- [x] Tambahkan guard role UMKM pada seluruh endpoint UMKM.
+- [x] Pastikan perpindahan mode tidak menghapus token baru.
 - [ ] Sinkronkan favorit setelah login dan saat berganti akun.
 - [ ] Bersihkan order, favorit, notifikasi, dan state mode saat logout.
 - [ ] Gunakan secure storage untuk token jika kompatibel dengan target device.
@@ -609,12 +615,13 @@ Satu task dianggap selesai apabila:
 
 ## Urutan Eksekusi Saat Ini
 
-1. Selesaikan decision gate **Task 8** tentang status pesanan, stok, approval,
+1. Selesaikan sisa hardening **Task 12** dan uji perangkat nyata.
+2. Selesaikan decision gate **Task 8** tentang status pesanan, stok, approval,
    refund, dan expiry.
-2. Implementasikan **Task 8 — Hardening Transaksi dan Pembayaran**.
-3. Implementasikan **Task 9 — Integritas Histori Pesanan dan Pembatalan**.
-4. Implementasikan **Task 10 — Ongkir Berbasis Zona dan Lokasi**.
-5. Putuskan dan implementasikan **Task 11 — Strategi Checkout Multi-UMKM**.
+3. Implementasikan **Task 8 — Hardening Transaksi dan Pembayaran**.
+4. Implementasikan **Task 9 — Integritas Histori Pesanan dan Pembatalan**.
+5. Implementasikan **Task 10 — Ongkir Berbasis Zona dan Lokasi**.
+6. Putuskan dan implementasikan **Task 11 — Strategi Checkout Multi-UMKM**.
 6. Implementasikan **Task 12 — Session, Role Guard, dan Sinkronisasi Akun**.
 7. Implementasikan **Task 13 — Notifikasi Persisten**.
 8. Implementasikan **Task 14 — Rating dan Ulasan**.
