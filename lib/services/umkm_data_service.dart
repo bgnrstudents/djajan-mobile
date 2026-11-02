@@ -282,7 +282,6 @@ class UmkmDataService extends ChangeNotifier {
   /// Menyimpan seluruh pengaturan pembayaran & pengiriman ke tabel `umkm`.
   Future<String> simpanPengaturan({
     required bool tokoAktif,
-    required bool transferBankAktif,
     required bool codAktif,
     required String skemaPO,
     required bool pickupAktif,
@@ -292,7 +291,7 @@ class UmkmDataService extends ChangeNotifier {
     final data = await ApiService.post('profil_update', {
       'id_umkm': _profile!.idUmkm,
       'toko_aktif': tokoAktif,
-      'transfer_bank_aktif': transferBankAktif,
+      'transfer_bank_aktif': false,
       'cod_aktif': codAktif,
       'skema_po': skemaPO,
       'pickup_aktif': pickupAktif,

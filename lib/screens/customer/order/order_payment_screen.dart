@@ -189,7 +189,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
                 _totalCard(order),
                 const SizedBox(height: 22),
                 _sectionTitle('Metode Pembayaran',
-                    chip: isCod ? 'Bayar di Tempat (COD)' : 'Transfer Bank Manual'),
+                    chip: isCod ? 'Bayar di Tempat (COD)' : 'Pembayaran Online (Midtrans)'),
                 const SizedBox(height: 10),
                 if (isCod) _codCard(order) else _bankCard(order),
                 if (!isCod) ...[

@@ -43,7 +43,6 @@ class PengaturanScreen extends StatefulWidget {
 
 class _PengaturanScreenState extends State<PengaturanScreen> {
   late bool _tokoAktif;
-  late bool _transferAktif;
   late bool _codAktif;
   late String _skemaPO;
   late bool _pickupAktif;
@@ -67,7 +66,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     super.initState();
     final p = context.read<UmkmDataService>().profile;
     _tokoAktif = p.tokoAktif;
-    _transferAktif = p.transferBankAktif;
     _codAktif = p.codAktif;
     _skemaPO = _skemaOptions.contains(p.skemaPO)
         ? p.skemaPO
@@ -190,80 +188,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     }
   }
 
-  // ---------------------------------------------------- ubah rekening
-  Future<void> _editRekening() async {
-    final service = context.read<UmkmDataService>();
-    final p = service.profile;
-    final bankKodeCtrl = TextEditingController(text: p.bankKode);
-    final bankNamaCtrl = TextEditingController(text: p.bankNama);
-    final noRekCtrl = TextEditingController(text: p.noRekening);
-    final atasNamaCtrl = TextEditingController(text: p.atasNama);
-
-    final simpan = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Ubah Rekening Bank'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: bankKodeCtrl,
-                textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
-                  labelText: 'Kode Bank (mis. BRI)',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: bankNamaCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Nama Bank Lengkap',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: noRekCtrl,
-                decoration: const InputDecoration(labelText: 'Nomor Rekening'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: atasNamaCtrl,
-                decoration: const InputDecoration(labelText: 'Atas Nama'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(minimumSize: const Size(110, 44)),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-
-    if (simpan != true) return;
-
-    try {
-      final pesan = await service.simpanRekening(
-        bankKode: bankKodeCtrl.text.trim().toUpperCase(),
-        bankNama: bankNamaCtrl.text.trim(),
-        noRekening: noRekCtrl.text.trim(),
-        atasNama: atasNamaCtrl.text.trim(),
-      );
-      if (mounted) pesanSukses(context, pesan);
-    } on ApiException catch (e) {
-      if (mounted) pesanGagal(context, e.pesan);
-    }
-  }
-
   Future<void> _ubahPassword() async {
     final lama = TextEditingController();
     final baru = TextEditingController();
@@ -370,14 +294,23 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     // Jarak maksimal pengantaran otomatis = akhir zona terakhir (atau sama
     // dengan radius gratis kalau UMKM tidak membuat zona berbayar sama sekali).
     final jarakMaksimal = batas;
+    final service = context.read<UmkmDataService>();
+    if (_kurirAktif &&
+        (service.profile.latitude == null ||
+            service.profile.longitude == null)) {
+      if (mounted) {
+        pesanGagal(
+          context,
+          'Isi lokasi dapur terlebih dahulu sebelum mengaktifkan layanan kurir.',
+        );
+      }
+      return;
+    }
 
     setState(() => _menyimpan = true);
     try {
-      final service = context.read<UmkmDataService>();
-
       final pesan = await service.simpanPengaturan(
         tokoAktif: _tokoAktif,
-        transferBankAktif: _transferAktif,
         codAktif: _codAktif,
         skemaPO: _skemaPO,
         pickupAktif: _pickupAktif,
@@ -494,6 +427,28 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               value: nilai,
               activeThumbColor: OC.primary,
               onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoPaymentCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: OC.box,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.verified_user_outlined, color: OC.primary),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Pembayaran online diproses melalui Midtrans. COD dapat diaktifkan sesuai kesiapan UMKM.',
+              style: TextStyle(color: OC.muted, fontSize: 12.5),
             ),
           ),
         ],
@@ -740,124 +695,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           'Atur metode terima uang dari pelanggan warga',
         ),
         const SizedBox(height: 10),
-        _toggleTile(
-          judul: 'Transfer Bank Manual',
-          badge: 'Utama',
-          subjudul: 'Pelanggan mengunggah bukti transfer ke rekening mitra',
-          nilai: _transferAktif,
-          onChanged: (v) => setState(() => _transferAktif = v),
-        ),
-        if (_transferAktif) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: OC.box,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        profile.bankKode,
-                        style: const TextStyle(
-                          color: OC.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bank ${profile.bankKode}',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            profile.bankNama,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: OC.muted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _editRekening,
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      tooltip: 'Ubah rekening',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'NOMOR REKENING',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: OC.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        profile.noRekening.isEmpty
-                            ? 'Belum diisi'
-                            : profile.noRekening,
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(
-                        text: 'Atas Nama (A.N): ',
-                        style: TextStyle(color: OC.muted, fontSize: 12.5),
-                      ),
-                      TextSpan(
-                        text: profile.atasNama.isEmpty ? '-' : profile.atasNama,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-        ],
+        _infoPaymentCard(),
         _toggleTile(
           judul: 'COD (Bayar di Tempat)',
           subjudul: 'Titip uang tunai ke kurir warga desa saat pesanan sampai',
