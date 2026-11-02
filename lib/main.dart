@@ -39,7 +39,7 @@ class DjajanApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => CategoryService()),
         ChangeNotifierProvider(create: (_) => CatalogService()..load()),
-        ChangeNotifierProvider(create: (_) => UmkmDataService()..muatSemua()),
+        ChangeNotifierProvider(create: (_) => UmkmDataService()),
         ChangeNotifierProvider(create: (_) => OrderService()),
       ],
       child: MaterialApp(
@@ -52,7 +52,7 @@ class DjajanApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(centerTitle: true),
         ),
 
-        initialRoute: AppRoutes.login,
+        initialRoute: AppRoutes.splash,
 
         routes: {
           AppRoutes.splash: (context) => const SplashScreen(),

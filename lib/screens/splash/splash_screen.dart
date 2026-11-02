@@ -1,8 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../routes/app_routes.dart';
+import '../../services/auth_service.dart';
+import '../../services/umkm_data_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -80,14 +81,25 @@ class _SplashScreenState extends State<SplashScreen>
 
     _startAnimation();
 
-    Timer(
-      const Duration(seconds: 3),
-      () {
-        if (!mounted) return;
+    _restoreSession();
+  }
 
-        // Untuk testing: langsung ke login
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
-      },
+  Future<void> _restoreSession() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final session = await context.read<AuthService>().restoreSession();
+    if (!mounted) return;
+    if (session?.role == AuthRole.umkm) {
+      context.read<UmkmDataService>().loadProfileFromLogin(session!.data);
+    }
+    Navigator.pushReplacementNamed(
+      context,
+      session == null
+          ? AppRoutes.login
+          : session.role == AuthRole.umkm
+          ? AppRoutes.umkmDashboard
+          : AppRoutes.customerHome,
     );
   }
 

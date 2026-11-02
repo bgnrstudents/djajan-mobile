@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 
 import 'api_service.dart';
+import 'cart_service.dart';
 import 'favorite_service.dart';
 
 enum AuthRole { pelanggan, umkm }
@@ -29,9 +30,35 @@ class AuthService extends ChangeNotifier {
   String? _errorMessage;
   AuthSession? _session;
 
+  AuthService() {
+    ApiService.onUnauthorized = _handleUnauthorized;
+  }
+
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
   AuthSession? get session => _session;
+
+  Future<AuthSession?> restoreSession() async {
+    final preferences = await SharedPreferences.getInstance();
+    final token = preferences.getString(_tokenKey);
+    final roleName = preferences.getString(_roleKey);
+    if (token == null || token.isEmpty || roleName == null) return null;
+
+    ApiService.setToken(token);
+    try {
+      final endpoint = roleName == AuthRole.umkm.name
+          ? 'profil_get'
+          : 'pelanggan/profil';
+      final data = await ApiService.get(endpoint);
+      final sessionData = Map<String, dynamic>.from(data as Map);
+      sessionData['token'] = token;
+      sessionData['role'] = roleName;
+      return await _setSession(sessionData);
+    } on ApiException {
+      await _clearSession();
+      return null;
+    }
+  }
 
   Future<void> updateCustomerProfile({
     required String name,
@@ -54,12 +81,12 @@ class AuthService extends ChangeNotifier {
 
   Future<AuthSession> switchToUmkm() async {
     final data = await ApiService.post('pelanggan/mode_umkm', {});
-    return _setSession(data as Map<String, dynamic>);
+    return await _setSession(data as Map<String, dynamic>);
   }
 
   Future<AuthSession> switchToCustomer() async {
     final data = await ApiService.post('pelanggan/mode_pelanggan', {});
-    return _setSession(data as Map<String, dynamic>);
+    return await _setSession(data as Map<String, dynamic>);
   }
 
   Future<AuthSession> login(String identifier, String password) async {
@@ -69,7 +96,7 @@ class AuthService extends ChangeNotifier {
           'identifier': identifier.trim(),
           'password': password,
         });
-        return _setSession(data as Map<String, dynamic>);
+        return await _setSession(data as Map<String, dynamic>);
       } on ApiException catch (customerError) {
         if (customerError.field != null ||
             !customerError.pesan.contains('salah')) {
@@ -79,7 +106,7 @@ class AuthService extends ChangeNotifier {
           'identifier': identifier.trim(),
           'password': password,
         });
-        return _setSession(data as Map<String, dynamic>);
+        return await _setSession(data as Map<String, dynamic>);
       }
     });
   }
@@ -99,7 +126,7 @@ class AuthService extends ChangeNotifier {
         'password': password,
         'password_confirmation': passwordConfirmation,
       });
-      _setSession(data as Map<String, dynamic>);
+      await _setSession(data as Map<String, dynamic>);
       return null;
     });
   }
@@ -129,7 +156,7 @@ class AuthService extends ChangeNotifier {
         final data = await ApiService.post('auth/google', {
           'id_token': idToken,
         });
-        return _setSession(data as Map<String, dynamic>);
+        return await _setSession(data as Map<String, dynamic>);
       } on ApiException {
         rethrow;
       } on PlatformException catch (error) {
@@ -185,7 +212,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  AuthSession _setSession(Map<String, dynamic> data) {
+  Future<AuthSession> _setSession(Map<String, dynamic> data) async {
     final role = data['role'] == 'umkm' ? AuthRole.umkm : AuthRole.pelanggan;
     final token = data['token']?.toString();
     if (token == null || token.isEmpty) {
@@ -193,7 +220,10 @@ class AuthService extends ChangeNotifier {
     }
     ApiService.setToken(token);
     _session = AuthSession(role: role, data: data);
-    _saveSession(token, role);
+    await _saveSession(token, role);
+    if (role == AuthRole.pelanggan) {
+      await CartService().loadForCustomer(data['id_pelanggan']?.toString() ?? '');
+    }
     return _session!;
   }
 
@@ -210,5 +240,10 @@ class AuthService extends ChangeNotifier {
     await preferences.remove(_tokenKey);
     await preferences.remove(_roleKey);
     notifyListeners();
+  }
+
+  void _handleUnauthorized() {
+    if (_session == null && !ApiService.hasToken) return;
+    _clearSession();
   }
 }
