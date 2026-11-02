@@ -366,7 +366,9 @@ Query: `id_pesanan`. Res `data` = satu objek pesanan (bentuk sama 4.11).
 
 ### 4.13 `POST /api/pesanan_status` (privat)
 Req: `id_pesanan`, `status` ∈ `diterima|diproses|diantar|ditolak|selesai`.
-Status `diterima` **otomatis mengurangi stok** produk terkait.
+Status `diterima` **otomatis mengurangi stok** produk terkait. Pembayaran
+Midtrans yang berhasil tidak otomatis mengubah status pesanan menjadi
+`diterima`; pesanan tetap `po_baru` sampai UMKM menyetujuinya.
 Transisi valid: `po_baru → diterima|ditolak`, `diterima → diproses|ditolak`,
 `diproses → diantar`, dan `diantar → selesai`. Res `data` = objek pesanan
 terbaru; transisi lain mengembalikan `409`.
@@ -491,9 +493,18 @@ Endpoint aktual aplikasi: `POST /api/pesanan/checkout` (privat). Kombinasi yang
 didukung adalah `cod` atau `midtrans` dengan `pickup` atau `kurir`. COD tidak
 memanggil Midtrans. Harga item dan biaya pengantaran dihitung ulang dari
 database, sehingga nilai harga/biaya dari client tidak dipercaya.
+Transaksi Midtrans memiliki batas pembayaran 2 jam. Checkout mobile memilih
+item tertentu dari keranjang; item yang tidak dipilih tetap berada di keranjang.
 
-> **Keputusan penting:** satu checkout bisa berisi produk dari **beberapa UMKM**,
-> sedangkan tabel `pesanan` hanya punya satu `id_umkm`. Lihat §9.1.
+> **Keputusan saat ini:** satu checkout dapat berisi produk dari beberapa UMKM.
+> Backend membuat satu `checkout_group` dan satu pesanan internal per UMKM,
+> sedangkan Midtrans menggunakan satu transaksi gabungan.
+
+Request checkout mengirim `groups[]`; setiap group berisi `id_umkm`,
+`metode_pengiriman`, detail pre-order, dan `items[]`. Response mengembalikan
+`id_checkout`, payment data gabungan, dan `orders[]`. Endpoint
+`GET /api/pesanan/saya/group/{id_checkout}` dipakai untuk menyegarkan status
+pembayaran seluruh pesanan dalam satu checkout.
 
 `POST /api/pesanan_buat`
 Req:

@@ -26,6 +26,8 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final CartService _cartService = CartService();
   final OrderService _orderService = OrderService();
+  final Set<String> _selectedProductIds = {};
+  final Set<String> _knownProductIds = {};
 
   // Recipient state
   Recipient _recipient = const Recipient(
@@ -46,6 +48,41 @@ class _CartScreenState extends State<CartScreen> {
   // Payment method (0: COD, 1: QRIS)
   int _selectedPayment = 1; // Default QRIS
   bool _isSubmitting = false;
+
+  void _syncSelection() {
+    final productIds = _cartService.items.map((item) => item.productId).toSet();
+    _selectedProductIds.removeWhere((id) => !productIds.contains(id));
+    _selectedProductIds.addAll(productIds.difference(_knownProductIds));
+    _knownProductIds
+      ..removeWhere((id) => !productIds.contains(id))
+      ..addAll(productIds);
+  }
+
+  List<CartLine> get _selectedItems => _cartService.items
+      .where((item) => _selectedProductIds.contains(item.productId))
+      .toList();
+
+  void _toggleProduct(String productId, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedProductIds.add(productId);
+      } else {
+        _selectedProductIds.remove(productId);
+      }
+    });
+  }
+
+  void _toggleAll(bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedProductIds
+          ..clear()
+          ..addAll(_cartService.items.map((item) => item.productId));
+      } else {
+        _selectedProductIds.clear();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -127,14 +164,16 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _handleCheckout() async {
     if (_isSubmitting) return;
 
-    final items = _cartService.items;
+    final items = _selectedItems;
     if (items.isEmpty) {
-      showToast(context, 'Keranjang belanja masih kosong.', error: true);
+      showToast(context, 'Pilih minimal satu produk untuk checkout.', error: true);
       return;
     }
 
-    final grouped = _cartService.itemsByUmkm;
-
+    final grouped = <String, List<CartLine>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.umkmId, () => []).add(item);
+    }
     // Validate pre-order dates
     for (final entry in grouped.entries) {
       final isPO = entry.value.any((item) => item.type == OrderType.preOrder);
@@ -182,7 +221,7 @@ class _CartScreenState extends State<CartScreen> {
         options: options,
       );
 
-      _cartService.clear();
+      _cartService.removeProducts(items.map((item) => item.productId));
 
       if (!mounted) return;
 
@@ -220,7 +259,8 @@ class _CartScreenState extends State<CartScreen> {
     return AnimatedBuilder(
       animation: _cartService,
       builder: (context, _) {
-        final grouped = _cartService.itemsByUmkm;
+      _syncSelection();
+      final grouped = _cartService.itemsByUmkm;
         final bool isEmpty = grouped.isEmpty;
 
         // Compute subtotals & delivery
@@ -229,7 +269,10 @@ class _CartScreenState extends State<CartScreen> {
 
         for (final entry in grouped.entries) {
           final umkmId = entry.key;
-          final lines = entry.value;
+          final lines = entry.value
+              .where((item) => _selectedProductIds.contains(item.productId))
+              .toList();
+          if (lines.isEmpty) continue;
           final int umkmItemsTotal =
               lines.fold(0, (sum, l) => sum + l.subtotal.round());
           subtotalProduk += umkmItemsTotal;
@@ -284,6 +327,8 @@ class _CartScreenState extends State<CartScreen> {
                           // 1. Notice banner
                           _buildNoticeBanner(grouped.length),
                           const SizedBox(height: 10),
+                          _buildSelectionBar(),
+                          const SizedBox(height: 10),
 
                           // 2. Receiver info
                           _buildReceiverCard(),
@@ -296,8 +341,10 @@ class _CartScreenState extends State<CartScreen> {
                           ],
 
                           // 4. Payment method
-                          _buildPaymentMethodCard(),
-                          const SizedBox(height: 10),
+                          if (_selectedItems.isNotEmpty) ...[
+                            _buildPaymentMethodCard(),
+                            const SizedBox(height: 10),
+                          ],
 
                           // 5. Payment summary
                           _buildPaymentSummaryCard(
@@ -449,6 +496,43 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Widget _buildSelectionBar() {
+    final itemCount = _cartService.items.length;
+    final selectedCount = _selectedItems.length;
+    final allSelected = itemCount > 0 && selectedCount == itemCount;
+
+    return _card(
+      child: Row(
+        children: [
+          Checkbox(
+            value: allSelected,
+            tristate: selectedCount > 0 && !allSelected,
+            activeColor: OC.primary,
+            onChanged: (value) => _toggleAll(value ?? false),
+          ),
+          const Expanded(
+            child: Text(
+              'Pilih produk untuk checkout',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.5,
+                color: OC.ink,
+              ),
+            ),
+          ),
+          Text(
+            '$selectedCount/$itemCount dipilih',
+            style: const TextStyle(
+              fontSize: 12,
+              color: OC.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 2. Receiver info
   Widget _buildReceiverCard() {
     return _card(
@@ -569,8 +653,13 @@ class _CartScreenState extends State<CartScreen> {
   // 3. Card for each UMKM
   Widget _buildUmkmCard(String umkmId, List<CartLine> lines) {
     final first = lines.first;
-    final bool hasPreOrder = lines.any((l) => l.type == OrderType.preOrder);
-    final bool hasInstant = lines.any((l) => l.type == OrderType.instant);
+    final selectedLines = lines
+        .where((item) => _selectedProductIds.contains(item.productId))
+        .toList();
+    final bool hasPreOrder =
+        selectedLines.any((l) => l.type == OrderType.preOrder);
+    final bool hasInstant =
+        selectedLines.any((l) => l.type == OrderType.instant);
 
     final int deliveryChoice =
         _deliveryOptions[umkmId] ?? (first.courierFee != null ? 0 : 1);
@@ -579,7 +668,8 @@ class _CartScreenState extends State<CartScreen> {
             ? first.courierFee!.round()
             : 0;
 
-    final int itemsSubtotal = lines.fold(0, (s, l) => s + l.subtotal.round());
+    final int itemsSubtotal =
+        selectedLines.fold(0, (s, l) => s + l.subtotal.round());
     final int umkmTotal = itemsSubtotal + courierFee;
 
     // Header badge
@@ -834,12 +924,19 @@ class _CartScreenState extends State<CartScreen> {
   // Row for each Product Item in Cart
   Widget _buildCartItemRow(CartLine item) {
     final bool isPO = item.type == OrderType.preOrder;
+    final bool isSelected = _selectedProductIds.contains(item.productId);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Checkbox(
+            value: isSelected,
+            activeColor: OC.primary,
+            onChanged: (value) =>
+                _toggleProduct(item.productId, value ?? false),
+          ),
           _productImage(
             imageUrl: item.imageUrl,
             fallbackIcon: isPO ? Icons.lunch_dining : Icons.local_drink,
@@ -1334,7 +1431,9 @@ class _CartScreenState extends State<CartScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        onPressed: _isSubmitting ? null : _handleCheckout,
+        onPressed: _isSubmitting || _selectedItems.isEmpty
+            ? null
+            : _handleCheckout,
         child: _isSubmitting
             ? const SizedBox(
                 width: 20,
@@ -1345,7 +1444,9 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               )
             : Text(
-                'Pesan Sekarang (${_formatRupiah(total)})',
+                _selectedItems.isEmpty
+                    ? 'Pilih produk terlebih dahulu'
+                    : 'Pesan Sekarang (${_formatRupiah(total)})',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,

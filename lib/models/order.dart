@@ -216,6 +216,7 @@ class PaymentAccount {
 
 class Order {
   final String id;
+  final String? checkoutId;
   final String refId;
   final DateTime createdAt;
   final List<OrderVendor> vendors;
@@ -234,6 +235,7 @@ class Order {
 
   const Order({
     required this.id,
+    this.checkoutId,
     required this.refId,
     required this.createdAt,
     required this.vendors,
@@ -303,6 +305,7 @@ class Order {
 
     return Order(
       id: (json['id_pesanan'] ?? '').toString(),
+      checkoutId: _asString(json['id_checkout']),
       refId: (json['id_pesanan'] ?? '').toString(),
       createdAt: _asDate(json['tanggal_pesan']) ?? DateTime.now(),
       vendors: [vendor],
@@ -357,6 +360,7 @@ class Order {
   }) {
     return Order(
       id: id,
+      checkoutId: checkoutId,
       refId: refId,
       createdAt: createdAt,
       vendors: vendors ?? this.vendors,

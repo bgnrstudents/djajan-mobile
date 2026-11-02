@@ -50,7 +50,8 @@ class OrderService extends ChangeNotifier {
 
   Future<String?> refreshPaymentStatus(String orderId) async {
     final order = _require(orderId);
-    final data = await ApiService.get('pesanan/saya/$orderId');
+    final groupId = order.checkoutId ?? orderId;
+    final data = await ApiService.get('pesanan/saya/group/$groupId');
     final paymentStatus = _effectivePaymentStatus(
       data['payment_status'],
       data['status_pembayaran'],
@@ -232,44 +233,46 @@ class OrderService extends ChangeNotifier {
       );
     }
 
-    if (vendors.length != 1) {
-      throw const OrderException(
-        'Checkout saat ini hanya mendukung satu UMKM per transaksi.',
-      );
-    }
-
     final isCod = paymentMethod == PaymentMethod.cod;
-    final vendor = vendors.single;
+    final groupedLines = <String, List<CartLine>>{};
+    for (final line in lines) {
+      groupedLines.putIfAbsent(line.umkmId, () => []).add(line);
+    }
     final backendData = await ApiService.postJson('pesanan/checkout', {
       'metode_pembayaran': isCod ? 'cod' : 'midtrans',
-      'metode_pengiriman': vendor.delivery == DeliveryMethod.courier
-          ? 'kurir'
-          : 'pickup',
       'alamat_tujuan': recipient.address,
-      'catatan': vendor.note ?? recipient.addressNote ?? '',
-      'waktu_dibutuhkan': vendor.requiredAt?.toIso8601String(),
-      'keperluan_acara': vendor.purpose ?? '',
-      'biaya_pengantaran': vendor.deliveryFee.round(),
-      'biaya_layanan': 0,
-      'items': vendor.items
-          .map(
-            (item) => {
-              'id_produk': int.tryParse(item.productId) ?? 0,
-              'jumlah': item.quantity,
-              'harga_satuan': item.price.round(),
-            },
-          )
-          .toList(),
+      'groups': groupedLines.entries.map((entry) {
+        final vendor = vendors.firstWhere((item) => item.umkmId == entry.key);
+        final option = options[entry.key]!;
+        return {
+          'id_umkm': int.tryParse(entry.key) ?? 0,
+          'metode_pengiriman': vendor.delivery == DeliveryMethod.courier
+              ? 'kurir'
+              : 'pickup',
+          'catatan': option.note ?? recipient.addressNote ?? '',
+          'waktu_dibutuhkan': option.requiredAt?.toIso8601String(),
+          'keperluan_acara': option.purpose ?? '',
+          'items': entry.value
+              .map((item) => {
+                    'id_produk': int.tryParse(item.productId) ?? 0,
+                    'jumlah': item.quantity,
+                  })
+              .toList(),
+        };
+      }).toList(),
     });
 
     final now = DateTime.now();
-    final backendOrderId = (backendData['id_pesanan'] ?? '').toString();
+    final backendOrderId =
+        (backendData['id_checkout'] ?? backendData['id_pesanan'] ?? '')
+            .toString();
     if (backendOrderId.isEmpty) {
       throw const OrderException('Server tidak mengembalikan nomor pesanan.');
     }
 
     final order = Order(
       id: backendOrderId,
+      checkoutId: backendOrderId,
       refId: backendOrderId,
       createdAt: now,
       vendors: vendors,
@@ -279,7 +282,7 @@ class OrderService extends ChangeNotifier {
       discount: 0,
       status: OrderStatus.waitingPayment,
       account: accountFor(vendors.first.umkmId),
-      paymentDeadline: isCod ? null : now.add(const Duration(hours: 24)),
+      paymentDeadline: isCod ? null : now.add(const Duration(hours: 2)),
       snapToken: backendData['snap_token']?.toString(),
       paymentUrl: backendData['payment_url']?.toString(),
     );
