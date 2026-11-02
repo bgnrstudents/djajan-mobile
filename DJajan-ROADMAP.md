@@ -363,6 +363,8 @@ selesai sebelum menambah fitur rating, promo, atau notifikasi push.
 - [x] Stok dikurangi saat UMKM menerima pesanan.
 - [x] Refund manual digunakan pada tahap awal jika pesanan berbayar ditolak.
 - [x] Pembayaran Midtrans kedaluwarsa setelah 2 jam.
+- [x] Pembayaran pelanggan menggunakan Midtrans dan COD; transfer manual ditunda.
+- [x] Midtrans menagih lunas; skema DP PO menjadi kebijakan internal UMKM.
 - [ ] Tetapkan mapping final status pesanan mobile/backend.
 
 ### Cakupan Implementasi
@@ -423,7 +425,7 @@ foreign key pesanan berpotensi menghapus histori karena memakai cascade.
 
 ## Task 10 — Ongkir Berbasis Zona dan Lokasi
 
-**Status:** Belum dimulai
+**Status:** Berjalan — perhitungan zona backend mulai diintegrasikan
 
 Zona ongkir sudah dapat disimpan, tetapi checkout masih menggunakan tarif flat
 `biaya_pengantaran`. Perhitungan final harus dilakukan backend dan tidak boleh
@@ -438,7 +440,26 @@ mempercayai nominal dari client.
 - [ ] Tolak checkout jika lokasi di luar radius pengantaran.
 - [ ] Simpan jarak/zona/ongkir yang dipakai pada snapshot pesanan.
 - [ ] Tampilkan hasil perhitungan ongkir yang sama di mobile dan checkout.
-- [ ] Hilangkan ketergantungan checkout pada `biaya_pengantaran` dari client.
+- [x] Hilangkan ketergantungan checkout pada `biaya_pengantaran` dari client.
+- [x] Checkout kurir memakai alamat tersimpan pelanggan yang memiliki koordinat GPS.
+- [x] Pickup selalu gratis dan tidak membutuhkan koordinat pelanggan.
+- [x] Toggle layanan kurir menolak konfigurasi tanpa lokasi UMKM.
+- [x] Kebijakan batas zona memakai `jarak > jarak_min` dan `jarak <= jarak_max`.
+- [x] Produk ready dan PO dalam satu UMKM digabung; kebijakan PO tertinggi menjadi aturan bisnis.
+
+### Rencana Peta dan Geocoding — OpenStreetMap
+
+Implementasi lokasi berikutnya akan memakai OpenStreetMap agar UMKM dan
+pelanggan tidak perlu memasukkan latitude/longitude secara manual.
+
+- [ ] Tambahkan peta berbasis OpenStreetMap pada form alamat UMKM dan pelanggan.
+- [ ] Tambahkan pencarian alamat melalui geocoding.
+- [ ] Izinkan pengguna memilih dan menggeser pin untuk mengoreksi lokasi.
+- [ ] Simpan alamat teks, latitude, dan longitude melalui API.
+- [ ] Pertahankan Haversine untuk perhitungan ongkir MVP.
+- [ ] Evaluasi OSRM atau layanan routing setelah alur peta stabil.
+- [ ] Tampilkan atribusi OpenStreetMap sesuai ketentuan lisensi.
+- [ ] Siapkan fallback manual untuk alamat lama yang belum memiliki koordinat.
 
 ### Test Gate
 
