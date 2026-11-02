@@ -5,6 +5,8 @@ class CustomerAddress {
   final String phone;
   final String address;
   final String note;
+  final double? latitude;
+  final double? longitude;
   final bool primary;
 
   const CustomerAddress({
@@ -14,6 +16,8 @@ class CustomerAddress {
     required this.phone,
     required this.address,
     this.note = '',
+    this.latitude,
+    this.longitude,
     this.primary = false,
   });
 
@@ -25,6 +29,8 @@ class CustomerAddress {
         phone: json['no_telp']?.toString() ?? '',
         address: json['alamat']?.toString() ?? '',
         note: json['catatan']?.toString() ?? '',
+        latitude: (json['latitude'] as num?)?.toDouble(),
+        longitude: (json['longitude'] as num?)?.toDouble(),
         primary: json['utama'] == true || json['utama'] == 1,
       );
 }

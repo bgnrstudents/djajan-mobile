@@ -173,12 +173,14 @@ class OrderVendor {
 }
 
 class Recipient {
+  final int? addressId;
   final String name;
   final String phone;
   final String address;
   final String? addressNote;
 
   const Recipient({
+    this.addressId,
     required this.name,
     required this.phone,
     required this.address,
@@ -186,12 +188,14 @@ class Recipient {
   });
 
   Recipient copyWith({
+    int? addressId,
     String? name,
     String? phone,
     String? address,
     String? addressNote,
   }) {
     return Recipient(
+      addressId: addressId ?? this.addressId,
       name: name ?? this.name,
       phone: phone ?? this.phone,
       address: address ?? this.address,

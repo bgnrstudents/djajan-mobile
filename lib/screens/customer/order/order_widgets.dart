@@ -822,6 +822,7 @@ Future<Recipient?> showRecipientSheet(
                           ctx,
                           OrderValidator.normalizeRecipient(
                             Recipient(
+                              addressId: initial.addressId,
                               name: name.text,
                               phone: phone.text,
                               address: address.text,

@@ -5,6 +5,7 @@ import 'midtrans_payment_screen.dart';
 import '../../../models/order.dart';
 import 'order_payment_screen.dart';
 import '../../../services/order_service.dart';
+import '../../../services/customer_settings_service.dart';
 import 'order_widgets.dart';
 
 /// Tahap 1 alur pesanan: Checkout.
@@ -79,15 +80,18 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   late PaymentMethod _method;
   bool _submitting = false;
+  bool _addressLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadPrimaryAddress();
     _method = widget.initialMethod;
     final Map<String, List<CartLine>> grouped = {};
     for (final l in widget.cartLines) {
       grouped.putIfAbsent(l.umkmId, () => []).add(l);
     }
+
     _vendors = grouped.values.map((lines) {
       final f = lines.first;
       final po = lines.any((l) => l.type == OrderType.preOrder);
@@ -117,6 +121,27 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         _method == PaymentMethod.cod &&
         !_vendors.single.codAvailable) {
       _method = PaymentMethod.midtrans;
+    }
+
+  }
+
+  Future<void> _loadPrimaryAddress() async {
+    try {
+      final settings = CustomerSettingsService();
+      await settings.load();
+      final address = settings.primaryAddress;
+      if (!mounted || address == null || address.id == 0) return;
+      setState(() {
+        _recipient = Recipient(
+          addressId: address.id,
+          name: address.recipient,
+          phone: address.phone,
+          address: address.address,
+          addressNote: address.note,
+        );
+      });
+    } finally {
+      if (mounted) setState(() => _addressLoading = false);
     }
   }
 
@@ -165,7 +190,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   }
 
   Future<void> _submit() async {
-    if (_submitting) return;
+    if (_submitting || _addressLoading) return;
     setState(() => _submitting = true);
     try {
       final order = await _service.createOrder(
@@ -901,7 +926,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              onPressed: _submitting ? null : _submit,
+              onPressed: _submitting || _addressLoading ? null : _submit,
               icon: _submitting
                   ? const SizedBox(
                       width: 18,

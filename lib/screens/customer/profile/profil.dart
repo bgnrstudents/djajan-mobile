@@ -564,6 +564,20 @@ class _ProfilScreenState extends State<ProfilScreen> {
           requiredField: false,
           prefixIcon: Icons.near_me_outlined,
         ),
+        ProfileFormField(
+          label: 'Latitude GPS',
+          initialValue: selected?.latitude?.toString() ?? '',
+          requiredField: false,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          prefixIcon: Icons.my_location_outlined,
+        ),
+        ProfileFormField(
+          label: 'Longitude GPS',
+          initialValue: selected?.longitude?.toString() ?? '',
+          requiredField: false,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          prefixIcon: Icons.explore_outlined,
+        ),
       ],
     );
 
@@ -577,6 +591,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
         recipient: values['Nama Penerima']!,
         phone: values['Nomor Handphone']!,
         note: values['Patokan']!,
+        latitude: double.tryParse(values['Latitude GPS']!.replaceAll(',', '.')),
+        longitude: double.tryParse(values['Longitude GPS']!.replaceAll(',', '.')),
         primary: true,
       );
       if (!mounted) return;

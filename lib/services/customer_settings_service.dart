@@ -54,6 +54,8 @@ class CustomerSettingsService extends ChangeNotifier {
     required String phone,
     required String address,
     String note = '',
+    double? latitude,
+    double? longitude,
     bool primary = false,
   }) async {
     final data = await ApiService.post('pelanggan/alamat_simpan', {
@@ -63,6 +65,8 @@ class CustomerSettingsService extends ChangeNotifier {
       'no_telp': phone,
       'alamat': address,
       'catatan': note,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'utama': primary,
     });
     final saved = CustomerAddress.fromJson(data as Map<String, dynamic>);
@@ -82,6 +86,8 @@ class CustomerSettingsService extends ChangeNotifier {
             phone: _addresses[i].phone,
             address: _addresses[i].address,
             note: _addresses[i].note,
+            latitude: _addresses[i].latitude,
+            longitude: _addresses[i].longitude,
           );
         }
       }
@@ -109,6 +115,8 @@ class CustomerSettingsService extends ChangeNotifier {
         phone: item.phone,
         address: item.address,
         note: item.note,
+        latitude: item.latitude,
+        longitude: item.longitude,
         primary: item.id == primary.id,
       );
     }
