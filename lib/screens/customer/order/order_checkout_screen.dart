@@ -71,6 +71,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   final OrderService _service = OrderService();
   late final List<_VendorDraft> _vendors;
 
+  /// true jika alamat utama yang dipilih memiliki koordinat GPS tersimpan
+  bool _addressHasCoords = false;
+
   Recipient _recipient = const Recipient(
     name: 'Muhammad Rizki',
     phone: '0812-3456-7890',
@@ -139,6 +142,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           address: address.address,
           addressNote: address.note,
         );
+        _addressHasCoords =
+            address.latitude != null && address.longitude != null;
       });
     } finally {
       if (mounted) setState(() => _addressLoading = false);
@@ -191,6 +196,19 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   Future<void> _submit() async {
     if (_submitting || _addressLoading) return;
+
+    // Cek koordinat jika ada pesanan dengan metode kurir
+    final adaCourier = _vendors.any((v) => v.delivery == DeliveryMethod.courier);
+    if (adaCourier && !_addressHasCoords) {
+      showToast(
+        context,
+        'Alamat pengiriman belum memiliki koordinat GPS. '
+        'Edit alamat dan tandai lokasi di peta terlebih dahulu.',
+        error: true,
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       final order = await _service.createOrder(

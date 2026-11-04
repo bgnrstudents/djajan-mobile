@@ -13,6 +13,7 @@ import '../../../services/customer_settings_service.dart';
 import '../../../services/api_service.dart';
 import '../../../services/umkm_data_service.dart';
 import '../../../models/customer_settings_models.dart';
+import 'alamat_form_page.dart';
 import '../order/order_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';
@@ -497,8 +498,32 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         : Icons.location_on_outlined,
                     color: AppConfig.primaryColor,
                   ),
-                  title: Text(
-                    '${address.label}${address.primary ? ' • Utama' : ''}',
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${address.label}${address.primary ? ' • Utama' : ''}',
+                        ),
+                      ),
+                      if (address.latitude != null)
+                        const Tooltip(
+                          message: 'Lokasi GPS tersimpan',
+                          child: Icon(
+                            Icons.location_on,
+                            size: 16,
+                            color: AppConfig.primaryColor,
+                          ),
+                        )
+                      else
+                        const Tooltip(
+                          message: 'Belum ada koordinat GPS',
+                          child: Icon(
+                            Icons.location_off_outlined,
+                            size: 16,
+                            color: Color(0xFFE67E22),
+                          ),
+                        ),
+                    ],
                   ),
                   subtitle: Text(address.address),
                   onTap: () => Navigator.pop(context, address.id),
@@ -531,76 +556,17 @@ class _ProfilScreenState extends State<ProfilScreen> {
     for (final address in _settings.addresses) {
       if (address.id == selectedId) selected = address;
     }
-    final values = await _openFormPage(
-      title: 'Alamat Pengiriman',
-      subtitle: 'Pastikan alamat akurat untuk pengantaran',
-      icon: Icons.location_on_outlined,
-      fields: [
-        ProfileFormField(
-          label: 'Label Alamat',
-          initialValue: selected?.label ?? '',
-          prefixIcon: Icons.label_outline,
+
+    await Navigator.of(context).push<AlamatFormResult>(
+      MaterialPageRoute(
+        builder: (_) => AlamatFormPage(
+          existing: selected,
+          defaultName: _user.name,
+          defaultPhone: _user.phoneNumber,
+          settings: _settings,
         ),
-        ProfileFormField(
-          label: 'Alamat Lengkap',
-          initialValue: selected?.address ?? '',
-          maxLines: 3,
-          prefixIcon: Icons.location_on_outlined,
-        ),
-        ProfileFormField(
-          label: 'Nama Penerima',
-          initialValue: selected?.recipient ?? _user.name,
-          prefixIcon: Icons.person_outline,
-        ),
-        ProfileFormField(
-          label: 'Nomor Handphone',
-          initialValue: selected?.phone ?? _user.phoneNumber,
-          keyboardType: TextInputType.phone,
-          prefixIcon: Icons.phone_outlined,
-        ),
-        ProfileFormField(
-          label: 'Patokan',
-          initialValue: selected?.note ?? '',
-          requiredField: false,
-          prefixIcon: Icons.near_me_outlined,
-        ),
-        ProfileFormField(
-          label: 'Latitude GPS',
-          initialValue: selected?.latitude?.toString() ?? '',
-          requiredField: false,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          prefixIcon: Icons.my_location_outlined,
-        ),
-        ProfileFormField(
-          label: 'Longitude GPS',
-          initialValue: selected?.longitude?.toString() ?? '',
-          requiredField: false,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          prefixIcon: Icons.explore_outlined,
-        ),
-      ],
+      ),
     );
-
-    if (values == null || !mounted) return;
-
-    try {
-      await _settings.saveAddress(
-        id: selected?.id,
-        label: values['Label Alamat']!,
-        address: values['Alamat Lengkap']!,
-        recipient: values['Nama Penerima']!,
-        phone: values['Nomor Handphone']!,
-        note: values['Patokan']!,
-        latitude: double.tryParse(values['Latitude GPS']!.replaceAll(',', '.')),
-        longitude: double.tryParse(values['Longitude GPS']!.replaceAll(',', '.')),
-        primary: true,
-      );
-      if (!mounted) return;
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.pesan)));
-    }
   }
 
   Future<void> _openBusinessRegistration({bool editing = false}) async {
