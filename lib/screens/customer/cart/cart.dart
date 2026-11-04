@@ -6,6 +6,8 @@ import '../../../models/order.dart';
 import '../../../services/order_service.dart';
 import '../order/order_widgets.dart';
 import '../../../services/cart_service.dart';
+import '../../../services/customer_settings_service.dart';
+import '../order/address_picker_sheet.dart';
 
 class CartScreen extends StatefulWidget {
   final bool showAppBar;
@@ -30,12 +32,43 @@ class _CartScreenState extends State<CartScreen> {
   final Set<String> _knownProductIds = {};
 
   // Recipient state
+  bool _addressHasCoords = false;
   Recipient _recipient = const Recipient(
     name: 'Muhammad Rizki',
     phone: '0812-3456-7890',
     address: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa Kreyongan Atas',
     addressNote: 'Rumah pagar hijau samping pos ronda desa',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    try {
+      final settings = CustomerSettingsService();
+      await settings.load();
+      if (!mounted) return;
+      final a = settings.primaryAddress ??
+          (settings.addresses.isNotEmpty ? settings.addresses.first : null);
+      if (a != null && a.id != 0) {
+        setState(() {
+          _recipient = Recipient(
+            addressId: a.id,
+            name: a.recipient,
+            phone: a.phone,
+            address: a.address,
+            addressNote: a.note,
+            latitude: a.latitude,
+            longitude: a.longitude,
+          );
+          _addressHasCoords = a.latitude != null && a.longitude != null;
+        });
+      }
+    } catch (_) {}
+  }
 
   // Delivery options per UMKM (0: Kurir, 1: Pickup)
   final Map<String, int> _deliveryOptions = {};
@@ -153,10 +186,23 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _editRecipient() async {
-    final updated = await showRecipientSheet(context, _recipient);
-    if (updated != null) {
+    final picked = await showAddressPickerSheet(
+      context,
+      currentAddressId: _recipient.addressId,
+    );
+    if (picked != null && mounted) {
       setState(() {
-        _recipient = updated;
+        _recipient = Recipient(
+          addressId: picked.id,
+          name: picked.recipient,
+          phone: picked.phone,
+          address: picked.address,
+          addressNote: picked.note,
+          latitude: picked.latitude,
+          longitude: picked.longitude,
+        );
+        _addressHasCoords =
+            picked.latitude != null && picked.longitude != null;
       });
     }
   }
@@ -209,6 +255,17 @@ class _CartScreenState extends State<CartScreen> {
           purpose: isPO ? _getPurposeController(umkmId).text.trim() : null,
           note: isPO ? _getNoteController(umkmId).text.trim() : null,
         );
+      }
+
+      // Validasi koordinat jika ada UMKM yang menggunakan kurir
+      final hasCourier = options.values.any((opt) => opt.delivery == DeliveryMethod.courier);
+      if (hasCourier && (_recipient.addressId == null || !_addressHasCoords)) {
+        showToast(
+          context,
+          'Alamat pengiriman belum memiliki titik GPS untuk kurir. Klik "Ubah" pada Kontak & Alamat untuk memilih alamat dengan GPS.',
+          error: true,
+        );
+        return;
       }
 
       final paymentMethod =
@@ -607,6 +664,13 @@ class _CartScreenState extends State<CartScreen> {
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
+              if (_recipient.addressId == null)
+                const Pill(text: 'Pilih Alamat', bg: OC.peach, fg: OC.amber, icon: Icons.warning_amber_rounded)
+              else if (_addressHasCoords)
+                const Pill(text: 'GPS Aktif', bg: OC.mint, fg: OC.primary, icon: Icons.location_on)
+              else
+                const Pill(text: 'Belum Ada GPS', bg: OC.peach, fg: OC.amber, icon: Icons.location_off_outlined),
             ],
           ),
           const SizedBox(height: 6),

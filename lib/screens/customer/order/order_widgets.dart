@@ -827,6 +827,8 @@ Future<Recipient?> showRecipientSheet(
                               phone: phone.text,
                               address: address.text,
                               addressNote: note.text,
+                              latitude: initial.latitude,
+                              longitude: initial.longitude,
                             ),
                           ),
                         );

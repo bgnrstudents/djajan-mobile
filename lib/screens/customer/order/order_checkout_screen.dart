@@ -6,6 +6,7 @@ import '../../../models/order.dart';
 import 'order_payment_screen.dart';
 import '../../../services/order_service.dart';
 import '../../../services/customer_settings_service.dart';
+import 'address_picker_sheet.dart';
 import 'order_widgets.dart';
 
 /// Tahap 1 alur pesanan: Checkout.
@@ -132,7 +133,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     try {
       final settings = CustomerSettingsService();
       await settings.load();
-      final address = settings.primaryAddress;
+      final address = settings.primaryAddress ??
+          (settings.addresses.isNotEmpty ? settings.addresses.first : null);
       if (!mounted || address == null || address.id == 0) return;
       setState(() {
         _recipient = Recipient(
@@ -141,6 +143,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           phone: address.phone,
           address: address.address,
           addressNote: address.note,
+          latitude: address.latitude,
+          longitude: address.longitude,
         );
         _addressHasCoords =
             address.latitude != null && address.longitude != null;
@@ -190,8 +194,25 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   }
 
   Future<void> _editRecipient() async {
-    final r = await showRecipientSheet(context, _recipient);
-    if (r != null) setState(() => _recipient = r);
+    final picked = await showAddressPickerSheet(
+      context,
+      currentAddressId: _recipient.addressId,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _recipient = Recipient(
+          addressId: picked.id,
+          name: picked.recipient,
+          phone: picked.phone,
+          address: picked.address,
+          addressNote: picked.note,
+          latitude: picked.latitude,
+          longitude: picked.longitude,
+        );
+        _addressHasCoords =
+            picked.latitude != null && picked.longitude != null;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -314,6 +335,13 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       fg: OC.mintText,
                       fontSize: 10,
                     ),
+                    const SizedBox(width: 6),
+                    if (_recipient.addressId == null)
+                      const Pill(text: 'Pilih Alamat', bg: OC.peach, fg: OC.amber, icon: Icons.warning_amber_rounded)
+                    else if (_addressHasCoords)
+                      const Pill(text: 'GPS Aktif', bg: OC.mint, fg: OC.primary, icon: Icons.location_on)
+                    else
+                      const Pill(text: 'Belum Ada GPS', bg: OC.peach, fg: OC.amber, icon: Icons.location_off_outlined),
                   ],
                 ),
                 const SizedBox(height: 2),
