@@ -452,14 +452,14 @@ mempercayai nominal dari client.
 Implementasi lokasi berikutnya akan memakai OpenStreetMap agar UMKM dan
 pelanggan tidak perlu memasukkan latitude/longitude secara manual.
 
-- [ ] Tambahkan peta berbasis OpenStreetMap pada form alamat UMKM dan pelanggan.
-- [ ] Tambahkan pencarian alamat melalui geocoding.
-- [ ] Izinkan pengguna memilih dan menggeser pin untuk mengoreksi lokasi.
-- [ ] Simpan alamat teks, latitude, dan longitude melalui API.
-- [ ] Pertahankan Haversine untuk perhitungan ongkir MVP.
+- [x] Tambahkan peta berbasis OpenStreetMap pada form alamat UMKM dan pelanggan.
+- [x] Tambahkan pencarian alamat melalui geocoding.
+- [x] Izinkan pengguna memilih dan menggeser pin untuk mengoreksi lokasi.
+- [x] Simpan alamat teks, latitude, dan longitude melalui API.
+- [x] Pertahankan Haversine untuk perhitungan ongkir MVP.
 - [ ] Evaluasi OSRM atau layanan routing setelah alur peta stabil.
-- [ ] Tampilkan atribusi OpenStreetMap sesuai ketentuan lisensi.
-- [ ] Siapkan fallback manual untuk alamat lama yang belum memiliki koordinat.
+- [x] Tampilkan atribusi OpenStreetMap sesuai ketentuan lisensi.
+- [x] Siapkan fallback manual untuk alamat lama yang belum memiliki koordinat.
 
 ### Test Gate
 
