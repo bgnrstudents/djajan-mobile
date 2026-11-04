@@ -178,6 +178,8 @@ class Recipient {
   final String phone;
   final String address;
   final String? addressNote;
+  final double? latitude;
+  final double? longitude;
 
   const Recipient({
     this.addressId,
@@ -185,6 +187,8 @@ class Recipient {
     required this.phone,
     required this.address,
     this.addressNote,
+    this.latitude,
+    this.longitude,
   });
 
   Recipient copyWith({
@@ -193,6 +197,8 @@ class Recipient {
     String? phone,
     String? address,
     String? addressNote,
+    double? latitude,
+    double? longitude,
   }) {
     return Recipient(
       addressId: addressId ?? this.addressId,
@@ -200,6 +206,8 @@ class Recipient {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       addressNote: addressNote ?? this.addressNote,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 }
@@ -565,10 +573,13 @@ class OrderValidator {
   static Recipient normalizeRecipient(Recipient r) {
     final note = clean(r.addressNote);
     return Recipient(
+      addressId: r.addressId,
       name: clean(r.name),
       phone: normalizePhone(r.phone) ?? r.phone.trim(),
       address: clean(r.address),
       addressNote: note.isEmpty ? null : note,
+      latitude: r.latitude,
+      longitude: r.longitude,
     );
   }
 

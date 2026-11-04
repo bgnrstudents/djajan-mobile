@@ -241,6 +241,8 @@ class OrderService extends ChangeNotifier {
     final backendData = await ApiService.postJson('pesanan/checkout', {
       'metode_pembayaran': isCod ? 'cod' : 'midtrans',
       if (recipient.addressId != null) 'id_alamat': recipient.addressId,
+      if (recipient.latitude != null) 'latitude': recipient.latitude,
+      if (recipient.longitude != null) 'longitude': recipient.longitude,
       'alamat_tujuan': recipient.address,
       'groups': groupedLines.entries.map((entry) {
         final vendor = vendors.firstWhere((item) => item.umkmId == entry.key);
