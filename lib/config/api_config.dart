@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 ///  SATU-SATUNYA TEMPAT YANG PERLU DIUBAH SAAT GANTI PERANGKAT / JARINGAN
 /// ===========================================================================
 ///
-/// Backend di Djajan-Website.
+/// Backend   di Djajan-Website.
 ///
 /// Jalankan dari terminal (di folder Djajan-Website):
 ///
@@ -36,7 +36,7 @@ class ApiConfig {
   /// IP laptop Anda (cek `ipconfig` -> IPv4 Address).
   /// Isi hanya saat aplikasi dijalankan di HP asli.
   /// Contoh: '192.168.1.128'
-  static const String ipLaptop = '192.168.1.8';
+  static const String ipLaptop = '10.10.186.18';
 
   /// Pilih target aplikasi:
   /// - false: laptop/browser atau emulator Android

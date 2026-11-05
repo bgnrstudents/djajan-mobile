@@ -180,12 +180,21 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
                 onPressed: () => Navigator.maybePop(context),
               ),
+              rightAction: IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: OC.muted),
+                tooltip: 'Muat ulang',
+                onPressed: () => context.read<UmkmDataService>().muatSemua(),
+              ),
             ),
             Expanded(
-              child: AbsorbPointer(
-                absorbing: _memproses,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
+              child: RefreshIndicator(
+                color: OC.primary,
+                onRefresh: () => context.read<UmkmDataService>().muatSemua(),
+                child: AbsorbPointer(
+                  absorbing: _memproses,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
                   children: [
                     // --------------- HERO STATUS BANNER ---------------
                     Container(
@@ -424,8 +433,9 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                           _barisInfo(
                             Icons.payments_outlined,
                             'METODE PEMBAYARAN',
-                            pesanan.metodePembayaran,
+                            pesanan.metodePembayaran.toUpperCase(),
                             extra: _labelStatusBayar(pesanan.statusPembayaran),
+                            extraColor: _warnaStatusBayar(pesanan.statusPembayaran),
                           ),
                         ],
                       ),
@@ -845,10 +855,18 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     return 'Jadwal sudah lewat ${selisih.abs()} hari';
   }
 
-  String _labelStatusBayar(String kode) => switch (kode) {
-    'lunas' => 'Sudah lunas',
+  String _labelStatusBayar(String kode) => switch (kode.toLowerCase().trim()) {
+    'lunas' || 'paid' || 'settlement' || 'capture' => 'Sudah lunas',
     'dp_terbayar' => 'DP sudah masuk',
+    'bayar_di_tempat' || 'cod' => 'Bayar di tempat (COD)',
+    'failed' || 'gagal' || 'expire' || 'deny' || 'cancel' => 'Gagal / Dibatalkan',
     _ => 'Belum dibayar',
+  };
+
+  Color _warnaStatusBayar(String kode) => switch (kode.toLowerCase().trim()) {
+    'lunas' || 'paid' || 'settlement' || 'capture' => AppColors.hijauTua,
+    'dp_terbayar' || 'bayar_di_tempat' || 'cod' => AppColors.amber,
+    _ => AppColors.danger,
   };
 
   Widget _barisInfo(
@@ -856,6 +874,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     String label,
     String nilai, {
     String? extra,
+    Color? extraColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -889,9 +908,10 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       extra,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.hijauTua,
+                        fontWeight: FontWeight.w600,
+                        color: extraColor ?? AppColors.hijauTua,
                       ),
                     ),
                   ),

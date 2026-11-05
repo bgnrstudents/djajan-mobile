@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/order.dart';
-import '../../../services/api_service.dart';
 import '../../../services/order_service.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
@@ -26,27 +25,46 @@ class OrderDetailScreen extends StatefulWidget {
   State<OrderDetailScreen> createState() => _OrderDetailScreenState();
 }
 
-class _OrderDetailScreenState extends State<OrderDetailScreen> {
+class _OrderDetailScreenState extends State<OrderDetailScreen>
+    with WidgetsBindingObserver {
   final OrderService _service = OrderService();
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _syncPaymentStatus();
   }
 
-  Future<void> _syncPaymentStatus() async {
-    final order = _service.findById(widget.orderId);
-    if (order?.paymentMethod != PaymentMethod.midtrans ||
-        order?.status != OrderStatus.waitingPayment) {
-      return;
-    }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncPaymentStatus();
+    }
+  }
+
+  Future<void> _syncPaymentStatus({bool showMessage = false}) async {
     try {
-      await _service.refreshPaymentStatusUntilSettled(widget.orderId);
-      if (mounted) setState(() {});
-    } on ApiException {
+      await _service.syncOrder(widget.orderId);
+      final order = _service.findById(widget.orderId);
+      if (order?.paymentMethod == PaymentMethod.midtrans &&
+          order?.status == OrderStatus.waitingPayment) {
+        await _service.refreshPaymentStatusUntilSettled(widget.orderId);
+      }
+      if (mounted) {
+        setState(() {});
+        if (showMessage) {
+          showToast(context, 'Status pesanan berhasil diperbarui.');
+        }
+      }
+    } catch (_) {
       // The existing order view remains available if status sync is temporarily unavailable.
     }
   }
@@ -66,13 +84,43 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _cancel(Order o) async {
+    final reasonController = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(o.hasPreOrder ? 'Batalkan PO?' : 'Batalkan Pesanan?'),
-        content: Text(
-          'Pesanan ${o.refId} akan dibatalkan dan tidak dapat dikembalikan.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pesanan ${o.refId} akan dibatalkan dan tidak dapat dikembalikan.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                hintText: 'Alasan pembatalan (opsional)',
+                hintStyle: const TextStyle(fontSize: 13, color: OC.muted),
+                filled: true,
+                fillColor: const Color(0xFFF9F9F9),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: OC.line),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: OC.line),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -88,8 +136,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       ),
     );
     if (ok != true) return;
+    final reason = reasonController.text.trim();
     await _run(() async {
-      await _service.cancelOrder(o.id);
+      await _service.cancelOrder(o.id, reason: reason.isNotEmpty ? reason : null);
       if (mounted) showToast(context, 'Pesanan berhasil dibatalkan.');
     });
   }
@@ -332,34 +381,53 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             children: [
               OrderHeader(
                 title: 'Status Pesanan',
-                trailing: IconButton(
-                  tooltip: 'Bagikan tautan pesanan',
-                  icon: const Icon(
-                    Icons.share_outlined,
-                    color: OC.ink,
-                    size: 22,
-                  ),
-                  onPressed: () => _share(order),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Perbarui status pesanan',
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        color: OC.ink,
+                        size: 22,
+                      ),
+                      onPressed: () => _syncPaymentStatus(showMessage: true),
+                    ),
+                    IconButton(
+                      tooltip: 'Bagikan tautan pesanan',
+                      icon: const Icon(
+                        Icons.share_outlined,
+                        color: OC.ink,
+                        size: 22,
+                      ),
+                      onPressed: () => _share(order),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
-                  children: [
-                    _statusCard(order),
-                    for (final v in order.vendors) ...[
+                child: RefreshIndicator(
+                  color: OC.primary,
+                  onRefresh: () => _syncPaymentStatus(showMessage: true),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+                    children: [
+                      _statusCard(order),
+                      for (final v in order.vendors) ...[
+                        const SizedBox(height: 10),
+                        _vendorCard(order, v),
+                      ],
+                      if (order.hasProof) ...[
+                        const SizedBox(height: 10),
+                        _proofCard(order),
+                      ],
                       const SizedBox(height: 10),
-                      _vendorCard(order, v),
+                      _paymentCard(order),
+                      const SizedBox(height: 14),
+                      _actions(order),
                     ],
-                    if (order.hasProof) ...[
-                      const SizedBox(height: 10),
-                      _proofCard(order),
-                    ],
-                    const SizedBox(height: 10),
-                    _paymentCard(order),
-                    const SizedBox(height: 14),
-                    _actions(order),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -468,9 +536,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         break;
       case OrderStatus.cancelled:
         tag = 'Dibatalkan';
-        chip = 'Pesanan Dibatalkan';
+        chip = o.refundStatus == 'perlu_refund'
+            ? 'Menunggu Refund'
+            : 'Pesanan Dibatalkan';
         headline = 'Pesanan ini sudah dibatalkan';
-        body = 'Anda dapat menghapus riwayat ini atau membuat pesanan baru.';
+        if (o.refundStatus == 'perlu_refund') {
+          body =
+              'Pesanan telah dibatalkan. Dana Anda sedang menunggu pengembalian/refund manual dari pihak UMKM/Admin.';
+        } else if (o.cancelReason != null && o.cancelReason!.isNotEmpty) {
+          body = 'Alasan: ${o.cancelReason}';
+        } else {
+          body = 'Anda dapat menghapus riwayat ini atau membuat pesanan baru.';
+        }
         toneBg = OC.dangerSoft;
         toneFg = OC.danger;
         icon = Icons.cancel_outlined;
@@ -674,56 +751,171 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   /// (jumlah langkah selesai, langkah yang sedang aktif).
   ///
-  /// Untuk COD, langkah "Pembayaran" baru selesai saat pesanan diterima —
-  /// jadi tidak ikut dicentang saat pesanan sedang dimasak/diantar.
+  /// Disesuaikan secara dinamis menurut metode pembayaran:
+  /// - Midtrans: Pembayaran di awal (Tahap 2) sebelum ditinjau UMKM.
+  /// - COD: Pembayaran tunai di akhir (Tahap 5) saat pesanan tiba.
+  /// - Transfer Desa / QRIS: Alur konfirmasi PO -> Bayar Tagihan -> Masak.
   ({int done, int? active}) _progress(Order o) {
-    final cod = o.paymentMethod == PaymentMethod.cod;
-    switch (o.status) {
-      case OrderStatus.waitingPayment:
-        return (done: 1, active: null);
-      case OrderStatus.reviewing:
-        return (done: 1, active: 2);
-      case OrderStatus.processing:
-        return cod ? (done: 2, active: 4) : (done: 3, active: 4);
-      case OrderStatus.delivering:
-        return cod ? (done: 2, active: 5) : (done: 4, active: 5);
-      case OrderStatus.completed:
-        return (done: 5, active: null);
-      case OrderStatus.cancelled:
-        return (done: 0, active: null);
+    if (o.status == OrderStatus.cancelled) {
+      return (done: 0, active: null);
+    }
+    if (o.status == OrderStatus.completed) {
+      return (done: 5, active: null);
+    }
+
+    if (o.paymentMethod == PaymentMethod.midtrans) {
+      switch (o.status) {
+        case OrderStatus.waitingPayment:
+          // Tahap 1 (Pesanan Dibuat) selesai, Tahap 2 (Pembayaran Midtrans) aktif
+          return (done: 1, active: 2);
+        case OrderStatus.reviewing:
+          // Tahap 1 & 2 selesai, Tahap 3 (Ditinjau & Dikonfirmasi UMKM) aktif
+          return (done: 2, active: 3);
+        case OrderStatus.processing:
+          // Tahap 1, 2, 3 selesai, Tahap 4 (Diproses Dapur) aktif
+          return (done: 3, active: 4);
+        case OrderStatus.delivering:
+          // Tahap 1, 2, 3, 4 selesai, Tahap 5 (Pengantaran/Ambil) aktif
+          return (done: 4, active: 5);
+        default:
+          return (done: 1, active: 2);
+      }
+    } else if (o.paymentMethod == PaymentMethod.cod) {
+      switch (o.status) {
+        case OrderStatus.waitingPayment:
+        case OrderStatus.reviewing:
+          // Tahap 1 (Pesanan Terkirim) selesai, Tahap 2 (Ditinjau & Dikonfirmasi UMKM) aktif
+          return (done: 1, active: 2);
+        case OrderStatus.processing:
+          // Tahap 1 & 2 selesai, Tahap 3 (Diproses Dapur) aktif
+          return (done: 2, active: 3);
+        case OrderStatus.delivering:
+          // Tahap 1, 2, 3 selesai, Tahap 4 (Pengantaran/Siap Diambil) aktif
+          return (done: 3, active: 4);
+        default:
+          return (done: 1, active: 2);
+      }
+    } else {
+      // Skema Transfer Desa / QRIS Manual (PO Katering Tradisional)
+      switch (o.status) {
+        case OrderStatus.waitingPayment:
+          return o.hasProof ? (done: 2, active: 3) : (done: 1, active: 2);
+        case OrderStatus.reviewing:
+          return (done: 1, active: 2);
+        case OrderStatus.processing:
+          return (done: 3, active: 4);
+        case OrderStatus.delivering:
+          return (done: 4, active: 5);
+        default:
+          return (done: 1, active: 2);
+      }
     }
   }
 
   List<_Step> _steps(Order o) {
     final main = o.mainVendor;
     final first = main.items.first;
-    final prog = _progress(o);
     final isGeprek = first.productName.toLowerCase().contains('geprek');
+    final courier = main.delivery == DeliveryMethod.courier;
 
-    final s2 =
+    final reviewDesc =
         'Memastikan kesiapan ${main.totalQty} ${first.unit.toLowerCase()} '
         '${isGeprek ? 'ayam geprek katering' : first.productName}'
         '${main.requiredAt != null ? ' untuk tanggal ${_dayMonth(main.requiredAt!)}' : ''}.';
 
-    String s3;
+    final kitchenDesc = isGeprek
+        ? 'Penyembelihan ayam segar, goreng renyah, dan racikan sambal bawang.'
+        : 'Bahan segar dipersiapkan, dimasak, dan dikemas rapi oleh dapur mitra.';
+
+    final deliveryStep = courier
+        ? _Step(
+            'Pengantaran Kurir Warga',
+            main.purpose != null
+                ? 'Diantar langsung dalam kondisi hangat ke lokasi kegiatan ${main.purpose!.toLowerCase()}.'
+                : 'Diantar langsung dalam kondisi hangat ke alamat penerima.',
+            Icons.two_wheeler,
+          )
+        : _Step(
+            'Siap Diambil Sendiri',
+            'Ambil pesanan Anda di ${main.pickupLocation}.',
+            Icons.storefront_outlined,
+          );
+
+    // 1. ALUR KHUSUS MIDTRANS (Bayar instan di awal sebelum diproses)
+    if (o.paymentMethod == PaymentMethod.midtrans) {
+      final isPaid = o.status != OrderStatus.waitingPayment;
+      return <_Step>[
+        _Step(
+          o.hasPreOrder ? 'Pengajuan PO Dibuat' : 'Pesanan Dibuat',
+          'Rincian pesanan berhasil dibuat di sistem.',
+          Icons.check_rounded,
+          trailing: fmtTime(o.createdAt),
+        ),
+        _Step(
+          'Pembayaran Midtrans',
+          isPaid
+              ? 'Pembayaran instan via Midtrans telah terverifikasi otomatis.'
+              : 'Selesaikan pembayaran instan via Midtrans (QRIS, e-wallet, atau VA).',
+          Icons.account_balance_wallet_outlined,
+        ),
+        _Step(
+          'Ditinjau & Dikonfirmasi ${_shortName(main.umkmName)}',
+          reviewDesc,
+          Icons.fact_check_outlined,
+        ),
+        _Step(
+          'Diproses & Dimasak Dapur',
+          kitchenDesc,
+          Icons.soup_kitchen_outlined,
+        ),
+        deliveryStep,
+      ];
+    }
+
+    // 2. ALUR KHUSUS COD (Bayar tunai di akhir saat pesanan tiba)
     if (o.paymentMethod == PaymentMethod.cod) {
-      s3 = 'Bayar tunai ke kurir warga saat pesanan tiba.';
-    } else if (o.paymentMethod == PaymentMethod.midtrans) {
-      s3 = o.status == OrderStatus.waitingPayment
-          ? 'Selesaikan pembayaran instan via Midtrans (QRIS, e-wallet, atau VA).'
-          : 'Pembayaran instan via Midtrans telah terverifikasi otomatis.';
-    } else if (o.hasProof) {
-      s3 = prog.done >= 3
+      return <_Step>[
+        _Step(
+          o.hasPreOrder ? 'Pengajuan PO Terkirim' : 'Pesanan Terkirim',
+          'Rincian pesanan sukses diajukan ke UMKM.',
+          Icons.check_rounded,
+          trailing: fmtTime(o.createdAt),
+        ),
+        _Step(
+          'Ditinjau & Dikonfirmasi ${_shortName(main.umkmName)}',
+          reviewDesc,
+          Icons.fact_check_outlined,
+        ),
+        _Step(
+          'Diproses & Dimasak Dapur',
+          kitchenDesc,
+          Icons.soup_kitchen_outlined,
+        ),
+        deliveryStep,
+        _Step(
+          courier ? 'Pembayaran Tunai (COD)' : 'Bayar Tunai di Tempat',
+          courier
+              ? 'Bayar tunai ke kurir warga saat pesanan tiba di tujuan.'
+              : 'Bayar tunai langsung di tempat saat mengambil pesanan.',
+          Icons.payments_outlined,
+        ),
+      ];
+    }
+
+    // 3. ALUR MANUAL TRANSFER / QRIS DESA (PO Katering Tradisional)
+    final prog = _progress(o);
+    String manualPayDesc;
+    if (o.hasProof) {
+      manualPayDesc = prog.done >= 3
           ? 'Bukti transfer terverifikasi oleh bendahara UMKM desa.'
           : 'Bukti transfer sudah diterima, diverifikasi setelah PO disetujui.';
     } else if (o.status == OrderStatus.waitingPayment) {
-      s3 = 'Segera transfer & unggah bukti pembayaran Anda.';
+      manualPayDesc = 'Segera transfer & unggah bukti pembayaran Anda.';
     } else {
-      s3 =
+      manualPayDesc =
           'Instruksi bayar (QRIS / Transfer Desa) dibuka setelah PO disetujui.';
     }
 
-    final courier = main.delivery == DeliveryMethod.courier;
     return <_Step>[
       _Step(
         o.hasPreOrder ? 'Pengajuan PO Terkirim' : 'Pesanan Terkirim',
@@ -735,36 +927,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       ),
       _Step(
         'Sedang Ditinjau ${_shortName(main.umkmName)}',
-        s2,
+        reviewDesc,
         Icons.fact_check_outlined,
       ),
       _Step(
-        o.paymentMethod == PaymentMethod.cod
-            ? 'Pembayaran Tunai (COD)'
-            : 'Pembayaran Tagihan',
-        s3,
+        'Pembayaran Tagihan',
+        manualPayDesc,
         Icons.account_balance_wallet_outlined,
       ),
       _Step(
         'Diproses & Dimasak Dapur',
-        isGeprek
-            ? 'Penyembelihan ayam segar, goreng renyah, dan racikan sambal bawang.'
-            : 'Bahan segar dipersiapkan, dimasak, dan dikemas rapi oleh dapur mitra.',
+        kitchenDesc,
         Icons.soup_kitchen_outlined,
       ),
-      courier
-          ? _Step(
-              'Pengantaran Kurir Warga',
-              main.purpose != null
-                  ? 'Diantar langsung dalam kondisi hangat ke lokasi kegiatan ${main.purpose!.toLowerCase()}.'
-                  : 'Diantar langsung dalam kondisi hangat ke alamat penerima.',
-              Icons.two_wheeler,
-            )
-          : _Step(
-              'Siap Diambil Sendiri',
-              'Ambil pesanan Anda di ${main.pickupLocation}.',
-              Icons.storefront_outlined,
-            ),
+      deliveryStep,
     ];
   }
 

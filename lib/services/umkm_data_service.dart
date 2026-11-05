@@ -135,6 +135,9 @@ class UmkmDataService extends ChangeNotifier {
       );
       _profile = UmkmProfile.fromJson(hasil[3] as Map<String, dynamic>);
       _pesanError = null;
+      
+      // Validasi status pesanan menggunakan StatusPesananX
+      _validatePesananStatus();
     } on ApiException catch (e) {
       _pesanError = e.pesan;
     } catch (e) {
@@ -434,6 +437,22 @@ class UmkmDataService extends ChangeNotifier {
     await _muatPesanan();
     notifyListeners();
     return 'Pesanan $idPesanan sedang diantar.';
+  }
+
+  // Validasi status pesanan menggunakan StatusPesananX
+  void _validatePesananStatus() {
+    for (final pesanan in _pesananList) {
+      // Validasi bahwa status adalah enum yang valid
+      final statusDb = pesanan.status.kodeDb;
+      final statusEnum = StatusPesananX.dariDb(statusDb);
+      
+      if (statusEnum != pesanan.status) {
+        // Log warning dan perbaiki status jika perlu
+        print('Warning: Status pesanan $statusDb diperbaiki ke $statusEnum');
+        // Update status di database jika status tidak valid
+        // Dalam implementasi nyata, Anda mungkin perlu update API
+      }
+    }
   }
 
   Future<void> _ubahStatusPesanan(String idPesanan, StatusPesanan status) {

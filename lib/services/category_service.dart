@@ -32,7 +32,7 @@ class CategoryService extends ChangeNotifier {
     } on ApiException catch (error) {
       _errorMessage = error.pesan;
     } finally {
-      _loading = false;
+      _loading = false; 
       notifyListeners();
     }
   }

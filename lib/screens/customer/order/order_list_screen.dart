@@ -21,6 +21,25 @@ enum _Filter { all, active, done, cancelled }
 class _OrderListScreenState extends State<OrderListScreen> {
   final OrderService _service = OrderService();
   _Filter _filter = _Filter.all;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    if (!mounted) return;
+    setState(() => _loading = true);
+    try {
+      await _service.loadFromApi();
+    } catch (_) {
+      // Ignored / handled by UI
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   List<Order> _filtered() {
     return _service.orders.where((o) {
@@ -48,25 +67,39 @@ class _OrderListScreenState extends State<OrderListScreen> {
   Widget build(BuildContext context) {
     return Container(
       color: OC.bg,
-      child: AnimatedBuilder(
-        animation: _service,
-        builder: (context, _) {
-          final list = _filtered();
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
-            children: [
-              const DjajanPageHeader(
-                title: 'Pesanan Saya',
-                subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
-                padding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 12),
-              _filters(),
-              const SizedBox(height: 12),
-              if (list.isEmpty) _empty() else ...list.map(_orderCard),
-            ],
-          );
-        },
+      child: RefreshIndicator(
+        onRefresh: _fetchOrders,
+        color: OC.primary,
+        child: AnimatedBuilder(
+          animation: _service,
+          builder: (context, _) {
+            final list = _filtered();
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+              children: [
+                const DjajanPageHeader(
+                  title: 'Pesanan Saya',
+                  subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
+                  padding: EdgeInsets.zero,
+                ),
+                if (_loading && _service.orders.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(color: OC.primary),
+                    ),
+                  )
+                else ...[
+                  const SizedBox(height: 12),
+                  _filters(),
+                  const SizedBox(height: 12),
+                  if (list.isEmpty) _empty() else ...list.map(_orderCard),
+                ],
+              ],
+            );
+          },
+        ),
       ),
     );
   }

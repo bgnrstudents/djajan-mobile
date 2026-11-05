@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../routes/app_routes.dart';
 import '../../services/auth_service.dart';
+import '../../services/order_service.dart';
 import '../../services/umkm_data_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -92,7 +93,12 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
     if (session?.role == AuthRole.umkm) {
       context.read<UmkmDataService>().loadProfileFromLogin(session!.data);
+    } else if (session?.role == AuthRole.pelanggan) {
+      try {
+        await context.read<OrderService>().loadFromApi();
+      } catch (_) {}
     }
+    if (!mounted) return;
     Navigator.pushReplacementNamed(
       context,
       session == null

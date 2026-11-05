@@ -214,7 +214,14 @@ class Produk {
 }
 
 // ============================================================ PESANAN
-enum StatusPesanan { poBaru, diterima, diproses, diantar, ditolak, selesai }
+enum StatusPesanan {
+  poBaru,
+  diterima,
+  diproses,
+  diantar,
+  ditolak,
+  selesai,
+}
 
 extension StatusPesananX on StatusPesanan {
   String get kodeDb => switch (this) {
@@ -243,6 +250,37 @@ extension StatusPesananX on StatusPesanan {
     'selesai' => StatusPesanan.selesai,
     _ => StatusPesanan.poBaru,
   };
+
+  /// Chain status yang sesuai dengan roadmap: po_baru -> diterima -> diproses -> diantar -> selesai
+  static const List<StatusPesanan> statusSequence = [
+    StatusPesanan.poBaru,
+    StatusPesanan.diterima,
+    StatusPesanan.diproses,
+    StatusPesanan.diantar,
+    StatusPesanan.selesai,
+  ];
+
+  /// Status yang dapat dilewati dari status saat ini
+  static List<StatusPesanan> canTransitionTo(StatusPesanan current) {
+    final index = statusSequence.indexOf(current);
+    if (index < 0) return [];
+    return statusSequence.skip(index + 1).toList();
+  }
+
+  /// Validasi bahwa transisi status adalah valid
+  static bool isValidTransition(StatusPesanan from, StatusPesanan to) {
+    if (from == to) return true;
+    final fromIndex = statusSequence.indexOf(from);
+    final toIndex = statusSequence.indexOf(to);
+    return fromIndex >= 0 && toIndex >= 0 && toIndex == fromIndex + 1;
+  }
+
+  /// Helper untuk mendapatkan status berikutnya yang valid
+  static StatusPesanan getNextStatus(StatusPesanan current) {
+    final index = statusSequence.indexOf(current);
+    if (index < 0 || index >= statusSequence.length - 1) return current;
+    return statusSequence[index + 1];
+  }
 }
 
 class ItemPesanan {
@@ -339,7 +377,12 @@ class Pesanan {
     alamatTujuan: _str(j['alamat_tujuan'], '-'),
     catatan: _str(j['catatan']),
     metodePembayaran: _str(j['metode_pembayaran'], '-'),
-    statusPembayaran: _str(j['status_pembayaran'], 'belum_bayar'),
+    statusPembayaran: _str(
+      (j['payment_status'] != null && j['payment_status'] != 'pending')
+          ? j['payment_status']
+          : (j['status_pembayaran'] ?? j['payment_status']),
+      'belum_bayar',
+    ),
     biayaPengantaran: _int(j['biaya_pengantaran']),
     biayaLayanan: _int(j['biaya_layanan']),
     subtotal: _int(j['subtotal']),
