@@ -1,12 +1,24 @@
 import 'dart:typed_data';
 
+import 'umkm_seller_models.dart';
+
 enum OrderStatus {
   waitingPayment,
   reviewing,
   processing,
   delivering,
   completed,
-  cancelled,
+  cancelled;
+
+  /// Membuat OrderStatus dari StatusPesanan
+  static OrderStatus fromStatusPesanan(StatusPesanan status) => switch (status) {
+    StatusPesanan.poBaru => OrderStatus.waitingPayment,
+    StatusPesanan.diterima => OrderStatus.reviewing,
+    StatusPesanan.diproses => OrderStatus.processing,
+    StatusPesanan.diantar => OrderStatus.delivering,
+    StatusPesanan.selesai => OrderStatus.completed,
+    StatusPesanan.ditolak => OrderStatus.cancelled,
+  };
 }
 
 enum OrderType { instant, preOrder }
@@ -32,6 +44,26 @@ extension OrderStatusX on OrderStatus {
         return 'Dibatalkan';
     }
   }
+
+  /// Mapping ke StatusPesanan yang setara
+  StatusPesanan get toStatusPesanan => switch (this) {
+    OrderStatus.waitingPayment => StatusPesanan.poBaru,
+    OrderStatus.reviewing => StatusPesanan.diterima,
+    OrderStatus.processing => StatusPesanan.diproses,
+    OrderStatus.delivering => StatusPesanan.diantar,
+    OrderStatus.completed => StatusPesanan.selesai,
+    OrderStatus.cancelled => StatusPesanan.ditolak,
+  };
+
+  /// Membuat OrderStatus dari StatusPesanan
+  static OrderStatus fromStatusPesanan(StatusPesanan status) => switch (status) {
+    StatusPesanan.poBaru => OrderStatus.waitingPayment,
+    StatusPesanan.diterima => OrderStatus.reviewing,
+    StatusPesanan.diproses => OrderStatus.processing,
+    StatusPesanan.diantar => OrderStatus.delivering,
+    StatusPesanan.selesai => OrderStatus.completed,
+    StatusPesanan.ditolak => OrderStatus.cancelled,
+  };
 
   bool get isActive =>
       this != OrderStatus.completed && this != OrderStatus.cancelled;
@@ -148,6 +180,7 @@ class OrderVendor {
   final List<OrderItem> items;
   final DeliveryMethod delivery;
   final double deliveryFee;
+  final double? distanceKm;
   final String pickupLocation;
   final DateTime? requiredAt;
   final String? purpose;
@@ -161,6 +194,7 @@ class OrderVendor {
     required this.items,
     required this.delivery,
     required this.deliveryFee,
+    this.distanceKm,
     required this.pickupLocation,
     this.requiredAt,
     this.purpose,
@@ -170,6 +204,49 @@ class OrderVendor {
   double get subtotal => items.fold(0.0, (s, i) => s + i.subtotal);
   int get totalQty => items.fold(0, (s, i) => s + i.quantity);
   bool get isPreOrder => type == OrderType.preOrder;
+}
+
+class OngkirCalculation {
+  final int umkmId;
+  final String umkmName;
+  final String deliveryMethod;
+  final double? distanceKm;
+  final double deliveryFee;
+  final bool isFree;
+  final int? zoneId;
+  final String message;
+  final bool isOutOfRange;
+
+  const OngkirCalculation({
+    required this.umkmId,
+    required this.umkmName,
+    required this.deliveryMethod,
+    this.distanceKm,
+    required this.deliveryFee,
+    required this.isFree,
+    this.zoneId,
+    required this.message,
+    required this.isOutOfRange,
+  });
+
+  factory OngkirCalculation.fromJson(Map<String, dynamic> json) {
+    return OngkirCalculation(
+      umkmId: int.tryParse(json['id_umkm']?.toString() ?? '') ?? 0,
+      umkmName: (json['nama_umkm'] ?? '').toString(),
+      deliveryMethod: (json['metode_pengiriman'] ?? 'kurir').toString(),
+      distanceKm: json['jarak_km'] != null
+          ? double.tryParse(json['jarak_km'].toString())
+          : null,
+      deliveryFee:
+          double.tryParse(json['biaya_ongkir']?.toString() ?? '') ?? 0.0,
+      isFree: json['gratis'] == true,
+      zoneId: json['zona_ongkir_id'] != null
+          ? int.tryParse(json['zona_ongkir_id'].toString())
+          : null,
+      message: (json['pesan'] ?? '').toString(),
+      isOutOfRange: json['di_luar_jangkauan'] == true,
+    );
+  }
 }
 
 class Recipient {
@@ -244,6 +321,10 @@ class Order {
   final Uint8List? proofBytes;
   final String? proofName;
   final DateTime? proofUploadedAt;
+  final String? cancelReason;
+  final String? cancelledBy;
+  final DateTime? cancelledAt;
+  final String? refundStatus;
 
   const Order({
     required this.id,
@@ -263,6 +344,10 @@ class Order {
     this.proofBytes,
     this.proofName,
     this.proofUploadedAt,
+    this.cancelReason,
+    this.cancelledBy,
+    this.cancelledAt,
+    this.refundStatus,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -290,6 +375,9 @@ class Order {
           ? DeliveryMethod.courier
           : DeliveryMethod.pickup,
       deliveryFee: _asDouble(json['biaya_pengantaran']),
+      distanceKm: json['jarak_km'] != null
+          ? double.tryParse(json['jarak_km'].toString())
+          : null,
       pickupLocation: (json['alamat_umkm'] ?? '').toString(),
       requiredAt: _asDate(json['waktu_dibutuhkan']),
       purpose: _asString(json['keperluan_acara']),
@@ -344,6 +432,10 @@ class Order {
       paymentDeadline: _asDate(json['batas_konfirmasi']),
       snapToken: _asString(json['snap_token']),
       paymentUrl: _asString(json['payment_url']),
+      cancelReason: _asString(json['alasan_batal']),
+      cancelledBy: _asString(json['dibatalkan_oleh']),
+      cancelledAt: _asDate(json['dibatalkan_pada']),
+      refundStatus: _asString(json['status_refund']) ?? 'none',
     );
   }
 
@@ -353,6 +445,7 @@ class Order {
   int get totalQty => vendors.fold(0, (s, v) => s + v.totalQty);
   bool get hasProof => proofBytes != null;
   bool get hasPreOrder => vendors.any((v) => v.isPreOrder);
+  bool get canCancel => status.canCancel;
   String get vendorNames => vendors.map((v) => v.umkmName).join(' & ');
 
   OrderVendor get mainVendor =>
@@ -369,6 +462,10 @@ class Order {
     String? proofName,
     DateTime? proofUploadedAt,
     bool clearProof = false,
+    String? cancelReason,
+    String? cancelledBy,
+    DateTime? cancelledAt,
+    String? refundStatus,
   }) {
     return Order(
       id: id,
@@ -390,6 +487,10 @@ class Order {
       proofUploadedAt: clearProof
           ? null
           : (proofUploadedAt ?? this.proofUploadedAt),
+      cancelReason: cancelReason ?? this.cancelReason,
+      cancelledBy: cancelledBy ?? this.cancelledBy,
+      cancelledAt: cancelledAt ?? this.cancelledAt,
+      refundStatus: refundStatus ?? this.refundStatus,
     );
   }
 
@@ -410,36 +511,44 @@ class Order {
   }
 
   static OrderStatus _statusFromJson(String paymentStatus, String orderStatus) {
-    if (paymentStatus == 'paid' ||
-        paymentStatus == 'settlement' ||
-        paymentStatus == 'capture') {
-      return OrderStatus.reviewing;
-    }
-    if (paymentStatus == 'failed' ||
-        paymentStatus == 'deny' ||
-        paymentStatus == 'cancel' ||
-        paymentStatus == 'expire' ||
-        orderStatus == 'ditolak' ||
-        orderStatus == 'cancelled') {
+    final lowerOrder = orderStatus.toLowerCase().trim();
+    final lowerPay = paymentStatus.toLowerCase().trim();
+
+    // 1. Ditolak / dibatalkan
+    if (lowerOrder == 'ditolak' ||
+        lowerOrder == 'cancelled' ||
+        lowerPay == 'failed' ||
+        lowerPay == 'deny' ||
+        lowerPay == 'cancel' ||
+        lowerPay == 'expire') {
       return OrderStatus.cancelled;
     }
-    switch (orderStatus.toLowerCase()) {
-      case 'diterima':
-      case 'confirmed':
-        return OrderStatus.reviewing;
-      case 'diproses':
-      case 'processing':
-        return OrderStatus.processing;
-      case 'diantar':
-      case 'delivering':
-      case 'ready':
-        return OrderStatus.delivering;
-      case 'selesai':
-      case 'completed':
-        return OrderStatus.completed;
-      default:
-        return OrderStatus.waitingPayment;
+
+    // 2. Status tahapan lanjutan (selesai, diantar, diproses)
+    if (lowerOrder == 'selesai' || lowerOrder == 'completed') {
+      return OrderStatus.completed;
     }
+    if (lowerOrder == 'diantar' ||
+        lowerOrder == 'delivering' ||
+        lowerOrder == 'ready') {
+      return OrderStatus.delivering;
+    }
+    if (lowerOrder == 'diproses' || lowerOrder == 'processing') {
+      return OrderStatus.processing;
+    }
+
+    // 3. Pembayaran sukses atau sudah diterima UMKM -> reviewing
+    if (lowerPay == 'paid' ||
+        lowerPay == 'settlement' ||
+        lowerPay == 'capture' ||
+        lowerOrder == 'diterima' ||
+        lowerOrder == 'confirmed' ||
+        lowerOrder == 'reviewing') {
+      return OrderStatus.reviewing;
+    }
+
+    // 4. Masih menunggu pembayaran
+    return OrderStatus.waitingPayment;
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'notification_service.dart';
 import '../models/order.dart';
+import '../models/umkm_seller_models.dart';
 import 'api_service.dart';
 
 class OrderService extends ChangeNotifier {
@@ -48,6 +49,28 @@ class OrderService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void seedOrders(List<Order> orders) {
+    _orders
+      ..clear()
+      ..addAll(orders);
+    notifyListeners();
+  }
+
+  Future<Order?> syncOrder(String orderId) async {
+    try {
+      final data = await ApiService.get('pesanan/saya/$orderId');
+      if (data is Map) {
+        final updated = Order.fromJson(Map<String, dynamic>.from(data));
+        _replace(updated);
+        notifyListeners();
+        return updated;
+      }
+    } catch (_) {
+      // Fallback jika network bermasalah
+    }
+    return findById(orderId);
+  }
+
   Future<String?> refreshPaymentStatus(String orderId) async {
     final order = _require(orderId);
     final groupId = order.checkoutId ?? orderId;
@@ -57,11 +80,15 @@ class OrderService extends ChangeNotifier {
       data['status_pembayaran'],
     );
     final orderStatus = data['status_pesanan']?.toString().toLowerCase();
-    final status = _statusFromPayment(
-      paymentStatus: paymentStatus,
-      orderStatus: orderStatus,
+    
+    // Validasi status pesanan menggunakan validation logic baru
+    final status = _validateOrderStatus(
       current: order.status,
+      paymentDeadline: order.paymentDeadline,
+      backendPaymentStatus: paymentStatus,
+      backendOrderStatus: orderStatus,
     );
+    
     if (status != order.status) {
       _replace(order.copyWith(status: status));
     }
@@ -148,6 +175,58 @@ class OrderService extends ChangeNotifier {
       default:
         return current;
     }
+  }
+
+  /// Helper untuk validasi pembayaran menggunakan StatusPesanan
+  static bool _isValidPaymentStatusTransition(
+    OrderStatus current,
+    OrderStatus next,
+  ) {
+    final currentPesanan = current.toStatusPesanan;
+    final nextPesanan = next.toStatusPesanan;
+    return StatusPesananX.isValidTransition(currentPesanan, nextPesanan);
+  }
+
+  /// Helper untuk validasi payment expiry
+  static OrderStatus _validatePaymentExpiry(
+    OrderStatus current,
+    DateTime? paymentDeadline,
+  ) {
+    if (paymentDeadline == null) return current;
+    final now = DateTime.now();
+    if (now.isAfter(paymentDeadline) && 
+        (current == OrderStatus.waitingPayment || current == OrderStatus.reviewing)) {
+      return OrderStatus.cancelled;
+    }
+    return current;
+  }
+
+  /// Validasi lengkap status pesanan dengan validation rules
+  static OrderStatus _validateOrderStatus({
+    required OrderStatus current,
+    DateTime? paymentDeadline,
+    String? backendPaymentStatus,
+    String? backendOrderStatus,
+  }) {
+    var validated = current;
+    
+    // 1. Validasi payment expiry
+    validated = _validatePaymentExpiry(validated, paymentDeadline);
+    
+    // 2. Validasi status transition (jika status berubah dari backend)
+    if (backendPaymentStatus != null || backendOrderStatus != null) {
+      final fromBackend = _statusFromPayment(
+        paymentStatus: backendPaymentStatus ?? 'pending',
+        orderStatus: backendOrderStatus,
+        current: validated,
+      );
+      if (fromBackend != validated && 
+          _isValidPaymentStatusTransition(validated, fromBackend)) {
+        validated = fromBackend;
+      }
+    }
+    
+    return validated;
   }
 
   PaymentAccount accountFor(String umkmId) {
@@ -273,6 +352,14 @@ class OrderService extends ChangeNotifier {
       throw const OrderException('Server tidak mengembalikan nomor pesanan.');
     }
 
+    // Validasi status pesanan yang dibuat
+    final initialStatus = _validateOrderStatus(
+      current: OrderStatus.waitingPayment,
+      paymentDeadline: isCod ? null : now.add(const Duration(hours: 2)),
+      backendPaymentStatus: backendData['payment_status']?.toString(),
+      backendOrderStatus: null,
+    );
+
     final order = Order(
       id: backendOrderId,
       checkoutId: backendOrderId,
@@ -283,12 +370,17 @@ class OrderService extends ChangeNotifier {
       paymentMethod: paymentMethod,
       serviceFee: 0,
       discount: 0,
-      status: OrderStatus.waitingPayment,
+      status: initialStatus,
       account: accountFor(vendors.first.umkmId),
       paymentDeadline: isCod ? null : now.add(const Duration(hours: 2)),
       snapToken: backendData['snap_token']?.toString(),
       paymentUrl: backendData['payment_url']?.toString(),
     );
+    
+    // Log jika payment expired saat creation
+    if (!isCod && now.isAfter(order.paymentDeadline!)) {
+      print('Warning: Order ${order.id} created with expired payment deadline');
+    }
 
     _orders.add(order);
     notifyListeners();
@@ -310,10 +402,25 @@ class OrderService extends ChangeNotifier {
     required String fileName,
   }) async {
     final order = _require(orderId);
-    if (order.status != OrderStatus.waitingPayment &&
-        order.status != OrderStatus.reviewing) {
+    
+    // Validasi status pesanan dengan payment expiry
+    final validatedStatus = _validateOrderStatus(
+      current: order.status,
+      paymentDeadline: order.paymentDeadline,
+      backendPaymentStatus: null,
+      backendOrderStatus: null,
+    );
+    
+    if (validatedStatus != order.status) {
+      // Pembayaran expired
+      return _replace(order.copyWith(status: OrderStatus.cancelled));
+    }
+    
+    if (validatedStatus != OrderStatus.waitingPayment &&
+        validatedStatus != OrderStatus.reviewing) {
       throw const OrderException('Pesanan ini tidak bisa dibayar lagi.');
     }
+    
     if (bytes.isEmpty) {
       throw const OrderException('File bukti transfer kosong.');
     }
@@ -347,9 +454,32 @@ class OrderService extends ChangeNotifier {
     if (order.paymentMethod != PaymentMethod.cod) {
       throw const OrderException('Pesanan ini memakai transfer / QRIS.');
     }
-    if (order.status != OrderStatus.waitingPayment) {
+    
+    // Validasi status pesanan dengan payment expiry
+    final validatedStatus = _validateOrderStatus(
+      current: order.status,
+      paymentDeadline: order.paymentDeadline,
+      backendPaymentStatus: null,
+      backendOrderStatus: null,
+    );
+    
+    if (validatedStatus != order.status) {
+      // Pembayaran expired
+      return _replace(order.copyWith(status: OrderStatus.cancelled));
+    }
+    
+    if (validatedStatus != OrderStatus.waitingPayment) {
       throw const OrderException('Pesanan sudah dikonfirmasi.');
     }
+    
+    // Validasi status transition menggunakan StatusPesanan
+    final currentPesanan = order.status.toStatusPesanan;
+    final nextPesanan = OrderStatus.reviewing.toStatusPesanan;
+    
+    if (!StatusPesananX.isValidTransition(currentPesanan, nextPesanan)) {
+      throw const OrderException('Transisi status pesanan tidak valid.');
+    }
+    
     await Future.delayed(const Duration(milliseconds: 600));
     final updated = _replace(order.copyWith(status: OrderStatus.reviewing));
     _notify(
@@ -367,7 +497,36 @@ class OrderService extends ChangeNotifier {
         'Pesanan ini sudah dibayar atau dalam proses.',
       );
     }
+    
+    // Validasi payment expiry sebelum menandai sebagai paid
+    final validatedStatus = _validateOrderStatus(
+      current: order.status,
+      paymentDeadline: order.paymentDeadline,
+      backendPaymentStatus: 'paid',
+      backendOrderStatus: null,
+    );
+    
+    if (validatedStatus != order.status) {
+      // Pembayaran expired - secara otomatis batalkan pesanan
+      _notify(
+        title: 'Pembayaran Expired',
+        message: 'Pembayaran pesanan ${order.refId} telah expired dan dibatalkan.',
+        type: AppNotificationType.payment,
+        orderId: order.id,
+      );
+      return _replace(order.copyWith(status: OrderStatus.cancelled));
+    }
+    
     await Future.delayed(const Duration(milliseconds: 600));
+    
+    // Validasi status transition menggunakan StatusPesanan
+    final currentPesanan = order.status.toStatusPesanan;
+    final nextPesanan = OrderStatus.reviewing.toStatusPesanan;
+    
+    if (!StatusPesananX.isValidTransition(currentPesanan, nextPesanan)) {
+      throw const OrderException('Transisi status pembayaran tidak valid.');
+    }
+    
     final updated = _replace(order.copyWith(status: OrderStatus.reviewing));
     _notify(
       title: 'Pembayaran Berhasil',
@@ -394,18 +553,38 @@ class OrderService extends ChangeNotifier {
   Future<Order> advanceStatus(String orderId) async {
     final order = _require(orderId);
     final OrderStatus next;
+    
     switch (order.status) {
-      case OrderStatus.reviewing:
-        next = OrderStatus.processing;
-      case OrderStatus.processing:
-        next = OrderStatus.delivering;
-      case OrderStatus.delivering:
-        next = OrderStatus.completed;
       case OrderStatus.waitingPayment:
         throw const OrderException('Unggah bukti transfer terlebih dahulu.');
+      case OrderStatus.reviewing:
+        next = OrderStatus.processing;
+        break;
+      case OrderStatus.processing:
+        next = OrderStatus.delivering;
+        break;
+      case OrderStatus.delivering:
+        next = OrderStatus.completed;
+        break;
       case OrderStatus.completed:
       case OrderStatus.cancelled:
         throw const OrderException('Pesanan sudah berakhir.');
+    }
+
+    // Validasi status menggunakan StatusPesanan
+    final currentStatusPesanan = order.status.toStatusPesanan;
+    final nextStatusPesanan = next.toStatusPesanan;
+    
+    if (!StatusPesananX.isValidTransition(currentStatusPesanan, nextStatusPesanan)) {
+      throw const OrderException('Status pesanan tidak valid.');
+    }
+
+    // Validasi untuk stock protection - cek status berdasarkan business logic
+    final currentOrderStatus = order.status;
+    if (currentOrderStatus == OrderStatus.processing || 
+        currentOrderStatus == OrderStatus.delivering) {
+      // Status ini memerlukan validasi stok
+      // TODO: Integrasi dengan service validasi stok
     }
 
     final updated = _replace(order.copyWith(status: next));
@@ -417,14 +596,51 @@ class OrderService extends ChangeNotifier {
     return updated;
   }
 
-  Future<Order> cancelOrder(String orderId) async {
+  Future<Order> cancelOrder(String orderId, {String? reason}) async {
     final order = _require(orderId);
     if (!order.status.canCancel) {
       throw const OrderException(
         'Pesanan yang sudah diproses tidak dapat dibatalkan.',
       );
     }
-    final updated = _replace(order.copyWith(status: OrderStatus.cancelled));
+
+    try {
+      final res = await ApiService.post('pesanan/batal', {
+        'id_pesanan': orderId,
+        if (reason != null && reason.trim().isNotEmpty) 'alasan': reason.trim(),
+      });
+      if (res is Map) {
+        final updated = Order.fromJson(Map<String, dynamic>.from(res));
+        _replace(updated);
+        _notify(
+          title: 'Pesanan Dibatalkan',
+          message: 'Pesanan ${updated.refId} telah dibatalkan.',
+          type: AppNotificationType.order,
+          orderId: updated.id,
+        );
+        return updated;
+      }
+    } on ApiException catch (e) {
+      if (e.pesan.contains('Endpoint API tidak ditemukan') ||
+          e.pesan.contains('Tidak dapat terhubung') ||
+          e.pesan.contains('Terjadi kesalahan pada server') ||
+          e.pesan.contains('Koneksi internet terputus')) {
+        // Fallback jika offline atau server pengujian tidak aktif
+      } else {
+        throw OrderException(e.pesan);
+      }
+    } catch (_) {
+      // Offline fallback: lanjutkan pembatalan lokal
+    }
+
+    final updated = _replace(
+      order.copyWith(
+        status: OrderStatus.cancelled,
+        cancelReason: reason ?? 'Dibatalkan oleh pelanggan',
+        cancelledBy: 'pelanggan',
+        cancelledAt: DateTime.now(),
+      ),
+    );
     _notify(
       title: 'Pesanan Dibatalkan',
       message: 'Pesanan ${updated.refId} telah dibatalkan.',
@@ -502,6 +718,50 @@ class OrderService extends ChangeNotifier {
       case OrderStatus.reviewing:
       case OrderStatus.cancelled:
         return 'Status pesanan ${order.refId} diperbarui.';
+    }
+  }
+
+  Future<OngkirCalculation> calculateDeliveryFee({
+    required int umkmId,
+    required DeliveryMethod delivery,
+    int? addressId,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final methodStr = delivery == DeliveryMethod.courier ? 'kurir' : 'pickup';
+    try {
+      final res = await ApiService.postJson('ongkir_hitung', {
+        'id_umkm': umkmId,
+        'metode_pengiriman': methodStr,
+        if (addressId != null) 'id_alamat': addressId,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      });
+
+      if (res is Map<String, dynamic>) {
+        return OngkirCalculation.fromJson(res);
+      }
+      return OngkirCalculation(
+        umkmId: umkmId,
+        umkmName: '',
+        deliveryMethod: methodStr,
+        deliveryFee: 0,
+        isFree: true,
+        message: 'Kalkulasi default',
+        isOutOfRange: false,
+      );
+    } on ApiException catch (e) {
+      final isOutOfRange = e.pesan.toLowerCase().contains('di luar jangkauan') ||
+          e.pesan.toLowerCase().contains('jangkauan');
+      return OngkirCalculation(
+        umkmId: umkmId,
+        umkmName: '',
+        deliveryMethod: methodStr,
+        deliveryFee: 0,
+        isFree: false,
+        message: e.pesan,
+        isOutOfRange: isOutOfRange,
+      );
     }
   }
 

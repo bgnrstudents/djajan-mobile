@@ -1,0 +1,168 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:djajan_mobile/models/order.dart';
+import 'package:djajan_mobile/services/order_service.dart';
+
+void main() {
+  group('Order Model & Cancellation Tests (Task 9)', () {
+    test('OrderStatus canCancel respects strict roadmap rules', () {
+      expect(OrderStatus.waitingPayment.canCancel, isTrue);
+      expect(OrderStatus.reviewing.canCancel, isTrue);
+
+      expect(OrderStatus.processing.canCancel, isFalse);
+      expect(OrderStatus.delivering.canCancel, isFalse);
+      expect(OrderStatus.completed.canCancel, isFalse);
+      expect(OrderStatus.cancelled.canCancel, isFalse);
+    });
+
+    test('Order parses cancellation metadata and UMKM name snapshot from JSON', () {
+      final json = {
+        'id_pesanan': 'PO-20261105-ABCD12',
+        'id_checkout': 'CHK-20261105-XYZ',
+        'nama_umkm': 'Dapur Bu Siti',
+        'spesialis_umkm': 'Kue Basah',
+        'alamat_umkm': 'Jl. Kenanga 12',
+        'nama_pembeli': 'Andi',
+        'no_telp': '081234567890',
+        'tanggal_pesan': '2026-11-05 10:00:00',
+        'metode_pengiriman': 'kurir',
+        'alamat_tujuan': 'Jl. Melati 5',
+        'metode_pembayaran': 'midtrans',
+        'status_pembayaran': 'batal',
+        'payment_status': 'cancel',
+        'status_pesanan': 'ditolak',
+        'alasan_batal': 'Salah alamat pengiriman',
+        'dibatalkan_oleh': 'pelanggan',
+        'dibatalkan_pada': '2026-11-05 10:15:00',
+        'status_refund': 'perlu_refund',
+        'biaya_pengantaran': 5000,
+        'biaya_layanan': 0,
+        'items': [
+          {
+            'id_produk': '10',
+            'nama_produk': 'Kue Lumpur',
+            'satuan': 'kotak',
+            'jumlah': 2,
+            'harga_satuan': 15000,
+            'subtotal': 30000,
+          }
+        ],
+      };
+
+      final order = Order.fromJson(json);
+
+      expect(order.id, 'PO-20261105-ABCD12');
+      expect(order.status, OrderStatus.cancelled);
+      expect(order.vendors.first.umkmName, 'Dapur Bu Siti');
+      expect(order.cancelReason, 'Salah alamat pengiriman');
+      expect(order.cancelledBy, 'pelanggan');
+      expect(order.cancelledAt, isNotNull);
+      expect(order.refundStatus, 'perlu_refund');
+      expect(order.canCancel, isFalse);
+    });
+
+    test('OrderService rejects cancellation of processing order', () async {
+      final service = OrderService();
+      
+      final order = Order(
+        id: 'PO-TEST-1',
+        refId: 'PO-TEST-1',
+        createdAt: DateTime(2026, 11, 5),
+        status: OrderStatus.processing,
+        paymentMethod: PaymentMethod.cod,
+        serviceFee: 0,
+        discount: 0,
+        account: PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        recipient: Recipient(
+          name: 'Budi Santoso',
+          phone: '08123456789',
+          address: 'Jl. Desa Maju No. 10',
+        ),
+        vendors: [
+          OrderVendor(
+            umkmId: '1',
+            umkmName: 'Toko Donat',
+            umkmType: 'Kue',
+            type: OrderType.instant,
+            delivery: DeliveryMethod.pickup,
+            deliveryFee: 0,
+            pickupLocation: 'Jl. Toko Donat',
+            items: [
+              OrderItem(
+                productId: '1',
+                productName: 'Donat Gula',
+                variant: 'Standar',
+                unit: 'pcs',
+                imageUrl: '',
+                quantity: 2,
+                price: 5000,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      service.seedOrders([order]);
+
+      // Attempting to cancel should throw OrderException
+      expect(
+        () => service.cancelOrder(order.id, reason: 'Mau batal'),
+        throwsA(isA<OrderException>()),
+      );
+    });
+
+    test('OrderService successfully cancels a waiting payment order', () async {
+      final service = OrderService();
+      
+      final order = Order(
+        id: 'PO-TEST-2',
+        refId: 'PO-TEST-2',
+        createdAt: DateTime(2026, 11, 5),
+        status: OrderStatus.waitingPayment,
+        paymentMethod: PaymentMethod.cod,
+        serviceFee: 0,
+        discount: 0,
+        account: PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        recipient: Recipient(
+          name: 'Siti Aminah',
+          phone: '08123456788',
+          address: 'Jl. Desa Maju No. 12',
+        ),
+        vendors: [
+          OrderVendor(
+            umkmId: '2',
+            umkmName: 'Warung Bu Ani',
+            umkmType: 'Jajanan',
+            type: OrderType.instant,
+            delivery: DeliveryMethod.pickup,
+            deliveryFee: 0,
+            pickupLocation: 'Jl. Pasar Desa',
+            items: [
+              OrderItem(
+                productId: '2',
+                productName: 'Pastel Basah',
+                variant: 'Ayam',
+                unit: 'pcs',
+                imageUrl: '',
+                quantity: 3,
+                price: 4000,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      service.seedOrders([order]);
+      expect(order.status, OrderStatus.waitingPayment);
+
+      final cancelled = await service.cancelOrder(
+        order.id,
+        reason: 'Ingin memesan produk lain',
+      );
+
+      expect(cancelled.status, OrderStatus.cancelled);
+      expect(cancelled.cancelReason, 'Ingin memesan produk lain');
+      expect(cancelled.cancelledBy, 'pelanggan');
+      expect(cancelled.cancelledAt, isNotNull);
+    });
+  });
+}
