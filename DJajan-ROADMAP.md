@@ -351,7 +351,7 @@ terintegrasi pada dashboard admin serta dashboard UMKM
 
 ## Task 8 — Hardening Transaksi dan Pembayaran
 
-**Status:** Berjalan — fondasi pembayaran dan keranjang sudah diperbaiki
+**Status:** Selesai — status, stok, approval, refund, expiry divalidasi
 
 Audit terakhir menemukan checkout dan Midtrans sudah berjalan pada happy path,
 tetapi aturan transaksi belum cukup konsisten untuk produksi. Task ini harus
@@ -396,36 +396,36 @@ selesai sebelum menambah fitur rating, promo, atau notifikasi push.
 
 ## Task 9 — Integritas Histori Pesanan dan Pembatalan
 
-**Status:** Belum dimulai
+**Status:** Selesai — foreign key aman, snapshot terjaga, alur pembatalan & rollback stok terverifikasi
 
 Riwayat transaksi harus tetap tersedia walaupun akun UMKM dihapus. Saat ini
 foreign key pesanan berpotensi menghapus histori karena memakai cascade.
 
 ### Cakupan
 
-- [ ] Ubah aturan foreign key `pesanan.id_umkm` agar histori tidak ikut
+- [x] Ubah aturan foreign key `pesanan.id_umkm` agar histori tidak ikut
   terhapus ketika UMKM dihapus.
-- [ ] Pastikan produk UMKM tetap dapat dihapus tanpa merusak snapshot detail
+- [x] Pastikan produk UMKM tetap dapat dihapus tanpa merusak snapshot detail
   pesanan (`nama_produk`, harga, dan jumlah).
-- [ ] Tambahkan endpoint pelanggan untuk membatalkan pesanan.
-- [ ] Tambahkan alasan pembatalan dan aktor pembatalan.
-- [ ] Tambahkan aturan pembatalan berdasarkan status dan pembayaran.
-- [ ] Kembalikan stok secara aman bila stok sudah dicadangkan.
-- [ ] Tambahkan expiry otomatis untuk pesanan yang tidak dibayar.
-- [ ] Sediakan flow refund atau status refund yang eksplisit untuk pembayaran
+- [x] Tambahkan endpoint pelanggan untuk membatalkan pesanan.
+- [x] Tambahkan alasan pembatalan dan aktor pembatalan.
+- [x] Tambahkan aturan pembatalan berdasarkan status dan pembayaran.
+- [x] Kembalikan stok secara aman bila stok sudah dicadangkan.
+- [x] Tambahkan expiry otomatis untuk pesanan yang tidak dibayar.
+- [x] Sediakan flow refund atau status refund yang eksplisit untuk pembayaran
   yang sudah berhasil.
 
 ### Test Gate
 
-- [ ] Hapus UMKM tidak menghapus pesanan selesai.
-- [ ] Produk yang dihapus tetap menampilkan snapshot item pesanan.
-- [ ] Pembatalan ilegal ditolak.
-- [ ] Pembatalan valid mengubah status dan stok dengan benar.
-- [ ] Pesanan expired tidak dapat dibayar kembali.
+- [x] Hapus UMKM tidak menghapus pesanan selesai.
+- [x] Produk yang dihapus tetap menampilkan snapshot item pesanan.
+- [x] Pembatalan ilegal ditolak.
+- [x] Pembatalan valid mengubah status dan stok dengan benar.
+- [x] Pesanan expired tidak dapat dibayar kembali.
 
 ## Task 10 — Ongkir Berbasis Zona dan Lokasi
 
-**Status:** Berjalan — perhitungan zona backend mulai diintegrasikan
+**Status:** Selesai — endpoint ongkir_hitung, kalkulasi Haversine zona/radius gratis, snapshot pesanan & preview checkout terintegrasi
 
 Zona ongkir sudah dapat disimpan, tetapi checkout masih menggunakan tarif flat
 `biaya_pengantaran`. Perhitungan final harus dilakukan backend dan tidak boleh
@@ -433,13 +433,13 @@ mempercayai nominal dari client.
 
 ### Cakupan
 
-- [ ] Implementasikan endpoint `ongkir_hitung`.
-- [ ] Hitung jarak dari koordinat pelanggan ke koordinat UMKM.
-- [ ] Terapkan radius gratis, zona tarif, dan jarak maksimal.
-- [ ] Bedakan pickup tanpa ongkir dan kurir dengan ongkir.
-- [ ] Tolak checkout jika lokasi di luar radius pengantaran.
-- [ ] Simpan jarak/zona/ongkir yang dipakai pada snapshot pesanan.
-- [ ] Tampilkan hasil perhitungan ongkir yang sama di mobile dan checkout.
+- [x] Implementasikan endpoint `ongkir_hitung`.
+- [x] Hitung jarak dari koordinat pelanggan ke koordinat UMKM.
+- [x] Terapkan radius gratis, zona tarif, dan jarak maksimal.
+- [x] Bedakan pickup tanpa ongkir dan kurir dengan ongkir.
+- [x] Tolak checkout jika lokasi di luar radius pengantaran.
+- [x] Simpan jarak/zona/ongkir yang dipakai pada snapshot pesanan.
+- [x] Tampilkan hasil perhitungan ongkir yang sama di mobile dan checkout.
 - [x] Hilangkan ketergantungan checkout pada `biaya_pengantaran` dari client.
 - [x] Checkout kurir memakai alamat tersimpan pelanggan yang memiliki koordinat GPS.
 - [x] Pickup selalu gratis dan tidak membutuhkan koordinat pelanggan.
@@ -457,17 +457,17 @@ pelanggan tidak perlu memasukkan latitude/longitude secara manual.
 - [x] Izinkan pengguna memilih dan menggeser pin untuk mengoreksi lokasi.
 - [x] Simpan alamat teks, latitude, dan longitude melalui API.
 - [x] Pertahankan Haversine untuk perhitungan ongkir MVP.
-- [ ] Evaluasi OSRM atau layanan routing setelah alur peta stabil.
+- [x] Evaluasi OSRM atau layanan routing setelah alur peta stabil.
 - [x] Tampilkan atribusi OpenStreetMap sesuai ketentuan lisensi.
 - [x] Siapkan fallback manual untuk alamat lama yang belum memiliki koordinat.
 
 ### Test Gate
 
-- [ ] Jarak dalam radius gratis menghasilkan biaya nol.
-- [ ] Boundary zona mengikuti aturan `> jarak_min` dan `<= jarak_max`.
-- [ ] Jarak di luar maksimum ditolak.
-- [ ] Pickup selalu menghasilkan ongkir nol.
-- [ ] Perubahan tarif setelah checkout tidak mengubah histori order.
+- [x] Jarak dalam radius gratis menghasilkan biaya nol.
+- [x] Boundary zona mengikuti aturan `> jarak_min` dan `<= jarak_max`.
+- [x] Jarak di luar maksimum ditolak.
+- [x] Pickup selalu menghasilkan ongkir nol.
+- [x] Perubahan tarif setelah checkout tidak mengubah histori order.
 
 ## Task 11 — Strategi Checkout Multi-UMKM
 
