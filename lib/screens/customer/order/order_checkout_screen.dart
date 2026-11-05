@@ -49,6 +49,12 @@ class _VendorDraft {
   final TextEditingController purpose = TextEditingController();
   final TextEditingController note = TextEditingController();
 
+  double? calculatedFee;
+  double? distanceKm;
+  bool isOutOfRange = false;
+  bool isCalculating = false;
+  String? calculationMessage;
+
   _VendorDraft({
     required this.umkmId,
     required this.umkmName,
@@ -65,7 +71,10 @@ class _VendorDraft {
                 : DeliveryMethod.pickup;
 
   double get subtotal => lines.fold(0.0, (s, l) => s + l.subtotal);
-  double get fee => delivery == DeliveryMethod.courier ? (courierFee ?? 0) : 0;
+  double get fee {
+    if (delivery != DeliveryMethod.courier) return 0;
+    return calculatedFee ?? courierFee ?? 0;
+  }
 }
 
 class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
@@ -149,8 +158,48 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         _addressHasCoords =
             address.latitude != null && address.longitude != null;
       });
+      if (_addressHasCoords) {
+        _calculateOngkirForVendors();
+      }
     } finally {
       if (mounted) setState(() => _addressLoading = false);
+    }
+  }
+
+  Future<void> _calculateOngkirForVendors() async {
+    for (final v in _vendors) {
+      if (v.delivery == DeliveryMethod.courier) {
+        await _calculateOngkirForSingleVendor(v);
+      }
+    }
+  }
+
+  Future<void> _calculateOngkirForSingleVendor(_VendorDraft v) async {
+    final umkmId = int.tryParse(v.umkmId) ?? 0;
+    if (umkmId <= 0 || !_addressHasCoords) return;
+
+    setState(() => v.isCalculating = true);
+    try {
+      final result = await _service.calculateDeliveryFee(
+        umkmId: umkmId,
+        delivery: v.delivery,
+        addressId: _recipient.addressId,
+        latitude: _recipient.latitude,
+        longitude: _recipient.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        v.isCalculating = false;
+        v.isOutOfRange = result.isOutOfRange;
+        v.calculatedFee = result.isOutOfRange ? null : result.deliveryFee;
+        v.distanceKm = result.distanceKm;
+        v.calculationMessage = result.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        v.isCalculating = false;
+      });
     }
   }
 
@@ -212,6 +261,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         _addressHasCoords =
             picked.latitude != null && picked.longitude != null;
       });
+      if (_addressHasCoords) {
+        _calculateOngkirForVendors();
+      }
     }
   }
 
@@ -230,10 +282,37 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       return;
     }
 
+    if (_vendors.any((v) => v.delivery == DeliveryMethod.courier && v.isCalculating)) {
+      showToast(context, 'Sedang menghitung ongkir, silakan tunggu...');
+      return;
+    }
+
+    final outOfRangeVendor = _vendors.cast<_VendorDraft?>().firstWhere(
+      (v) => v != null && v.delivery == DeliveryMethod.courier && v.isOutOfRange,
+      orElse: () => null,
+    );
+    if (outOfRangeVendor != null) {
+      showToast(
+        context,
+        'Lokasi pengiriman di luar jangkauan kurir ${outOfRangeVendor.umkmName}. '
+        'Pilih metode Ambil Sendiri (Pickup) atau ubah alamat.',
+        error: true,
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
+      final updatedLines = widget.cartLines.map((line) {
+        final v = _vendors.firstWhere(
+          (item) => item.umkmId == line.umkmId,
+          orElse: () => _vendors.first,
+        );
+        return line.copyWith(courierFee: v.fee);
+      }).toList();
+
       final order = await _service.createOrder(
-        lines: widget.cartLines,
+        lines: updatedLines,
         recipient: _recipient,
         paymentMethod: _method,
         options: {
@@ -486,13 +565,41 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           _sectionLabel('Pengantaran'),
           const SizedBox(height: 8),
           if (v.courierFee != null) ...[
-            _deliveryOption(
-              selected: v.delivery == DeliveryMethod.courier,
-              title: 'Diantar Kurir Warga / UMKM',
-              subtitle: 'Langsung diantar ke balai / rumah',
-              price: '+${rupiah(v.courierFee!)}',
-              onTap: () => setState(() => v.delivery = DeliveryMethod.courier),
-            ),
+            Builder(builder: (context) {
+              String courierPrice;
+              String courierSubtitle;
+              if (v.isCalculating) {
+                courierPrice = '...';
+                courierSubtitle = 'Menghitung tarif ongkir...';
+              } else if (v.isOutOfRange) {
+                courierPrice = 'Tidak terjangkau';
+                courierSubtitle =
+                    v.calculationMessage ?? 'Di luar radius kurir UMKM';
+              } else if (v.fee == 0) {
+                courierPrice = 'Gratis';
+                courierSubtitle = v.distanceKm != null
+                    ? 'Jarak ~${v.distanceKm!.toStringAsFixed(1)} km • ${v.calculationMessage ?? "Gratis ongkir"}'
+                    : 'Langsung diantar ke balai / rumah';
+              } else {
+                courierPrice = '+${rupiah(v.fee)}';
+                courierSubtitle = v.distanceKm != null
+                    ? 'Jarak ~${v.distanceKm!.toStringAsFixed(1)} km • ${v.calculationMessage ?? "Tarif zona"}'
+                    : 'Langsung diantar ke balai / rumah';
+              }
+
+              return _deliveryOption(
+                selected: v.delivery == DeliveryMethod.courier,
+                title: 'Diantar Kurir Warga / UMKM',
+                subtitle: courierSubtitle,
+                price: courierPrice,
+                onTap: () {
+                  setState(() => v.delivery = DeliveryMethod.courier);
+                  if (v.calculatedFee == null && _addressHasCoords) {
+                    _calculateOngkirForSingleVendor(v);
+                  }
+                },
+              );
+            }),
             const SizedBox(height: 8),
           ],
           if (v.pickupAvailable)
