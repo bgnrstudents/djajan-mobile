@@ -787,7 +787,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 ),
               ),
             ),
-          ],
+          ),
+        ],
         ),
       ),
       bottomNavigationBar: sudahDiputuskan
@@ -865,7 +866,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
 
   Color _warnaStatusBayar(String kode) => switch (kode.toLowerCase().trim()) {
     'lunas' || 'paid' || 'settlement' || 'capture' => AppColors.hijauTua,
-    'dp_terbayar' || 'bayar_di_tempat' || 'cod' => AppColors.amber,
+    'dp_terbayar' || 'bayar_di_tempat' || 'cod' => OC.amber,
     _ => AppColors.danger,
   };
 
