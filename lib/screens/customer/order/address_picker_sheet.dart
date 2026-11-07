@@ -103,6 +103,52 @@ class _AddressPickerSheetState extends State<_AddressPickerSheet> {
     }
   }
 
+  Future<void> _useDemoKreyonganAddress() async {
+    final existing = widget.settings.addresses.cast<CustomerAddress?>().firstWhere(
+      (a) => a?.label == 'Rumah (Kreyongan Atas)',
+      orElse: () => null,
+    );
+    if (existing != null) {
+      Navigator.of(context).pop(existing);
+      return;
+    }
+
+    try {
+      await widget.settings.saveAddress(
+        label: 'Rumah (Kreyongan Atas)',
+        recipient: 'Budi Pelanggan',
+        phone: '081234567890',
+        address: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa Kreyongan Atas',
+        note: 'Dekat balai RT & pos ronda Kreyongan Atas',
+        latitude: -8.1588,
+        longitude: 113.7032,
+        primary: true,
+      );
+      await widget.settings.load();
+      final created = widget.settings.addresses.cast<CustomerAddress?>().firstWhere(
+        (a) => a?.label == 'Rumah (Kreyongan Atas)',
+        orElse: () => null,
+      ) ?? widget.settings.primaryAddress;
+      if (created != null && mounted) {
+        Navigator.of(context).pop(created);
+        return;
+      }
+    } catch (_) {
+      const fallback = CustomerAddress(
+        id: 9999,
+        label: 'Rumah (Kreyongan Atas)',
+        recipient: 'Budi Pelanggan',
+        phone: '081234567890',
+        address: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa Kreyongan Atas',
+        note: 'Dekat balai RT Kreyongan Atas',
+        latitude: -8.1588,
+        longitude: 113.7032,
+        primary: true,
+      );
+      if (mounted) Navigator.of(context).pop(fallback);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final addresses = widget.settings.addresses;
@@ -170,6 +216,59 @@ class _AddressPickerSheetState extends State<_AddressPickerSheet> {
               ],
             ),
             const Divider(height: 20),
+
+            // Demo / Fast Preset Banner Kreyongan Atas
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: OC.banner,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: OC.primary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.storefront_outlined, color: OC.primary, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Titik Kreyongan Atas (Demo/Cepat)',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: OC.primary,
+                          ),
+                        ),
+                        Text(
+                          'Gunakan alamat contoh di area Desa Kreyongan Atas',
+                          style: TextStyle(fontSize: 11, color: OC.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _useDemoKreyonganAddress,
+                    style: TextButton.styleFrom(
+                      backgroundColor: OC.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Pilih',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             // Daftar Alamat
             if (addresses.isEmpty) ...[

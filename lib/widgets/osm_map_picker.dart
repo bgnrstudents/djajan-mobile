@@ -57,7 +57,8 @@ class OsmMapPicker extends StatefulWidget {
 }
 
 class _OsmMapPickerState extends State<OsmMapPicker> {
-  static const _defaultCenter = LatLng(-7.9024, 113.3539); // Jember, Jawa Timur
+  // Pusat Desa Kreyongan Atas, Patrang, Jember
+  static const _defaultCenter = LatLng(-8.1585, 113.7025);
   static const _defaultZoom = 15.0;
   static const _searchZoom = 16.0;
 
@@ -84,6 +85,15 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     } else {
       _reverseGeocode(_pinCenter);
     }
+  }
+
+  void _jumpToKreyongan() {
+    _mapController.move(_defaultCenter, _searchZoom);
+    setState(() {
+      _pinCenter = _defaultCenter;
+      _alamatTeks = 'Desa Kreyongan Atas, Patrang, Jember, Jawa Timur';
+    });
+    _reverseGeocode(_defaultCenter);
   }
 
   @override
@@ -355,6 +365,11 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
               }
             },
             tooltip: _showSearch ? 'Tutup pencarian' : 'Cari alamat',
+          ),
+          IconButton(
+            icon: const Icon(Icons.storefront_outlined, color: OC.primary),
+            onPressed: _jumpToKreyongan,
+            tooltip: 'Titik Desa Kreyongan Atas',
           ),
           IconButton(
             icon: const Icon(Icons.my_location, color: OC.primary),

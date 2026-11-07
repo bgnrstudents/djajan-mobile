@@ -289,5 +289,47 @@ void main() {
       expect(msg, contains('Jl. Melati No. 5'));
       expect(msg, contains('Diantar Kurir Warga'));
     });
+
+    test('Recipient with Kreyongan coordinates stores valid lat/lng and handles out of range correctly', () {
+      const recipient = Recipient(
+        name: 'Budi Pelanggan',
+        phone: '081234567890',
+        address: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa Kreyongan Atas',
+        latitude: -8.1588,
+        longitude: 113.7032,
+      );
+
+      expect(recipient.latitude, -8.1588);
+      expect(recipient.longitude, 113.7032);
+
+      final inRange = OngkirCalculation.fromJson({
+        'id_umkm': '1',
+        'nama_umkm': 'Warung Enak',
+        'metode_pengiriman': 'kurir',
+        'jarak_km': 1.2,
+        'biaya_ongkir': 4500,
+        'gratis': false,
+        'pesan': 'Tarif kurir warga desa (~1.2 km)',
+        'di_luar_jangkauan': false,
+      });
+
+      expect(inRange.isOutOfRange, isFalse);
+      expect(inRange.deliveryFee, 4500.0);
+      expect(inRange.distanceKm, 1.2);
+
+      final outOfRange = OngkirCalculation.fromJson({
+        'id_umkm': '1',
+        'nama_umkm': 'Warung Enak',
+        'metode_pengiriman': 'kurir',
+        'jarak_km': 25.0,
+        'biaya_ongkir': 0,
+        'gratis': false,
+        'pesan': 'Alamat pengiriman berada di luar jangkauan kurir UMKM (10 km).',
+        'di_luar_jangkauan': true,
+      });
+
+      expect(outOfRange.isOutOfRange, isTrue);
+      expect(outOfRange.message, contains('di luar jangkauan'));
+    });
   });
 }

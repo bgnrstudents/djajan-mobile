@@ -82,13 +82,15 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   late final List<_VendorDraft> _vendors;
 
   /// true jika alamat utama yang dipilih memiliki koordinat GPS tersimpan
-  bool _addressHasCoords = false;
+  bool _addressHasCoords = true;
 
   Recipient _recipient = const Recipient(
     name: 'Muhammad Rizki',
     phone: '0812-3456-7890',
     address: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa Kreyongan Atas',
     addressNote: 'Rumah pagar hijau samping pos ronda desa',
+    latitude: -8.1588,
+    longitude: 113.7032,
   );
 
   late PaymentMethod _method;
@@ -143,7 +145,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       await settings.load();
       final address = settings.primaryAddress ??
           (settings.addresses.isNotEmpty ? settings.addresses.first : null);
-      if (!mounted || address == null || address.id == 0) return;
+      if (!mounted || address == null || address.id == 0) {
+        if (_addressHasCoords) {
+          _calculateOngkirForVendors();
+        }
+        return;
+      }
       setState(() {
         _recipient = Recipient(
           addressId: address.id,
@@ -193,6 +200,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         v.calculatedFee = result.isOutOfRange ? null : result.deliveryFee;
         v.distanceKm = result.distanceKm;
         v.calculationMessage = result.message;
+        if (result.isOutOfRange && v.pickupAvailable) {
+          v.delivery = DeliveryMethod.pickup;
+        }
       });
     } catch (_) {
       if (!mounted) return;
@@ -595,6 +605,14 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 subtitle: courierSubtitle,
                 price: courierPrice,
                 onTap: () {
+                  if (v.isOutOfRange) {
+                    showToast(
+                      context,
+                      'Alamat di luar jangkauan kurir ${v.umkmName}. Silakan pilih Ambil Sendiri (Pickup) atau ubah alamat.',
+                      error: true,
+                    );
+                    return;
+                  }
                   setState(() => v.delivery = DeliveryMethod.courier);
                   if (v.calculatedFee == null && _addressHasCoords) {
                     _calculateOngkirForSingleVendor(v);
