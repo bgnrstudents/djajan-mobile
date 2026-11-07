@@ -130,9 +130,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       }
       return d;
     }).toList();
-    if (_vendors.length == 1 &&
-        _method == PaymentMethod.cod &&
-        !_vendors.single.codAvailable) {
+    if (_vendors.any((v) => !v.codAvailable) &&
+        _method == PaymentMethod.cod) {
       _method = PaymentMethod.midtrans;
     }
 
@@ -330,7 +329,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => _method == PaymentMethod.midtrans
-              ? MidtransPaymentScreen(orderId: order.id)
+              ? MidtransPaymentScreen(
+                  orderId: order.id,
+                  paymentUrl: order.paymentUrl,
+                )
               : OrderPaymentScreen(orderId: order.id),
         ),
       );
@@ -902,15 +904,16 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             title: 'Metode Pembayaran',
           ),
           const SizedBox(height: 10),
-          if (_vendors.length == 1 && _vendors.first.codAvailable) ...[
-            _methodRow(
-              method: PaymentMethod.cod,
-              icon: Icons.handshake_outlined,
-              title: 'Bayar di Tempat (COD)',
-              subtitle: 'Bayar saat pesanan diterima',
-            ),
-            const SizedBox(height: 8),
-          ],
+          _methodRow(
+            method: PaymentMethod.cod,
+            icon: Icons.handshake_outlined,
+            title: 'Bayar di Tempat (COD)',
+            subtitle: _vendors.every((v) => v.codAvailable)
+                ? 'Bayar saat pesanan diterima'
+                : 'Dinonaktifkan oleh ${_vendors.where((v) => !v.codAvailable).map((v) => v.umkmName).join(", ")}',
+            enabled: _vendors.every((v) => v.codAvailable),
+          ),
+          const SizedBox(height: 8),
           _methodRow(
             method: PaymentMethod.midtrans,
             icon: Icons.bolt_rounded,
@@ -927,24 +930,49 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     required IconData icon,
     required String title,
     required String subtitle,
+    bool enabled = true,
   }) {
-    final sel = _method == method;
+    final sel = _method == method && enabled;
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: () => setState(() => _method = method),
+      onTap: enabled
+          ? () => setState(() => _method = method)
+          : () {
+              showToast(
+                context,
+                subtitle,
+                error: true,
+              );
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
-          color: sel ? OC.mintSoft : Colors.white,
+          color: !enabled
+              ? OC.box
+              : sel
+                  ? OC.mintSoft
+                  : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: sel ? OC.primary : OC.line,
+            color: !enabled
+                ? OC.line
+                : sel
+                    ? OC.primary
+                    : OC.line,
             width: sel ? 1.2 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: sel ? OC.primary : OC.muted),
+            Icon(
+              icon,
+              size: 22,
+              color: !enabled
+                  ? OC.faint
+                  : sel
+                      ? OC.primary
+                      : OC.muted,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -952,26 +980,38 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: OC.ink,
+                      color: enabled ? OC.ink : OC.muted,
                     ),
                   ),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11.5, color: OC.muted),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: !enabled ? OC.danger : OC.muted,
+                      fontWeight: !enabled ? FontWeight.w500 : FontWeight.normal,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             Icon(
-              sel ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              !enabled
+                  ? Icons.lock_outline
+                  : sel
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
               size: 20,
-              color: sel ? OC.primary : OC.faint,
+              color: !enabled
+                  ? OC.faint
+                  : sel
+                      ? OC.primary
+                      : OC.faint,
             ),
           ],
         ),

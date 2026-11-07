@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:djajan_mobile/models/order.dart';
+import 'package:djajan_mobile/models/product.dart';
+import 'package:djajan_mobile/models/umkm.dart';
+import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/services/order_service.dart';
 
 void main() {
@@ -163,6 +166,69 @@ void main() {
       expect(cancelled.cancelReason, 'Ingin memesan produk lain');
       expect(cancelled.cancelledBy, 'pelanggan');
       expect(cancelled.cancelledAt, isNotNull);
+    });
+
+    test('Umkm parses cod_available and cod_aktif correctly', () {
+      final umkmCodActive = Umkm.fromJson({
+        'id_umkm': '1',
+        'nama_usaha': 'Warung Berkah',
+        'cod_aktif': 1,
+      });
+      expect(umkmCodActive.codAvailable, isTrue);
+
+      final umkmCodDisabled = Umkm.fromJson({
+        'id_umkm': '2',
+        'nama_usaha': 'Dapur Mama',
+        'cod_aktif': 0,
+      });
+      expect(umkmCodDisabled.codAvailable, isFalse);
+    });
+
+    test('CartService syncWithCatalog dynamically updates codAvailable state', () {
+      final cart = CartService();
+      cart.clear();
+
+      final initialLine = CartLine(
+        productId: 'prod_1',
+        productName: 'Lemper Ayam',
+        variant: 'Original',
+        unit: 'pcs',
+        imageUrl: '',
+        quantity: 2,
+        price: 3000,
+        type: OrderType.instant,
+        umkmId: 'umkm_10',
+        umkmName: 'Warung Lemper',
+        umkmType: 'Jajanan Pasar',
+        pickupLocation: 'Kreyongan',
+        codAvailable: true,
+      );
+      cart.addCartLine(initialLine);
+
+      expect(cart.items.first.codAvailable, isTrue);
+
+      // Simulasikan UMKM menonaktifkan COD di dashboard dan katalog diperbarui
+      final updatedCatalogProduct = Product(
+        id: 'prod_1',
+        name: 'Lemper Ayam',
+        umkmId: 'umkm_10',
+        umkm: 'Warung Lemper',
+        price: 3000,
+        rating: 4.8,
+        category: 'Jajanan',
+        orderType: 'Pesan Sekarang',
+        imageUrl: '',
+        description: 'Lemper ayam gurih',
+        variant: 'Original',
+        unit: 'pcs',
+        pickupLocation: 'Kreyongan',
+        codAvailable: false,
+      );
+
+      cart.syncWithCatalog([updatedCatalogProduct]);
+
+      expect(cart.items.first.codAvailable, isFalse);
+      cart.clear();
     });
   });
 }

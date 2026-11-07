@@ -13,6 +13,7 @@ class Umkm {
   final int soldCount;
   final bool isVerified;
   final String phone;
+  final bool codAvailable;
 
   const Umkm({
     required this.id,
@@ -26,6 +27,7 @@ class Umkm {
     this.soldCount = 0,
     this.isVerified = true,
     this.phone = '',
+    this.codAvailable = true,
   });
 
   /// UMKM yang hanya melayani ambil sendiri (tanpa kurir warga).
@@ -52,6 +54,7 @@ class Umkm {
     int? soldCount,
     bool? isVerified,
     String? phone,
+    bool? codAvailable,
   }) {
     return Umkm(
       id: id ?? this.id,
@@ -65,6 +68,7 @@ class Umkm {
       soldCount: soldCount ?? this.soldCount,
       isVerified: isVerified ?? this.isVerified,
       phone: phone ?? this.phone,
+      codAvailable: codAvailable ?? this.codAvailable,
     );
   }
 
@@ -85,6 +89,8 @@ class Umkm {
       soldCount: (json['sold_count'] as num?)?.toInt() ?? 0,
       isVerified: json['is_verified'] as bool? ?? true,
       phone: (json['phone'] ?? json['no_telp_usaha']) as String? ?? '',
+      codAvailable: json['cod_available'] as bool? ??
+          (json['cod_aktif'] == 1 || json['cod_aktif'] == true || json['cod_aktif'] == '1'),
     );
   }
 
@@ -101,6 +107,7 @@ class Umkm {
       'sold_count': soldCount,
       'is_verified': isVerified,
       'phone': phone,
+      'cod_available': codAvailable,
     };
   }
 }

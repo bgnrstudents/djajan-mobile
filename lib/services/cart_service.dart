@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../models/product.dart';
 import '../models/order.dart';
+import '../models/umkm.dart';
 
 class CartService extends ChangeNotifier {
   CartService._internal();
@@ -112,6 +113,43 @@ class CartService extends ChangeNotifier {
   void clear() {
     _items.clear();
     _changed();
+  }
+
+  /// Memperbarui status ketersediaan COD dan pengantaran berdasarkan katalog terkini
+  void syncWithCatalog(List<Product> products, {List<Umkm>? umkms}) {
+    if (_items.isEmpty) return;
+    bool hasChanged = false;
+    for (int i = 0; i < _items.length; i++) {
+      final line = _items[i];
+      final matchingProduct = products.cast<Product?>().firstWhere(
+        (p) =>
+            p != null &&
+            (p.id == line.productId ||
+                (p.name == line.productName && p.umkm == line.umkmName)),
+        orElse: () => null,
+      );
+
+      final matchingUmkm = umkms?.cast<Umkm?>().firstWhere(
+        (u) => u != null && (u.id == line.umkmId || u.name == line.umkmName),
+        orElse: () => null,
+      );
+
+      bool? updatedCod;
+      if (matchingProduct != null) {
+        updatedCod = matchingProduct.codAvailable;
+      } else if (matchingUmkm != null) {
+        updatedCod = matchingUmkm.codAvailable;
+      }
+
+      if (updatedCod != null && updatedCod != line.codAvailable) {
+        _items[i] = line.copyWith(codAvailable: updatedCod);
+        hasChanged = true;
+      }
+    }
+
+    if (hasChanged) {
+      _changed();
+    }
   }
 
   void _changed() {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../order/midtrans_payment_screen.dart';
 import '../order/order_detail_screen.dart';
 import '../../../models/order.dart';
+import '../../../services/catalog_service.dart';
 import '../../../services/order_service.dart';
 import '../order/order_widgets.dart';
 import '../../../services/cart_service.dart';
@@ -207,8 +209,18 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  DateTime? _lastCheckoutTime;
+
   Future<void> _handleCheckout() async {
     if (_isSubmitting) return;
+    
+    // 1.5s minimum delay to prevent rapid successive calls
+    if (_lastCheckoutTime != null && 
+        DateTime.now().difference(_lastCheckoutTime!) < Duration(seconds: 1)) {
+      return;
+    }
+    
+    _lastCheckoutTime = DateTime.now();
 
     final items = _selectedItems;
     if (items.isEmpty) {
@@ -270,6 +282,80 @@ class _CartScreenState extends State<CartScreen> {
 
       final paymentMethod =
           _selectedPayment == 0 ? PaymentMethod.cod : PaymentMethod.midtrans;
+      
+      // Validasi ketersediaan COD per UMKM yang dipilih
+      final disabledCodUmkms = items
+          .where((item) => !item.codAvailable)
+          .map((item) => item.umkmName)
+          .toSet()
+          .toList();
+
+      if (paymentMethod == PaymentMethod.cod && disabledCodUmkms.isNotEmpty) {
+        setState(() => _selectedPayment = 1);
+        showToast(
+          context,
+          'Metode COD dinonaktifkan oleh ${disabledCodUmkms.join(", ")}. Dialihkan ke pembayaran online.',
+          error: true,
+        );
+        return;
+      }
+
+      // Tampilkan loader modal tanpa henti agar interaksi terkunci dan transisi mulus
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => PopScope(
+          canPop: false,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(30),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: CircularProgressIndicator(
+                      color: OC.primary,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    paymentMethod == PaymentMethod.midtrans
+                        ? 'Menghubungkan ke Midtrans...'
+                        : 'Membuat pesanan...',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: OC.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Mohon tunggu sebentar',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: OC.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
 
       final order = await _orderService.createOrder(
         lines: items,
@@ -280,19 +366,31 @@ class _CartScreenState extends State<CartScreen> {
 
       _cartService.removeProducts(items.map((item) => item.productId));
 
+      // Tutup dialog loader sebelum berpindah layar
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Pesanan ${order.refId} berhasil dibuat!'),
-          backgroundColor: OC.primary,
-        ),
-      );
-
       if (paymentMethod == PaymentMethod.midtrans) {
+        // Langsung buka layar pembayaran Midtrans tanpa jeda
+        await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (_) => MidtransPaymentScreen(
+              orderId: order.id,
+              paymentUrl: order.paymentUrl,
+            ),
+          ),
+        );
+
+        if (!mounted) return;
+
+        // Setelah selesai dari Midtrans (baik dibayar maupun kembali), arahkan langsung ke Detail Pesanan.
+        // Menjamin user tidak pernah stuck di halaman keranjang lagi!
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MidtransPaymentScreen(orderId: order.id),
+            builder: (_) => OrderDetailScreen(orderId: order.id),
           ),
         );
       } else {
@@ -303,9 +401,15 @@ class _CartScreenState extends State<CartScreen> {
         );
       }
     } on OrderException catch (e) {
-      if (mounted) showToast(context, e.message, error: true);
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog loader jika gagal
+        showToast(context, e.message, error: true);
+      }
     } catch (e) {
-      if (mounted) showToast(context, 'Terjadi kesalahan: $e', error: true);
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog loader jika gagal
+        showToast(context, 'Terjadi kesalahan: $e', error: true);
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -316,9 +420,33 @@ class _CartScreenState extends State<CartScreen> {
     return AnimatedBuilder(
       animation: _cartService,
       builder: (context, _) {
-      _syncSelection();
-      final grouped = _cartService.itemsByUmkm;
+        _syncSelection();
+
+        // Sinkronkan ketersediaan COD dan pengantaran dengan katalog realtime
+        final catalog = Provider.of<CatalogService?>(context);
+        if (catalog != null && catalog.products.isNotEmpty) {
+          _cartService.syncWithCatalog(catalog.products, umkms: catalog.umkms);
+        }
+
+        final grouped = _cartService.itemsByUmkm;
         final bool isEmpty = grouped.isEmpty;
+
+        final selected = _selectedItems;
+        final disabledCodUmkms = selected
+            .where((item) => !item.codAvailable)
+            .map((item) => item.umkmName)
+            .toSet()
+            .toList();
+        final bool isCodAvailable = selected.isNotEmpty && disabledCodUmkms.isEmpty;
+
+        // Jika opsi COD dinonaktifkan oleh UMKM yang dipilih, otomatis pindahkan ke Midtrans
+        if (!isCodAvailable && _selectedPayment == 0 && selected.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _selectedPayment == 0) {
+              setState(() => _selectedPayment = 1);
+            }
+          });
+        }
 
         // Compute subtotals & delivery
         int subtotalProduk = 0;
@@ -399,7 +527,10 @@ class _CartScreenState extends State<CartScreen> {
 
                           // 4. Payment method
                           if (_selectedItems.isNotEmpty) ...[
-                            _buildPaymentMethodCard(),
+                            _buildPaymentMethodCard(
+                              isCodAvailable: isCodAvailable,
+                              disabledCodUmkmNames: disabledCodUmkms,
+                            ),
                             const SizedBox(height: 10),
                           ],
 
@@ -1277,7 +1408,16 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   // 4. Payment method
-  Widget _buildPaymentMethodCard() {
+  Widget _buildPaymentMethodCard({
+    required bool isCodAvailable,
+    required List<String> disabledCodUmkmNames,
+  }) {
+    final String disabledReason = disabledCodUmkmNames.isNotEmpty
+        ? (disabledCodUmkmNames.length == 1
+            ? '${disabledCodUmkmNames.first} tidak melayani COD'
+            : 'Beberapa UMKM tidak melayani COD')
+        : 'COD tidak tersedia untuk produk ini';
+
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1302,15 +1442,27 @@ class _CartScreenState extends State<CartScreen> {
               // COD
               Expanded(
                 child: _paymentTile(
-                  selected: _selectedPayment == 0,
-                  onTap: () {
-                    setState(() {
-                      _selectedPayment = 0;
-                    });
-                  },
+                  selected: isCodAvailable && _selectedPayment == 0,
+                  enabled: isCodAvailable,
+                  disabledReason: disabledReason,
+                  onTap: isCodAvailable
+                      ? () {
+                          setState(() {
+                            _selectedPayment = 0;
+                          });
+                        }
+                      : () {
+                          showToast(
+                            context,
+                            'Opsi COD dinonaktifkan oleh toko: ${disabledCodUmkmNames.join(", ")}',
+                            error: true,
+                          );
+                        },
                   icon: Icons.payments_outlined,
                   title: 'Bayar di Tempat (COD)',
-                  subtitle: 'Titip tunai ke kurir warga',
+                  subtitle: isCodAvailable
+                      ? 'Titip tunai ke kurir warga'
+                      : disabledReason,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1319,6 +1471,7 @@ class _CartScreenState extends State<CartScreen> {
               Expanded(
                 child: _paymentTile(
                   selected: _selectedPayment == 1,
+                  enabled: true,
                   onTap: () {
                     setState(() {
                       _selectedPayment = 1;
@@ -1331,6 +1484,33 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ],
           ),
+          if (!isCodAvailable && _selectedItems.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: OC.dangerSoft,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: OC.danger.withAlpha(50)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 15, color: OC.danger),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Pilihan COD dinonaktifkan oleh ${disabledCodUmkmNames.join(", ")}. Silakan gunakan pembayaran instan.',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: OC.danger,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1338,19 +1518,33 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _paymentTile({
     required bool selected,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     required IconData icon,
     required String title,
     required String subtitle,
+    bool enabled = true,
+    String? disabledReason,
   }) {
+    final bgColor = !enabled
+        ? OC.box
+        : selected
+            ? OC.mintSoft
+            : Colors.white;
+
+    final borderColor = !enabled
+        ? OC.line
+        : selected
+            ? OC.primary
+            : OC.line;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: selected ? OC.mintSoft : Colors.white,
-          border: Border.all(color: selected ? OC.primary : OC.line),
+          color: bgColor,
+          border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -1359,12 +1553,24 @@ class _CartScreenState extends State<CartScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, color: OC.primary, size: 22),
                 Icon(
-                  selected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: selected ? OC.primary : OC.faint,
+                  icon,
+                  color: enabled
+                      ? (selected ? OC.primary : OC.muted)
+                      : OC.faint,
+                  size: 22,
+                ),
+                Icon(
+                  !enabled
+                      ? Icons.lock_outline
+                      : selected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                  color: !enabled
+                      ? OC.faint
+                      : selected
+                          ? OC.primary
+                          : OC.faint,
                   size: 18,
                 ),
               ],
@@ -1372,18 +1578,21 @@ class _CartScreenState extends State<CartScreen> {
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: OC.ink,
+                color: enabled ? OC.ink : OC.muted,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: const TextStyle(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
                 fontSize: 10.5,
-                color: OC.muted,
+                color: !enabled ? OC.danger : OC.muted,
+                fontWeight: !enabled ? FontWeight.w500 : FontWeight.normal,
               ),
             ),
           ],
