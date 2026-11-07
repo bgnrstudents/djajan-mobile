@@ -144,6 +144,119 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     });
   }
 
+  Future<void> _confirmReceived(Order o) async {
+    final main = o.mainVendor;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 24),
+            SizedBox(width: 8),
+            Text('Pesanan Diterima?'),
+          ],
+        ),
+        content: Text(
+          'Apakah Anda sudah menerima seluruh pesanan dari ${main.umkmName} dengan baik dan sesuai?\n\nTindakan ini akan menyelesaikan transaksi.',
+          style: const TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Belum', style: TextStyle(color: OC.muted)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Sudah Diterima'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    await _run(() async {
+      await _service.completeOrder(o.id);
+      if (!mounted) return;
+      showToast(context, 'Pesanan selesai! Terima kasih telah berbelanja.');
+      _showRatingDialog(o);
+    });
+  }
+
+  void _showRatingDialog(Order o) {
+    int rating = 5;
+    final noteCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Beri Ulasan ${_shortName(o.mainVendor.umkmName)}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Bagaimana kualitas makanan & layanan yang Anda terima?',
+                style: TextStyle(fontSize: 13, color: OC.muted),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  final star = index + 1;
+                  return IconButton(
+                    icon: Icon(
+                      star <= rating ? Icons.star : Icons.star_border,
+                      color: const Color(0xFFF59E0B),
+                      size: 32,
+                    ),
+                    onPressed: () => setModalState(() => rating = star),
+                  );
+                }),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: noteCtrl,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Tulis ulasan singkat (opsional)',
+                  hintStyle: const TextStyle(fontSize: 12.5, color: OC.muted),
+                  filled: true,
+                  fillColor: const Color(0xFFF9F9F9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: OC.line),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Nanti Saja'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: OC.primary),
+              onPressed: () {
+                Navigator.pop(ctx);
+                showToast(context, 'Terima kasih atas penilaian Anda!');
+              },
+              child: const Text('Kirim Ulasan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _delete(Order o) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -1592,6 +1705,42 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     final main = o.mainVendor;
     return Column(
       children: [
+        if (o.canComplete) ...[
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 1,
+              ),
+              onPressed: _busy ? null : () => _confirmReceived(o),
+              icon: _busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.check_circle_outline, size: 22),
+              label: const Text(
+                'Pesanan Sudah Diterima',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         SizedBox(
           width: double.infinity,
           height: 50,

@@ -71,6 +71,9 @@ extension OrderStatusX on OrderStatus {
   bool get canCancel =>
       this == OrderStatus.waitingPayment || this == OrderStatus.reviewing;
 
+  bool get canComplete =>
+      this == OrderStatus.delivering;
+
   bool get canEdit => canCancel;
 }
 
@@ -327,6 +330,8 @@ class Order {
   final String? cancelledBy;
   final DateTime? cancelledAt;
   final String? refundStatus;
+  final DateTime? deliveredAt;
+  final DateTime? completedAt;
 
   const Order({
     required this.id,
@@ -350,6 +355,8 @@ class Order {
     this.cancelledBy,
     this.cancelledAt,
     this.refundStatus,
+    this.deliveredAt,
+    this.completedAt,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -439,6 +446,8 @@ class Order {
       cancelledBy: _asString(json['dibatalkan_oleh']),
       cancelledAt: _asDate(json['dibatalkan_pada']),
       refundStatus: _asString(json['status_refund']) ?? 'none',
+      deliveredAt: _asDate(json['waktu_diantar']),
+      completedAt: _asDate(json['waktu_selesai']),
     );
   }
 
@@ -449,6 +458,7 @@ class Order {
   bool get hasProof => proofBytes != null;
   bool get hasPreOrder => vendors.any((v) => v.isPreOrder);
   bool get canCancel => status.canCancel;
+  bool get canComplete => status.canComplete;
   String get vendorNames => vendors.map((v) => v.umkmName).join(' & ');
 
   OrderVendor get mainVendor =>
@@ -469,6 +479,8 @@ class Order {
     String? cancelledBy,
     DateTime? cancelledAt,
     String? refundStatus,
+    DateTime? deliveredAt,
+    DateTime? completedAt,
   }) {
     return Order(
       id: id,
@@ -494,6 +506,8 @@ class Order {
       cancelledBy: cancelledBy ?? this.cancelledBy,
       cancelledAt: cancelledAt ?? this.cancelledAt,
       refundStatus: refundStatus ?? this.refundStatus,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 

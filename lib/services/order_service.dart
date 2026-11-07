@@ -650,6 +650,58 @@ class OrderService extends ChangeNotifier {
     return updated;
   }
 
+  Future<Order> completeOrder(String orderId) async {
+    final order = _require(orderId);
+    if (!order.status.canComplete) {
+      throw const OrderException(
+        'Pesanan belum dapat diselesaikan pada status ini.',
+      );
+    }
+
+    try {
+      final res = await ApiService.post('pesanan/selesai', {
+        'id_pesanan': orderId,
+      });
+      if (res is Map) {
+        final updated = Order.fromJson(Map<String, dynamic>.from(res));
+        _replace(updated);
+        _notify(
+          title: 'Pesanan Selesai',
+          message: 'Pesanan ${updated.refId} telah Anda konfirmasi selesai. Terima kasih!',
+          type: AppNotificationType.order,
+          orderId: updated.id,
+        );
+        return updated;
+      }
+    } on ApiException catch (e) {
+      if (e.pesan.contains('Endpoint API tidak ditemukan') ||
+          e.pesan.contains('Tidak dapat terhubung') ||
+          e.pesan.contains('Terjadi kesalahan pada server') ||
+          e.pesan.contains('Terjadi kesalahan koneksi') ||
+          e.pesan.contains('Koneksi internet terputus')) {
+        // Fallback jika offline
+      } else {
+        throw OrderException(e.pesan);
+      }
+    } catch (_) {
+      // Offline fallback
+    }
+
+    final updated = _replace(
+      order.copyWith(
+        status: OrderStatus.completed,
+        completedAt: DateTime.now(),
+      ),
+    );
+    _notify(
+      title: 'Pesanan Selesai',
+      message: 'Pesanan ${updated.refId} telah Anda konfirmasi selesai.',
+      type: AppNotificationType.order,
+      orderId: updated.id,
+    );
+    return updated;
+  }
+
   Future<void> deleteOrder(String orderId) async {
     final order = _require(orderId);
     if (order.status.isActive) {

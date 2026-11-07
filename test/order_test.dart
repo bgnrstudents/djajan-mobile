@@ -331,5 +331,63 @@ void main() {
       expect(outOfRange.isOutOfRange, isTrue);
       expect(outOfRange.message, contains('di luar jangkauan'));
     });
+
+    test('OrderStatus canComplete allows only delivering status', () {
+      expect(OrderStatus.delivering.canComplete, isTrue);
+      expect(OrderStatus.waitingPayment.canComplete, isFalse);
+      expect(OrderStatus.reviewing.canComplete, isFalse);
+      expect(OrderStatus.processing.canComplete, isFalse);
+      expect(OrderStatus.completed.canComplete, isFalse);
+      expect(OrderStatus.cancelled.canComplete, isFalse);
+    });
+
+    test('OrderService completeOrder transitions delivering order to completed', () async {
+      final service = OrderService();
+      final deliveringOrder = Order(
+        id: 'PO-TEST-DELIVERING',
+        refId: 'PO-TEST-DELIVERING',
+        createdAt: DateTime(2026, 11, 7),
+        status: OrderStatus.delivering,
+        paymentMethod: PaymentMethod.cod,
+        serviceFee: 0,
+        discount: 0,
+        account: const PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        recipient: const Recipient(
+          name: 'Budi Santoso',
+          phone: '08123456789',
+          address: 'Jl. Desa Kreyongan No. 10',
+        ),
+        vendors: const [
+          OrderVendor(
+            umkmId: '1',
+            umkmName: 'Warung Enak',
+            umkmType: 'Jajanan',
+            type: OrderType.instant,
+            delivery: DeliveryMethod.courier,
+            deliveryFee: 5000,
+            pickupLocation: 'Jl. Kreyongan',
+            items: [
+              OrderItem(
+                productId: '1',
+                productName: 'Kue Cucur',
+                variant: 'Original',
+                unit: 'pcs',
+                imageUrl: '',
+                quantity: 2,
+                price: 2500,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      service.seedOrders([deliveringOrder]);
+      expect(deliveringOrder.status, OrderStatus.delivering);
+      expect(deliveringOrder.canComplete, isTrue);
+
+      final completed = await service.completeOrder(deliveringOrder.id);
+      expect(completed.status, OrderStatus.completed);
+      expect(completed.canComplete, isFalse);
+    });
   });
 }
