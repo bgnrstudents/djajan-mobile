@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../models/order.dart';
+import '../../../services/catalog_service.dart';
 import '../../../services/order_service.dart';
 import 'order_detail_screen.dart';
 import 'order_widgets.dart';
@@ -227,11 +228,18 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
         const Spacer(),
         InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => openWhatsApp(
-            context,
-            phone: kUmkmWhatsApp,
-            message: 'Halo, saya butuh bantuan untuk pesanan ${o.refId}.',
-          ),
+          onTap: () {
+            final phone = o.mainVendor.phone.isNotEmpty
+                ? o.mainVendor.phone
+                : (CatalogService().umkmById(o.mainVendor.umkmId)?.phone.isNotEmpty == true
+                    ? CatalogService().umkmById(o.mainVendor.umkmId)!.phone
+                    : kUmkmWhatsApp);
+            openWhatsApp(
+              context,
+              phone: phone,
+              message: generateOrderWhatsAppMessage(o, umkmName: o.mainVendor.umkmName),
+            );
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:djajan_mobile/models/order.dart';
 import 'package:djajan_mobile/models/product.dart';
 import 'package:djajan_mobile/models/umkm.dart';
+import 'package:djajan_mobile/screens/customer/order/order_widgets.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/services/order_service.dart';
 
@@ -229,6 +230,64 @@ void main() {
 
       expect(cart.items.first.codAvailable, isFalse);
       cart.clear();
+    });
+
+    test('normalizeWaNumber converts diverse Indonesian phone formats to 628xxx', () {
+      expect(normalizeWaNumber('081234567890'), '6281234567890');
+      expect(normalizeWaNumber('+6281234567890'), '6281234567890');
+      expect(normalizeWaNumber('6281234567890'), '6281234567890');
+      expect(normalizeWaNumber('81234567890'), '6281234567890');
+      expect(normalizeWaNumber('0812-3456-7890'), '6281234567890');
+      expect(normalizeWaNumber(''), '');
+    });
+
+    test('generateOrderWhatsAppMessage builds detailed order summary', () {
+      final order = Order(
+        id: 'PO-TEST-WA',
+        refId: 'PO-TEST-WA',
+        createdAt: DateTime(2026, 11, 7),
+        status: OrderStatus.waitingPayment,
+        paymentMethod: PaymentMethod.midtrans,
+        serviceFee: 0,
+        discount: 0,
+        account: const PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        recipient: const Recipient(
+          name: 'Pak Budi',
+          phone: '08123456789',
+          address: 'Jl. Melati No. 5',
+        ),
+        vendors: const [
+          OrderVendor(
+            umkmId: '1',
+            umkmName: 'Warung Bu Siti',
+            umkmType: 'Jajanan',
+            phone: '081987654321',
+            type: OrderType.instant,
+            delivery: DeliveryMethod.courier,
+            deliveryFee: 5000,
+            pickupLocation: 'Jl. Kenanga',
+            items: [
+              OrderItem(
+                productId: '10',
+                productName: 'Kue Lumpur',
+                variant: 'Pandan',
+                unit: 'kotak',
+                imageUrl: '',
+                quantity: 2,
+                price: 10000,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final msg = generateOrderWhatsAppMessage(order);
+      expect(msg, contains('Warung Bu Siti'));
+      expect(msg, contains('PO-TEST-WA'));
+      expect(msg, contains('Pak Budi'));
+      expect(msg, contains('Kue Lumpur'));
+      expect(msg, contains('Jl. Melati No. 5'));
+      expect(msg, contains('Diantar Kurir Warga'));
     });
   });
 }

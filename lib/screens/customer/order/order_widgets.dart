@@ -236,36 +236,120 @@ Future<void> copyText(BuildContext context, String text, String message) async {
   if (context.mounted) showToast(context, message);
 }
 
-String _waNumber(String phone) {
+/// Menstandarkan format nomor HP ke format internasional WhatsApp (628xxxx)
+String normalizeWaNumber(String phone) {
   var d = phone.replaceAll(RegExp(r'[^0-9]'), '');
-  if (d.startsWith('0')) d = '62${d.substring(1)}';
+  if (d.startsWith('0')) {
+    d = '62${d.substring(1)}';
+  } else if (d.startsWith('8')) {
+    d = '62$d';
+  }
   return d;
 }
 
+/// Membuka aplikasi WhatsApp langsung dengan fallback tautan wa.me
 Future<void> openWhatsApp(
   BuildContext context, {
   required String phone,
   required String message,
 }) async {
-  final uri = Uri.parse(
-    'https://wa.me/${_waNumber(phone)}?text=${Uri.encodeComponent(message)}',
-  );
-  var ok = false;
+  final cleanNumber = normalizeWaNumber(phone);
+  if (cleanNumber.isEmpty) {
+    if (context.mounted) {
+      showToast(context, 'Nomor WhatsApp belum tersedia.', error: true);
+    }
+    return;
+  }
+
+  final encodedMessage = Uri.encodeComponent(message);
+  final directUri = Uri.parse('whatsapp://send?phone=$cleanNumber&text=$encodedMessage');
+  final webUri = Uri.parse('https://wa.me/$cleanNumber?text=$encodedMessage');
+
+  bool ok = false;
+
+  // 1. Coba buka langsung ke aplikasi WhatsApp
   try {
-    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    ok = await launchUrl(directUri, mode: LaunchMode.externalApplication);
   } catch (_) {
     ok = false;
   }
+
+  // 2. Fallback: Buka melalui wa.me external browser / app handler
+  if (!ok) {
+    try {
+      ok = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      ok = false;
+    }
+  }
+
+  // 3. Fallback: Buka platform default
+  if (!ok) {
+    try {
+      ok = await launchUrl(webUri, mode: LaunchMode.platformDefault);
+    } catch (_) {
+      ok = false;
+    }
+  }
+
+  // 4. Jika masih gagal, salin teks pesan ke clipboard
   if (!ok && context.mounted) {
     await copyText(
       context,
-      uri.toString(),
-      'WhatsApp tidak dapat dibuka. Tautan disalin.',
+      webUri.toString(),
+      'WhatsApp tidak dapat dibuka. Tautan pesan telah disalin ke clipboard.',
     );
   }
 }
 
-/// Nomor WhatsApp UMKM (contoh; nanti diambil dari data UMKM di backend).
+/// Menghasilkan format pesan WhatsApp terstruktur dan profesional untuk pesanan
+String generateOrderWhatsAppMessage(Order order, {String? umkmName}) {
+  final main = order.mainVendor;
+  final targetName = umkmName ?? main.umkmName;
+
+  final itemsSummary = main.items.map((i) {
+    return '• ${i.quantity}x ${i.productName} (${rupiah(i.subtotal)})';
+  }).join('\n');
+
+  final isCod = order.paymentMethod == PaymentMethod.cod;
+  final payText = isCod
+      ? 'Bayar di Tempat (COD)'
+      : (order.status == OrderStatus.waitingPayment
+          ? 'Menunggu Pembayaran (Midtrans)'
+          : 'Lunas (Midtrans)');
+
+  final deliveryText = main.delivery == DeliveryMethod.courier
+      ? 'Diantar Kurir Warga'
+      : 'Ambil Sendiri (Pickup)';
+
+  final buffer = StringBuffer()
+    ..writeln('Halo *$targetName*, saya ingin konfirmasi pesanan saya di *DJajan*:')
+    ..writeln()
+    ..writeln('📋 *No. Pesanan:* ${order.refId}')
+    ..writeln('👤 *Pemesan:* ${order.recipient.name}')
+    ..writeln('📦 *Rincian Menu:*')
+    ..writeln(itemsSummary)
+    ..writeln()
+    ..writeln('💰 *Total Pesanan:* ${rupiah(order.total)}')
+    ..writeln('💳 *Pembayaran:* $payText')
+    ..writeln('📍 *Pengiriman:* $deliveryText');
+
+  if (main.delivery == DeliveryMethod.courier && order.recipient.address.isNotEmpty) {
+    buffer.writeln('🏠 *Alamat Antar:* ${order.recipient.address}');
+  }
+
+  if (main.note != null && main.note!.trim().isNotEmpty) {
+    buffer.writeln('📝 *Catatan:* ${main.note!.trim()}');
+  }
+
+  buffer
+    ..writeln()
+    ..writeln('Mohon bantuannya untuk memproses pesanan saya ya. Terima kasih! 🙏');
+
+  return buffer.toString();
+}
+
+/// Nomor WhatsApp UMKM (contoh/fallback; nanti diambil dari data UMKM di backend).
 const String kUmkmWhatsApp = '081234567890';
 
 // ---------------------------------------------------------------- widgets

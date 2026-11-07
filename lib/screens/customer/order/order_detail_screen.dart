@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/order.dart';
+import '../../../services/catalog_service.dart';
 import '../../../services/order_service.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
@@ -1602,12 +1603,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            onPressed: () => openWhatsApp(
-              context,
-              phone: kUmkmWhatsApp,
-              message:
-                  'Halo ${main.umkmName}, saya ingin menanyakan pesanan ${o.refId}.',
-            ),
+            onPressed: () {
+              final phone = main.phone.isNotEmpty
+                  ? main.phone
+                  : (CatalogService().umkmById(main.umkmId)?.phone.isNotEmpty == true
+                      ? CatalogService().umkmById(main.umkmId)!.phone
+                      : kUmkmWhatsApp);
+              openWhatsApp(
+                context,
+                phone: phone,
+                message: generateOrderWhatsAppMessage(o, umkmName: main.umkmName),
+              );
+            },
             icon: const Icon(Icons.chat_outlined, size: 20),
             label: Text(
               'Hubungi ${_shortName(main.umkmName)} via WhatsApp',

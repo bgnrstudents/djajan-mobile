@@ -374,23 +374,20 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      title: const Text('Hubungi Pelanggan'),
-                                      content: Text(
-                                        'Nomor WhatsApp ${pesanan.namaPembeli}: ${pesanan.noTelp}.\n\nSilakan konfirmasi pesanan atau koordinasikan pengantaran langsung.',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(ctx),
-                                          child: const Text('Tutup'),
-                                        ),
-                                      ],
-                                    ),
+                                  if (pesanan.noTelp.trim().isEmpty) {
+                                    showToast(
+                                      context,
+                                      'Nomor telepon pembeli tidak tersedia.',
+                                      error: true,
+                                    );
+                                    return;
+                                  }
+                                  final message =
+                                      'Halo Kak ${pesanan.namaPembeli}, ini dari UMKM DJajan terkait pesanan *${pesanan.idPesanan}*.\n\nAda hal yang ingin kami konfirmasikan mengenai pesanan Anda.';
+                                  openWhatsApp(
+                                    context,
+                                    phone: pesanan.noTelp,
+                                    message: message,
                                   );
                                 },
                                 icon: const Icon(

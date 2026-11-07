@@ -176,6 +176,7 @@ class OrderVendor {
   final String umkmId;
   final String umkmName;
   final String umkmType;
+  final String phone;
   final OrderType type;
   final List<OrderItem> items;
   final DeliveryMethod delivery;
@@ -190,6 +191,7 @@ class OrderVendor {
     required this.umkmId,
     required this.umkmName,
     required this.umkmType,
+    this.phone = '',
     required this.type,
     required this.items,
     required this.delivery,
@@ -369,6 +371,7 @@ class Order {
       umkmId: (json['id_umkm'] ?? '').toString(),
       umkmName: (json['nama_umkm'] ?? 'UMKM').toString(),
       umkmType: (json['spesialis_umkm'] ?? '').toString(),
+      phone: (json['no_telp_umkm'] ?? json['no_telp_usaha'] ?? json['phone'] ?? '').toString(),
       type: OrderType.instant,
       items: items,
       delivery: (json['metode_pengiriman'] ?? '').toString() == 'kurir'
