@@ -483,7 +483,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MidtransPaymentScreen(orderId: o.id),
+                  builder: (_) => MidtransPaymentScreen(
+                    orderId: o.id,
+                    paymentUrl: o.paymentUrl,
+                  ),
                 ),
               );
               if (mounted) await _syncPaymentStatus();

@@ -624,6 +624,7 @@ class OrderService extends ChangeNotifier {
       if (e.pesan.contains('Endpoint API tidak ditemukan') ||
           e.pesan.contains('Tidak dapat terhubung') ||
           e.pesan.contains('Terjadi kesalahan pada server') ||
+          e.pesan.contains('Terjadi kesalahan koneksi') ||
           e.pesan.contains('Koneksi internet terputus')) {
         // Fallback jika offline atau server pengujian tidak aktif
       } else {
