@@ -5,6 +5,7 @@ import 'package:djajan_mobile/models/umkm.dart';
 import 'package:djajan_mobile/screens/customer/order/order_widgets.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/services/order_service.dart';
+import 'package:djajan_mobile/services/receipt_pdf_service.dart';
 
 void main() {
   group('Order Model & Cancellation Tests (Task 9)', () {
@@ -388,6 +389,62 @@ void main() {
       final completed = await service.completeOrder(deliveringOrder.id);
       expect(completed.status, OrderStatus.completed);
       expect(completed.canComplete, isFalse);
+    });
+
+    test('ReceiptData formats customer order and generates valid PDF bytes', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+
+      final order = Order(
+        id: 'PO-PDF-TEST',
+        refId: 'PO-PDF-TEST',
+        createdAt: DateTime(2026, 11, 8, 14, 30),
+        status: OrderStatus.completed,
+        paymentMethod: PaymentMethod.midtrans,
+        serviceFee: 1000,
+        discount: 2000,
+        account: const PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        recipient: const Recipient(
+          name: 'Pak Budi',
+          phone: '081234567890',
+          address: 'Jl. Merpati No. 12, Kreyongan Atas',
+        ),
+        vendors: const [
+          OrderVendor(
+            umkmId: '1',
+            umkmName: 'Warung Bu Siti',
+            umkmType: 'Jajanan',
+            type: OrderType.instant,
+            delivery: DeliveryMethod.courier,
+            deliveryFee: 5000,
+            pickupLocation: 'Jl. Kreyongan',
+            items: [
+              OrderItem(
+                productId: '10',
+                productName: 'Kue Lumpur',
+                variant: 'Pandan',
+                unit: 'kotak',
+                imageUrl: '',
+                quantity: 3,
+                price: 10000,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final data = ReceiptData.fromCustomerOrder(order);
+      expect(data.orderId, 'PO-PDF-TEST');
+      expect(data.merchantName, 'Warung Bu Siti');
+      expect(data.customerName, 'Pak Budi');
+      expect(data.items.length, 1);
+      expect(data.items.first.total, 30000.0);
+      expect(data.subtotal, 30000.0);
+      expect(data.total, 34000.0); // 30000 + 5000 + 1000 - 2000
+
+      // Generate PDF bytes
+      final pdfBytes = await ReceiptPdfService.generateReceiptPdf(data);
+      expect(pdfBytes, isNotEmpty);
+      expect(pdfBytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]); // %PDF
     });
   });
 }

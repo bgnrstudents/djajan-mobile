@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/umkm_seller_models.dart';
 import '../../services/api_service.dart';
+import '../../services/receipt_pdf_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
@@ -133,6 +134,18 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     }
   }
 
+  Future<void> _cetakStruk(Pesanan pesanan) async {
+    final umkmService = context.read<UmkmDataService>();
+    final umkm = umkmService.sudahLogin ? umkmService.profile : null;
+    final data = ReceiptData.fromUmkmPesanan(
+      pesanan,
+      merchantName: umkm?.namaUsaha,
+      merchantPhone: umkm?.noTelpUsaha,
+      merchantAddress: umkm?.alamat,
+    );
+    await ReceiptPdfService.printOrDownloadReceipt(context, data);
+  }
+
   @override
   Widget build(BuildContext context) {
     final service = context.watch<UmkmDataService>();
@@ -180,10 +193,20 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
                 onPressed: () => Navigator.maybePop(context),
               ),
-              rightAction: IconButton(
-                icon: const Icon(Icons.refresh_rounded, color: OC.muted),
-                tooltip: 'Muat ulang',
-                onPressed: () => context.read<UmkmDataService>().muatSemua(),
+              rightAction: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.picture_as_pdf_outlined, color: OC.primary),
+                    tooltip: 'Cetak Struk PDF',
+                    onPressed: () => _cetakStruk(pesanan),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded, color: OC.muted),
+                    tooltip: 'Muat ulang',
+                    onPressed: () => context.read<UmkmDataService>().muatSemua(),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -780,6 +803,23 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                         label: const Text('Tandai Pesanan Selesai'),
                       ),
                     ],
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: OC.ink,
+                        side: const BorderSide(color: OC.line),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => _cetakStruk(pesanan),
+                      icon: const Icon(Icons.picture_as_pdf_outlined, color: OC.primary),
+                      label: const Text(
+                        'Cetak Struk PDF Transaksi',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
                   ],
                 ),
               ),

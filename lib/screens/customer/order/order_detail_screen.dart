@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/order.dart';
 import '../../../services/catalog_service.dart';
 import '../../../services/order_service.dart';
+import '../../../services/receipt_pdf_service.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
@@ -415,6 +416,55 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                 ),
               ),
               const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: OC.ink,
+                        side: const BorderSide(color: OC.line),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        copyText(context, text, 'Struk berhasil disalin!');
+                      },
+                      icon: const Icon(Icons.content_copy_outlined, size: 18),
+                      label: const Text(
+                        'Salin Teks',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: OC.primary,
+                        side: const BorderSide(color: OC.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final data = ReceiptData.fromCustomerOrder(o);
+                        await ReceiptPdfService.shareReceiptPdf(data);
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 18),
+                      label: const Text(
+                        'Bagi PDF',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -426,14 +476,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    copyText(context, text, 'Struk berhasil disalin!');
+                    final data = ReceiptData.fromCustomerOrder(o);
+                    await ReceiptPdfService.printOrDownloadReceipt(context, data);
                   },
-                  icon: const Icon(Icons.content_copy_outlined),
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
                   label: const Text(
-                    'Salin Struk',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    'Cetak / Simpan PDF',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                   ),
                 ),
               ),
@@ -1779,8 +1830,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           children: [
             Expanded(
               child: _softButton(
-                icon: Icons.receipt_long_outlined,
-                label: 'Struk Digital',
+                icon: Icons.picture_as_pdf_outlined,
+                label: 'Struk PDF',
                 color: OC.ink,
                 onTap: () => _showReceipt(o),
               ),
