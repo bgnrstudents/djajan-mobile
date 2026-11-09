@@ -582,6 +582,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
                     children: [
                       _statusCard(order),
+                      if (order.isRefundPending) ...[
+                        const SizedBox(height: 10),
+                        _refundClaimCard(order),
+                      ],
                       if (order.vendors.any((v) => v.delivery == DeliveryMethod.courier)) ...[
                         const SizedBox(height: 10),
                         _deliveryMapCard(order),
@@ -735,21 +739,35 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         break;
       case OrderStatus.cancelled:
         tag = 'Dibatalkan';
-        chip = o.refundStatus == 'perlu_refund'
-            ? 'Menunggu Refund'
-            : 'Pesanan Dibatalkan';
-        headline = 'Pesanan ini sudah dibatalkan';
-        if (o.refundStatus == 'perlu_refund') {
+        if (o.isRefundSuccess) {
+          chip = 'Refund Selesai';
+          headline = 'Pesanan Dibatalkan & Refund Selesai';
           body =
-              'Pesanan telah dibatalkan. Dana Anda sedang menunggu pengembalian/refund manual dari pihak UMKM/Admin.';
-        } else if (o.cancelReason != null && o.cancelReason!.isNotEmpty) {
-          body = 'Alasan: ${o.cancelReason}';
+              'Dana sebesar ${rupiah(o.total)} telah berhasil dikembalikan ke akun pembayaran Anda.';
+          toneBg = OC.mintSoft;
+          toneFg = OC.primary;
+          icon = Icons.check_circle_outline;
+        } else if (o.isRefundPending) {
+          chip = 'Menunggu Refund';
+          headline = 'Pesanan Dibatalkan & Menunggu Refund';
+          body =
+              'Pesanan telah dibatalkan. Pengembalian dana ${rupiah(o.total)} sedang diproses oleh pihak Admin/UMKM DJajan.';
+          toneBg = const Color(0xFFFFF3E0);
+          toneFg = const Color(0xFFE65100);
+          icon = Icons.hourglass_bottom_rounded;
         } else {
-          body = 'Anda dapat menghapus riwayat ini atau membuat pesanan baru.';
+          chip = 'Pesanan Dibatalkan';
+          headline = 'Pesanan ini sudah dibatalkan';
+          if (o.cancelReason != null && o.cancelReason!.isNotEmpty) {
+            body = 'Alasan: ${o.cancelReason}';
+          } else {
+            body =
+                'Anda dapat menghapus riwayat ini atau membuat pesanan baru.';
+          }
+          toneBg = OC.dangerSoft;
+          toneFg = OC.danger;
+          icon = Icons.cancel_outlined;
         }
-        toneBg = OC.dangerSoft;
-        toneFg = OC.danger;
-        icon = Icons.cancel_outlined;
         break;
     }
 
@@ -930,6 +948,113 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                     : _StepState.pending)),
                   ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _refundClaimCard(Order o) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFCC80)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: Color(0xFFE65100),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pengembalian Dana Menunggu Konfirmasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: OC.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Nominal Refund: ${rupiah(o.total)}',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFE65100),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Pesanan dibatalkan setelah pembayaran tercatat. Karena Anda menggunakan metode pembayaran non-otomatis (Virtual Account/Transfer), silakan hubungi Admin DJajan via WhatsApp untuk memverifikasi nomor rekening atau e-wallet tujuan pengembalian dana Anda.',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: OC.muted,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(44),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              final msg =
+                  'Halo Admin DJajan, saya ingin konfirmasi klaim pengembalian dana (refund) untuk pesanan berikut:\n\n'
+                  '• ID Pesanan: ${o.id}\n'
+                  '• Nama Pembeli: ${o.recipient.name}\n'
+                  '• Total Dana: ${rupiah(o.total)}\n'
+                  '• Alasan Batal: ${o.cancelReason ?? "-"}\n\n'
+                  'Mohon bantuan proses pengembalian dana ke rekening/e-wallet saya. Terima kasih!';
+              openWhatsApp(
+                context,
+                phone: kUmkmWhatsApp,
+                message: msg,
+              );
+            },
+            icon: const Icon(Icons.chat_bubble_outline, size: 17),
+            label: const Text(
+              'Klaim Refund ke Admin via WhatsApp',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],

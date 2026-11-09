@@ -476,6 +476,10 @@ class Order {
   bool get hasPreOrder => vendors.any((v) => v.isPreOrder);
   bool get canCancel => status.canCancel;
   bool get canComplete => status.canComplete;
+  bool get isRefundPending =>
+      status == OrderStatus.cancelled && refundStatus == 'perlu_refund';
+  bool get isRefundSuccess =>
+      status == OrderStatus.cancelled && refundStatus == 'refund_berhasil';
   String get vendorNames => vendors.map((v) => v.umkmName).join(' & ');
 
   OrderVendor get mainVendor =>

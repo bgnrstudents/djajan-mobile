@@ -183,6 +183,15 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   Widget _orderCard(Order o) {
     final c = _statusColors(o.status);
+    final String statusLabel = o.isRefundPending
+        ? 'Menunggu Refund'
+        : (o.isRefundSuccess ? 'Refund Selesai' : o.status.label);
+    final Color badgeBg = o.isRefundPending
+        ? const Color(0xFFFFF3E0)
+        : (o.isRefundSuccess ? OC.mintSoft : c.bg);
+    final Color badgeFg = o.isRefundPending
+        ? const Color(0xFFE65100)
+        : (o.isRefundSuccess ? OC.primary : c.fg);
     final firstItem = o.vendors.first.items.first;
     final more = o.vendors.fold(0, (s, v) => s + v.items.length) - 1;
 
@@ -207,7 +216,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                       ),
                     ),
                   ),
-                  Pill(text: o.status.label, bg: c.bg, fg: c.fg, fontSize: 11),
+                  Pill(text: statusLabel, bg: badgeBg, fg: badgeFg, fontSize: 11),
                 ],
               ),
               const SizedBox(height: 10),

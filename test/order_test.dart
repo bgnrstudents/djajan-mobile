@@ -635,5 +635,42 @@ void main() {
       hasPreOrder = cart.items.any((item) => item.type == OrderType.preOrder);
       expect(hasPreOrder, isTrue, reason: 'Cart containing Pre-Order product must flag Pre-Order');
     });
+
+    test('Order refund status getters and cancellation guards (Item B.1)', () {
+      final orderPerluRefund = Order(
+        id: 'PO-REF-1',
+        refId: 'PO-REF-1',
+        createdAt: DateTime.now(),
+        status: OrderStatus.cancelled,
+        paymentMethod: PaymentMethod.midtrans,
+        serviceFee: 0,
+        discount: 0,
+        account: PaymentAccount(bank: 'BCA', bankFullName: '', number: '', holder: ''),
+        recipient: const Recipient(name: 'Andi', phone: '08123456789', address: 'Kreyongan'),
+        vendors: const [],
+        refundStatus: 'perlu_refund',
+      );
+
+      expect(orderPerluRefund.isRefundPending, isTrue);
+      expect(orderPerluRefund.isRefundSuccess, isFalse);
+      expect(orderPerluRefund.canCancel, isFalse);
+
+      final orderRefundSukses = Order(
+        id: 'PO-REF-2',
+        refId: 'PO-REF-2',
+        createdAt: DateTime.now(),
+        status: OrderStatus.cancelled,
+        paymentMethod: PaymentMethod.midtrans,
+        serviceFee: 0,
+        discount: 0,
+        account: PaymentAccount(bank: 'BCA', bankFullName: '', number: '', holder: ''),
+        recipient: const Recipient(name: 'Andi', phone: '08123456789', address: 'Kreyongan'),
+        vendors: const [],
+        refundStatus: 'refund_berhasil',
+      );
+
+      expect(orderRefundSukses.isRefundPending, isFalse);
+      expect(orderRefundSukses.isRefundSuccess, isTrue);
+    });
   });
 }
