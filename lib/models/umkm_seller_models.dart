@@ -372,12 +372,27 @@ class Pesanan {
   /// Total yang diterima mitra = subtotal item + ongkir + biaya layanan.
   int get totalDiterimaMitra => subtotal + biayaPengantaran + biayaLayanan;
 
+  /// Pesanan merupakan Pre-Order / Acara jika memiliki tanggal kebutuhan acara
+  /// atau keperluan acara yang diisi.
+  bool get isPreOrder {
+    if (keperluanAcara.isNotEmpty && keperluanAcara != '-') return true;
+    if (waktuDibutuhkan != null) {
+      final selisih = waktuDibutuhkan!.difference(tanggalPesan);
+      return selisih.inHours >= 12;
+    }
+    return false;
+  }
+
   bool get belumDiputuskan => status == StatusPesanan.poBaru;
 
-  /// Sisa waktu konfirmasi, dihitung dari kolom `batas_konfirmasi` di database.
+  /// Sisa waktu konfirmasi, dihitung dari kolom `batas_konfirmasi` di database
+  /// dengan fallback 24 jam untuk Pre-Order dan 30 menit untuk Ready Stock.
   Duration get sisaWaktuKonfirmasi {
-    if (batasKonfirmasi == null) return Duration.zero;
-    final sisa = batasKonfirmasi!.difference(DateTime.now());
+    final deadline = batasKonfirmasi ??
+        tanggalPesan.add(
+          isPreOrder ? const Duration(hours: 24) : const Duration(minutes: 30),
+        );
+    final sisa = deadline.difference(DateTime.now());
     return sisa.isNegative ? Duration.zero : sisa;
   }
 

@@ -536,5 +536,104 @@ void main() {
       expect(pesanan.longitudeUmkm, 113.7025);
       expect(pesanan.jarakKm, 1.1);
     });
+
+    test('Pesanan.isPreOrder and confirmation deadline calculations (Item B.2 & B.5)', () {
+      final now = DateTime.now();
+
+      final readyStock = umkm_models.Pesanan(
+        idPesanan: 'PO-READY-1',
+        namaPembeli: 'Budi',
+        noTelp: '081234567890',
+        tanggalPesan: now,
+        waktuDibutuhkan: null,
+        batasKonfirmasi: null,
+        keperluanAcara: '-',
+        metodePengiriman: 'kurir',
+        alamatTujuan: 'Kreyongan',
+        catatan: '',
+        metodePembayaran: 'cod',
+        statusPembayaran: 'belum_lunas',
+        biayaPengantaran: 3000,
+        biayaLayanan: 0,
+        subtotal: 22000,
+        totalHarga: 25000,
+        status: umkm_models.StatusPesanan.poBaru,
+        items: [],
+      );
+
+      expect(readyStock.isPreOrder, isFalse);
+      // Fallback deadline for ready stock is 30 minutes from now
+      expect(readyStock.sisaWaktuKonfirmasi.inMinutes, inInclusiveRange(28, 30));
+
+      final preOrderEvent = umkm_models.Pesanan(
+        idPesanan: 'PO-EVENT-1',
+        namaPembeli: 'Siti',
+        noTelp: '081234567891',
+        tanggalPesan: now,
+        waktuDibutuhkan: now.add(const Duration(days: 3)),
+        batasKonfirmasi: null,
+        keperluanAcara: 'Syukuran Khitanan',
+        metodePengiriman: 'ambil_sendiri',
+        alamatTujuan: '-',
+        catatan: 'Porsi besar',
+        metodePembayaran: 'midtrans',
+        statusPembayaran: 'lunas',
+        biayaPengantaran: 0,
+        biayaLayanan: 0,
+        subtotal: 500000,
+        totalHarga: 500000,
+        status: umkm_models.StatusPesanan.poBaru,
+        items: [],
+      );
+
+      expect(preOrderEvent.isPreOrder, isTrue);
+      // Fallback deadline for pre-order is 24 hours from now
+      expect(preOrderEvent.sisaWaktuKonfirmasi.inHours, inInclusiveRange(23, 24));
+    });
+
+    test('Cart detection of Pre-Order items for COD disabling (Item B.2)', () {
+      final cart = CartService();
+      cart.clear();
+
+      final readyLine = CartLine(
+        productId: 'prod_1',
+        productName: 'Pastel Basah',
+        variant: 'Original',
+        unit: 'pcs',
+        imageUrl: '',
+        quantity: 2,
+        price: 3500,
+        type: OrderType.instant,
+        umkmId: 'umkm_1',
+        umkmName: 'Dapur Berkah',
+        umkmType: 'Jajanan',
+        pickupLocation: 'Kreyongan',
+        codAvailable: true,
+      );
+
+      final poLine = CartLine(
+        productId: 'prod_2',
+        productName: 'Tumpeng Mini',
+        variant: 'Paket Komplit',
+        unit: 'porsi',
+        imageUrl: '',
+        quantity: 10,
+        price: 25000,
+        type: OrderType.preOrder,
+        umkmId: 'umkm_1',
+        umkmName: 'Dapur Berkah',
+        umkmType: 'Katering',
+        pickupLocation: 'Kreyongan',
+        codAvailable: true,
+      );
+
+      cart.addCartLine(readyLine);
+      bool hasPreOrder = cart.items.any((item) => item.type == OrderType.preOrder);
+      expect(hasPreOrder, isFalse, reason: 'Ready stock item cart should allow COD');
+
+      cart.addCartLine(poLine);
+      hasPreOrder = cart.items.any((item) => item.type == OrderType.preOrder);
+      expect(hasPreOrder, isTrue, reason: 'Cart containing Pre-Order product must flag Pre-Order');
+    });
   });
 }

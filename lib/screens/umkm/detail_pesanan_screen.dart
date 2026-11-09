@@ -289,6 +289,52 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                                   : OC.primary),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: pesanan.isPreOrder
+                                            ? const Color(0xFFFFF3E0)
+                                            : const Color(0xFFE8F5E9),
+                                        borderRadius:
+                                            BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: pesanan.isPreOrder
+                                              ? const Color(0xFFFFB74D)
+                                              : const Color(0xFFA5D6A7),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            pesanan.isPreOrder
+                                                ? Icons.cake_outlined
+                                                : Icons.bolt_rounded,
+                                            size: 11,
+                                            color: pesanan.isPreOrder
+                                                ? const Color(0xFFE65100)
+                                                : const Color(0xFF2E7D32),
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            pesanan.isPreOrder
+                                                ? 'Pre-Order'
+                                                : 'Ready Stock',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: pesanan.isPreOrder
+                                                  ? const Color(0xFFE65100)
+                                                  : const Color(0xFF2E7D32),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                     const Spacer(),
                                     Text(
                                       tanggalFmt.format(pesanan.tanggalPesan),
@@ -304,7 +350,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                   Text(
                                     sisa == Duration.zero
                                         ? 'Batas waktu konfirmasi lewat! Putuskan sekarang.'
-                                        : 'Sisa ${_formatDurasi(sisa)} sebelum dialihkan ke mitra lain.',
+                                        : 'Sisa ${_formatDurasi(sisa)} (Batas konfirmasi ${pesanan.isPreOrder ? "24 jam" : "30 menit"}).',
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,

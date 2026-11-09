@@ -1208,13 +1208,14 @@ class _TabPesanan extends StatefulWidget {
 
 class _TabPesananState extends State<_TabPesanan> {
   int _filterIndex = 0;
+  int _tipeIndex = 0; // 0: Semua Jenis, 1: Ready Stock, 2: Pre-Order
 
   @override
   Widget build(BuildContext context) {
     final semua = widget.service.pesananList;
     final tanggalFmt = DateFormat('d MMM yyyy, HH:mm', 'id_ID');
 
-    final pesananTersaring = switch (_filterIndex) {
+    final berdasarkanStatus = switch (_filterIndex) {
       1 => semua.where((p) => p.status == StatusPesanan.poBaru).toList(),
       2 => semua.where((p) => p.status == StatusPesanan.diterima).toList(),
       3 =>
@@ -1230,9 +1231,17 @@ class _TabPesananState extends State<_TabPesanan> {
       _ => semua,
     };
 
+    final pesananTersaring = switch (_tipeIndex) {
+      1 => berdasarkanStatus.where((p) => !p.isPreOrder).toList(),
+      2 => berdasarkanStatus.where((p) => p.isPreOrder).toList(),
+      _ => berdasarkanStatus,
+    };
+
     final jumlahPoBaru = semua
         .where((p) => p.status == StatusPesanan.poBaru)
         .length;
+    final jumlahReady = semua.where((p) => !p.isPreOrder).length;
+    final jumlahPo = semua.where((p) => p.isPreOrder).length;
 
     return RefreshIndicator(
       color: OC.primary,
@@ -1295,6 +1304,23 @@ class _TabPesananState extends State<_TabPesanan> {
               ),
             ),
           ),
+          // Filter Jenis: Semua, Ready Stock, Pre-Order
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            color: OC.bg,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _tipeChip('Semua (${semua.length})', 0),
+                  const SizedBox(width: 8),
+                  _tipeChip('⚡ Ready ($jumlahReady)', 1),
+                  const SizedBox(width: 8),
+                  _tipeChip('🎂 Pre-Order / Acara ($jumlahPo)', 2),
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: pesananTersaring.isEmpty
                 ? ListView(
@@ -1353,6 +1379,73 @@ class _TabPesananState extends State<_TabPesanan> {
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  if (p.isPreOrder)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 3.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFF3E0),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: const Color(0xFFFFB74D),
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.cake_outlined,
+                                            size: 11,
+                                            color: Color(0xFFE65100),
+                                          ),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Pre-Order',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFFE65100),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 3.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE8F5E9),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: const Color(0xFFA5D6A7),
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.bolt_rounded,
+                                            size: 11,
+                                            color: Color(0xFF2E7D32),
+                                          ),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Ready',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF2E7D32),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   const Spacer(),
                                   MiniBadge(p.status.label, bg: bg, fg: fg),
                                 ],
@@ -1434,6 +1527,32 @@ class _TabPesananState extends State<_TabPesanan> {
                                             color: OC.muted,
                                           ),
                                         ),
+                                        if (p.isPreOrder &&
+                                            p.waktuDibutuhkan != null) ...[
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.event_available_outlined,
+                                                size: 13,
+                                                color: Color(0xFFE65100),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  'Acara: ${tanggalFmt.format(p.waktuDibutuhkan!)}',
+                                                  style: const TextStyle(
+                                                    fontSize: 11.5,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Color(0xFFE65100),
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -1476,17 +1595,19 @@ class _TabPesananState extends State<_TabPesanan> {
                                         color: OC.peachSoft,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.timer_outlined,
                                             size: 14,
                                             color: OC.amber,
                                           ),
-                                          SizedBox(width: 4),
+                                          const SizedBox(width: 4),
                                           Text(
-                                            'Konfirmasi Segera',
-                                            style: TextStyle(
+                                            p.isPreOrder
+                                                ? 'Konfirmasi 24 Jam'
+                                                : 'Konfirmasi 30 Mnt',
+                                            style: const TextStyle(
                                               fontSize: 11.5,
                                               fontWeight: FontWeight.w800,
                                               color: OC.amber,
@@ -1581,6 +1702,32 @@ class _TabPesananState extends State<_TabPesanan> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tipeChip(String label, int index) {
+    final active = _tipeIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _tipeIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: active ? OC.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active ? OC.primary : OC.line,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+            color: active ? Colors.white : OC.muted,
+          ),
         ),
       ),
     );

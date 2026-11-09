@@ -132,7 +132,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       }
       return d;
     }).toList();
-    if (_vendors.any((v) => !v.codAvailable) &&
+    if ((_vendors.any((v) => !v.codAvailable) || _hasPreOrder) &&
         _method == PaymentMethod.cod) {
       _method = PaymentMethod.midtrans;
     }
@@ -226,6 +226,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   double get _total => _subtotal + _shipping;
   int get _qty => widget.cartLines.fold(0, (s, l) => s + l.quantity);
 
+  bool get _hasPreOrder => _vendors.any((v) => v.isPreOrder);
+  bool get _isCodAllowed =>
+      _vendors.every((v) => v.codAvailable) && !_hasPreOrder;
+
   Future<void> _pickDateTime(_VendorDraft v) async {
     final now = DateTime.now();
     final first =
@@ -305,6 +309,28 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         context,
         'Lokasi pengiriman di luar jangkauan kurir ${outOfRangeVendor.umkmName}. '
         'Pilih metode Ambil Sendiri (Pickup) atau ubah alamat.',
+        error: true,
+      );
+      return;
+    }
+
+    final missingPoDateVendor = _vendors.cast<_VendorDraft?>().firstWhere(
+      (v) => v != null && v.isPreOrder && v.requiredAt == null,
+      orElse: () => null,
+    );
+    if (missingPoDateVendor != null) {
+      showToast(
+        context,
+        'Pilih tanggal & jam kebutuhan acara untuk ${missingPoDateVendor.umkmName}.',
+        error: true,
+      );
+      return;
+    }
+
+    if (_method == PaymentMethod.cod && _hasPreOrder) {
+      showToast(
+        context,
+        'Pesanan Pre-Order/Katering wajib menggunakan pembayaran digital (Midtrans/QRIS).',
         error: true,
       );
       return;
@@ -913,6 +939,15 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   // ------------------------------------------------------------- payment
 
   Widget _paymentCard() {
+    String codSubtitle = 'Bayar saat pesanan diterima';
+    if (_hasPreOrder) {
+      codSubtitle =
+          'Khusus Pre-Order/Katering wajib pembayaran digital untuk jaminan modal dapur UMKM';
+    } else if (!_vendors.every((v) => v.codAvailable)) {
+      codSubtitle =
+          'Dinonaktifkan oleh ${_vendors.where((v) => !v.codAvailable).map((v) => v.umkmName).join(", ")}';
+    }
+
     return OrderCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -926,11 +961,36 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             method: PaymentMethod.cod,
             icon: Icons.handshake_outlined,
             title: 'Bayar di Tempat (COD)',
-            subtitle: _vendors.every((v) => v.codAvailable)
-                ? 'Bayar saat pesanan diterima'
-                : 'Dinonaktifkan oleh ${_vendors.where((v) => !v.codAvailable).map((v) => v.umkmName).join(", ")}',
-            enabled: _vendors.every((v) => v.codAvailable),
+            subtitle: codSubtitle,
+            enabled: _isCodAllowed,
           ),
+          if (_hasPreOrder) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFE082)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.shield_outlined, size: 16, color: Color(0xFFF57F17)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pesanan berisi Pre-Order / Acara. COD dikunci untuk jaminan pesanan & modal UMKM.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFE65100),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           _methodRow(
             method: PaymentMethod.midtrans,
