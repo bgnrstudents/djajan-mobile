@@ -189,6 +189,8 @@ class OrderVendor {
   final DateTime? requiredAt;
   final String? purpose;
   final String? note;
+  final double? latitude;
+  final double? longitude;
 
   const OrderVendor({
     required this.umkmId,
@@ -204,6 +206,8 @@ class OrderVendor {
     this.requiredAt,
     this.purpose,
     this.note,
+    this.latitude,
+    this.longitude,
   });
 
   double get subtotal => items.fold(0.0, (s, i) => s + i.subtotal);
@@ -392,6 +396,12 @@ class Order {
       requiredAt: _asDate(json['waktu_dibutuhkan']),
       purpose: _asString(json['keperluan_acara']),
       note: _asString(json['catatan']),
+      latitude: json['latitude_umkm'] != null
+          ? double.tryParse(json['latitude_umkm'].toString())
+          : null,
+      longitude: json['longitude_umkm'] != null
+          ? double.tryParse(json['longitude_umkm'].toString())
+          : null,
     );
     final paymentValues = [
       json['payment_status'],
@@ -423,6 +433,13 @@ class Order {
         name: (json['nama_pembeli'] ?? '').toString(),
         phone: (json['no_telp'] ?? '').toString(),
         address: (json['alamat_tujuan'] ?? '').toString(),
+        addressNote: _asString(json['catatan_alamat'] ?? json['patokan_alamat']),
+        latitude: json['latitude_tujuan'] != null
+            ? double.tryParse(json['latitude_tujuan'].toString())
+            : (json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null),
+        longitude: json['longitude_tujuan'] != null
+            ? double.tryParse(json['longitude_tujuan'].toString())
+            : (json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null),
       ),
       paymentMethod: (json['metode_pembayaran'] ?? '').toString() == 'cod'
           ? PaymentMethod.cod

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../models/order.dart';
 import '../../../services/catalog_service.dart';
+import '../../../services/map_navigation_service.dart';
 import '../../../services/order_service.dart';
 import '../../../services/receipt_pdf_service.dart';
+import '../../../widgets/order_delivery_map_card.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
@@ -579,6 +582,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
                     children: [
                       _statusCard(order),
+                      if (order.vendors.any((v) => v.delivery == DeliveryMethod.courier)) ...[
+                        const SizedBox(height: 10),
+                        _deliveryMapCard(order),
+                      ],
                       for (final v in order.vendors) ...[
                         const SizedBox(height: 10),
                         _vendorCard(order, v),
@@ -599,6 +606,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _deliveryMapCard(Order o) {
+    final v = o.mainVendor;
+    final origin = (v.latitude != null && v.longitude != null)
+        ? LatLng(v.latitude!, v.longitude!)
+        : MapNavigationService.defaultKreyonganCenter;
+    final destination = (o.recipient.latitude != null && o.recipient.longitude != null)
+        ? LatLng(o.recipient.latitude!, o.recipient.longitude!)
+        : MapNavigationService.defaultCustomerLocation;
+
+    return OrderDeliveryMapCard(
+      origin: origin,
+      destination: destination,
+      originLabel: v.umkmName,
+      destinationLabel: o.recipient.name,
+      recipientAddress: o.recipient.address,
+      recipientNote: o.recipient.addressNote,
+      distanceKm: v.distanceKm,
+      isDelivering: o.status == OrderStatus.delivering,
+      isUmkmView: false,
+      contactPhone: v.phone,
+      orderId: o.refId,
     );
   }
 

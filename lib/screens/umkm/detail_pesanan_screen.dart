@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/umkm_seller_models.dart';
 import '../../services/api_service.dart';
+import '../../services/map_navigation_service.dart';
 import '../../services/receipt_pdf_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/order_delivery_map_card.dart';
 import '../customer/order/order_widgets.dart';
 
 /// HALAMAN 5 — Detail Pesanan.
@@ -462,6 +465,12 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                     ),
                     const SizedBox(height: 14),
 
+                    if (pesanan.metodePengiriman.toLowerCase().contains('kurir') ||
+                        pesanan.metodePengiriman.toLowerCase().contains('diantar')) ...[
+                      _buildDeliveryMapCard(pesanan),
+                      const SizedBox(height: 14),
+                    ],
+
                     if (pesanan.catatan.isNotEmpty) ...[
                       Container(
                         padding: const EdgeInsets.all(14),
@@ -872,6 +881,36 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildDeliveryMapCard(Pesanan pesanan) {
+    final umkmService = context.read<UmkmDataService>();
+    final umkm = umkmService.sudahLogin ? umkmService.profile : null;
+
+    LatLng origin = MapNavigationService.defaultKreyonganCenter;
+    if (pesanan.latitudeUmkm != null && pesanan.longitudeUmkm != null) {
+      origin = LatLng(pesanan.latitudeUmkm!, pesanan.longitudeUmkm!);
+    } else if (umkm != null && umkm.latitude != null && umkm.longitude != null) {
+      origin = LatLng(umkm.latitude!, umkm.longitude!);
+    }
+
+    final destination = (pesanan.latitudeTujuan != null && pesanan.longitudeTujuan != null)
+        ? LatLng(pesanan.latitudeTujuan!, pesanan.longitudeTujuan!)
+        : MapNavigationService.defaultCustomerLocation;
+
+    return OrderDeliveryMapCard(
+      origin: origin,
+      destination: destination,
+      originLabel: pesanan.namaUmkm ?? (umkm?.namaUsaha ?? 'Dapur UMKM'),
+      destinationLabel: pesanan.namaPembeli,
+      recipientAddress: pesanan.alamatTujuan,
+      recipientNote: pesanan.catatan.isNotEmpty ? pesanan.catatan : null,
+      distanceKm: pesanan.jarakKm,
+      isDelivering: pesanan.status == StatusPesanan.diantar,
+      isUmkmView: true,
+      contactPhone: pesanan.noTelp,
+      orderId: pesanan.idPesanan,
     );
   }
 

@@ -329,6 +329,14 @@ class Pesanan {
   final int totalHarga;
   final List<ItemPesanan> items;
   StatusPesanan status;
+  final double? latitudeTujuan;
+  final double? longitudeTujuan;
+  final double? latitudeUmkm;
+  final double? longitudeUmkm;
+  final double? jarakKm;
+  final String? alamatUmkm;
+  final String? noTelpUmkm;
+  final String? namaUmkm;
 
   Pesanan({
     required this.idPesanan,
@@ -349,6 +357,14 @@ class Pesanan {
     required this.totalHarga,
     required this.items,
     required this.status,
+    this.latitudeTujuan,
+    this.longitudeTujuan,
+    this.latitudeUmkm,
+    this.longitudeUmkm,
+    this.jarakKm,
+    this.alamatUmkm,
+    this.noTelpUmkm,
+    this.namaUmkm,
   });
 
   int get totalPorsi => items.fold(0, (s, i) => s + i.jumlah);
@@ -391,6 +407,24 @@ class Pesanan {
     items: ((j['items'] as List?) ?? [])
         .map((e) => ItemPesanan.fromJson(e as Map<String, dynamic>))
         .toList(),
+    latitudeTujuan: j['latitude_tujuan'] != null
+        ? double.tryParse(j['latitude_tujuan'].toString())
+        : (j['latitude'] != null ? double.tryParse(j['latitude'].toString()) : null),
+    longitudeTujuan: j['longitude_tujuan'] != null
+        ? double.tryParse(j['longitude_tujuan'].toString())
+        : (j['longitude'] != null ? double.tryParse(j['longitude'].toString()) : null),
+    latitudeUmkm: j['latitude_umkm'] != null
+        ? double.tryParse(j['latitude_umkm'].toString())
+        : null,
+    longitudeUmkm: j['longitude_umkm'] != null
+        ? double.tryParse(j['longitude_umkm'].toString())
+        : null,
+    jarakKm: j['jarak_km'] != null
+        ? double.tryParse(j['jarak_km'].toString())
+        : null,
+    alamatUmkm: _strOrNull(j['alamat_umkm']),
+    noTelpUmkm: _strOrNull(j['no_telp_umkm'] ?? j['no_telp_usaha']),
+    namaUmkm: _strOrNull(j['nama_umkm']),
   );
 }
 

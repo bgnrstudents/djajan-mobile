@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:djajan_mobile/models/order.dart';
 import 'package:djajan_mobile/models/product.dart';
 import 'package:djajan_mobile/models/umkm.dart';
+import 'package:djajan_mobile/models/umkm_seller_models.dart' as umkm_models;
 import 'package:djajan_mobile/screens/customer/order/order_widgets.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
+import 'package:djajan_mobile/services/map_navigation_service.dart';
 import 'package:djajan_mobile/services/order_service.dart';
 import 'package:djajan_mobile/services/receipt_pdf_service.dart';
 
@@ -445,6 +448,93 @@ void main() {
       final pdfBytes = await ReceiptPdfService.generateReceiptPdf(data);
       expect(pdfBytes, isNotEmpty);
       expect(pdfBytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]); // %PDF
+    });
+
+    test('MapNavigationService generates correct Google Maps turn-by-turn navigation URLs', () {
+      final dest = const LatLng(-8.1630, 113.7100);
+      final origin = const LatLng(-8.1585, 113.7025);
+
+      final uriWithoutOrigin = MapNavigationService.buildGoogleMapsDirUri(destination: dest);
+      expect(uriWithoutOrigin.scheme, 'https');
+      expect(uriWithoutOrigin.host, 'www.google.com');
+      expect(uriWithoutOrigin.path, '/maps/dir/');
+      expect(uriWithoutOrigin.queryParameters['destination'], '-8.163,113.71');
+      expect(uriWithoutOrigin.queryParameters['travelmode'], 'driving');
+      expect(uriWithoutOrigin.queryParameters.containsKey('origin'), isFalse);
+
+      final uriWithOrigin = MapNavigationService.buildGoogleMapsDirUri(
+        destination: dest,
+        origin: origin,
+      );
+      expect(uriWithOrigin.queryParameters['origin'], '-8.1585,113.7025');
+      expect(uriWithOrigin.queryParameters['destination'], '-8.163,113.71');
+    });
+
+    test('MapNavigationService calculates Haversine distance and estimated delivery duration', () {
+      final p1 = const LatLng(-8.1585, 113.7025);
+      final p2 = const LatLng(-8.1630, 113.7100);
+
+      final dist = MapNavigationService.calculateDistanceKm(p1, p2);
+      expect(dist, inInclusiveRange(0.4, 1.0));
+
+      final sameDist = MapNavigationService.calculateDistanceKm(p1, p1);
+      expect(sameDist, 0.0);
+
+      final shortDuration = MapNavigationService.estimateDeliveryMinutes(0.1);
+      expect(shortDuration, 5); // 5 min buffer
+
+      final travelDuration = MapNavigationService.estimateDeliveryMinutes(dist);
+      expect(travelDuration, inInclusiveRange(5, 10));
+    });
+
+    test('Order and Pesanan models parse navigation coordinates from JSON', () {
+      final customerJson = {
+        'id_pesanan': 'ORD-MAP-TEST',
+        'nama_pembeli': 'Rina Pembeli',
+        'no_telp': '081234567891',
+        'alamat_tujuan': 'Jl. Teratai No. 12',
+        'catatan_alamat': 'Pagar hitam samping pos',
+        'latitude_tujuan': -8.1620,
+        'longitude_tujuan': 113.7080,
+        'id_umkm': '1',
+        'nama_umkm': 'Dapur Kreyongan',
+        'alamat_umkm': 'Jl. Kreyongan Atas',
+        'latitude_umkm': -8.1585,
+        'longitude_umkm': 113.7025,
+        'metode_pengiriman': 'kurir',
+        'jarak_km': 1.1,
+      };
+
+      final order = Order.fromJson(customerJson);
+      expect(order.recipient.latitude, -8.1620);
+      expect(order.recipient.longitude, 113.7080);
+      expect(order.recipient.addressNote, 'Pagar hitam samping pos');
+      expect(order.vendors.first.latitude, -8.1585);
+      expect(order.vendors.first.longitude, 113.7025);
+      expect(order.vendors.first.distanceKm, 1.1);
+
+      final umkmJson = {
+        'id_pesanan': 'ORD-MAP-TEST',
+        'nama_pembeli': 'Rina Pembeli',
+        'no_telp': '081234567891',
+        'alamat_tujuan': 'Jl. Teratai No. 12',
+        'catatan': 'Pagar hitam',
+        'metode_pengiriman': 'kurir',
+        'status_pesanan': 'diantar',
+        'status_pembayaran': 'bayar_di_tempat',
+        'latitude_tujuan': -8.1620,
+        'longitude_tujuan': 113.7080,
+        'latitude_umkm': -8.1585,
+        'longitude_umkm': 113.7025,
+        'jarak_km': 1.1,
+      };
+
+      final pesanan = umkm_models.Pesanan.fromJson(umkmJson);
+      expect(pesanan.latitudeTujuan, -8.1620);
+      expect(pesanan.longitudeTujuan, 113.7080);
+      expect(pesanan.latitudeUmkm, -8.1585);
+      expect(pesanan.longitudeUmkm, 113.7025);
+      expect(pesanan.jarakKm, 1.1);
     });
   });
 }
