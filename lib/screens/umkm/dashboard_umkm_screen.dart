@@ -298,7 +298,7 @@ class _TabBeranda extends StatelessWidget {
                 child: _KartuStatistik(
                   ikon: Icons.notifications_active_outlined,
                   nilai: '${r.pesananBaru}',
-                  label: 'PO Baru',
+                  label: 'Perlu Konfirmasi',
                   soroti: r.pesananBaru > 0,
                   onTap: () => onPindahTab(2),
                 ),

@@ -354,8 +354,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           for (final v in _vendors)
             v.umkmId: VendorCheckout(
               delivery: v.delivery,
-              requiredAt: v.requiredAt,
-              purpose: v.purpose.text,
+              requiredAt: v.isPreOrder ? v.requiredAt : null,
+              purpose: v.isPreOrder ? v.purpose.text : null,
               note: v.note.text,
             ),
         },

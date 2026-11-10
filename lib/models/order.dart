@@ -383,7 +383,12 @@ class Order {
       umkmName: (json['nama_umkm'] ?? 'UMKM').toString(),
       umkmType: (json['spesialis_umkm'] ?? '').toString(),
       phone: (json['no_telp_umkm'] ?? json['no_telp_usaha'] ?? json['phone'] ?? '').toString(),
-      type: OrderType.instant,
+      type: (json['is_preorder'] == true ||
+              (json['keperluan_acara'] != null &&
+                  json['keperluan_acara'].toString().trim().isNotEmpty &&
+                  json['keperluan_acara'].toString().trim() != '-'))
+          ? OrderType.preOrder
+          : OrderType.instant,
       items: items,
       delivery: (json['metode_pengiriman'] ?? '').toString() == 'kurir'
           ? DeliveryMethod.courier

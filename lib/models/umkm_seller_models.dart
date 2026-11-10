@@ -234,7 +234,7 @@ extension StatusPesananX on StatusPesanan {
   };
 
   String get label => switch (this) {
-    StatusPesanan.poBaru => 'PO Baru',
+    StatusPesanan.poBaru => 'Perlu Konfirmasi',
     StatusPesanan.diterima => 'Diterima',
     StatusPesanan.diproses => 'Diproses',
     StatusPesanan.diantar => 'Diantar',
@@ -290,6 +290,8 @@ class ItemPesanan {
   final int hargaSatuan;
   final int subtotal;
   final String? gambarUrl;
+  final String? modePenjualan;
+  final bool? isPreOrderExplicit;
 
   ItemPesanan({
     required this.namaProduk,
@@ -298,7 +300,14 @@ class ItemPesanan {
     required this.hargaSatuan,
     required this.subtotal,
     this.gambarUrl,
+    this.modePenjualan,
+    this.isPreOrderExplicit,
   });
+
+  bool get isPreOrder =>
+      isPreOrderExplicit ??
+      (modePenjualan != null &&
+          (modePenjualan!.contains('pre') || modePenjualan == 'preorder'));
 
   factory ItemPesanan.fromJson(Map<String, dynamic> j) => ItemPesanan(
     namaProduk: _str(j['nama_produk']),
@@ -307,6 +316,8 @@ class ItemPesanan {
     hargaSatuan: _int(j['harga_satuan']),
     subtotal: _int(j['subtotal']),
     gambarUrl: _strOrNull(j['gambar_url']),
+    modePenjualan: _strOrNull(j['mode_penjualan']),
+    isPreOrderExplicit: j['is_preorder'] as bool?,
   );
 }
 
@@ -337,6 +348,7 @@ class Pesanan {
   final String? alamatUmkm;
   final String? noTelpUmkm;
   final String? namaUmkm;
+  final bool? isPreOrderExplicit;
 
   Pesanan({
     required this.idPesanan,
@@ -365,6 +377,7 @@ class Pesanan {
     this.alamatUmkm,
     this.noTelpUmkm,
     this.namaUmkm,
+    this.isPreOrderExplicit,
   });
 
   int get totalPorsi => items.fold(0, (s, i) => s + i.jumlah);
@@ -372,13 +385,15 @@ class Pesanan {
   /// Total yang diterima mitra = subtotal item + ongkir + biaya layanan.
   int get totalDiterimaMitra => subtotal + biayaPengantaran + biayaLayanan;
 
-  /// Pesanan merupakan Pre-Order / Acara jika memiliki tanggal kebutuhan acara
-  /// atau keperluan acara yang diisi.
+  /// Pesanan merupakan Pre-Order / Acara jika bertipe PO dari server,
+  /// memiliki item PO, atau memiliki keperluan acara / batas konfirmasi PO.
   bool get isPreOrder {
+    if (isPreOrderExplicit != null) return isPreOrderExplicit!;
+    if (items.any((i) => i.isPreOrder)) return true;
     if (keperluanAcara.isNotEmpty && keperluanAcara != '-') return true;
-    if (waktuDibutuhkan != null) {
-      final selisih = waktuDibutuhkan!.difference(tanggalPesan);
-      return selisih.inHours >= 12;
+    if (batasKonfirmasi != null && waktuDibutuhkan != null) {
+      final diff = batasKonfirmasi!.difference(waktuDibutuhkan!).inHours.abs();
+      if (diff >= 2) return true;
     }
     return false;
   }
@@ -440,6 +455,7 @@ class Pesanan {
     alamatUmkm: _strOrNull(j['alamat_umkm']),
     noTelpUmkm: _strOrNull(j['no_telp_umkm'] ?? j['no_telp_usaha']),
     namaUmkm: _strOrNull(j['nama_umkm']),
+    isPreOrderExplicit: j['is_preorder'] as bool?,
   );
 }
 
