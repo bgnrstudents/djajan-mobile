@@ -137,6 +137,47 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
     }
   }
 
+  /// Dialog konfirmasi khusus saat UMKM menekan "Pesanan Telah Sampai ke Pembeli".
+  /// Memastikan UMKM benar-benar yakin sebelum menyelesaikan transaksi.
+  Future<void> _konfirmasiPesananSampai(Pesanan pesanan) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.where_to_vote_outlined, color: Color(0xFF10B981)),
+            SizedBox(width: 8),
+            Text('Pesanan Telah Sampai?'),
+          ],
+        ),
+        content: Text(
+          'Konfirmasi bahwa pesanan ini sudah diserahterimakan kepada '
+          '${pesanan.namaPembeli} dengan baik dan lengkap.\n\n'
+          'Tindakan ini akan menyelesaikan transaksi dan dana akan '
+          'diteruskan ke saldo UMKM.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Belum'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              minimumSize: const Size(140, 44),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Sudah Sampai'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) {
+      _ubahTahap(pesanan, context.read<UmkmDataService>().selesaikanPesanan);
+    }
+  }
+
   Future<void> _cetakStruk(Pesanan pesanan) async {
     final umkmService = context.read<UmkmDataService>();
     final umkm = umkmService.sudahLogin ? umkmService.profile : null;
@@ -776,7 +817,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                   StatusPesanan.diterima => 'Pesanan ini sudah Anda terima dan masuk antrean dapur.',
                                   StatusPesanan.diproses =>
                                     'Pesanan ini sedang diproses oleh dapur.',
-                                  StatusPesanan.diantar => 'Pesanan ini sedang diantar kepada pelanggan.',
+                                  StatusPesanan.diantar =>
+                                    'Pesanan sedang diantar oleh kurir. Tekan tombol "Pesanan Telah Sampai" setelah kurir mengonfirmasi sudah diterima pembeli.',
                                   StatusPesanan.selesai =>
                                     'Pesanan ini telah selesai dikerjakan.',
                                   StatusPesanan.ditolak =>
@@ -832,14 +874,14 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                 context.read<UmkmDataService>().antarPesanan,
                               ),
                         icon: const Icon(Icons.delivery_dining_outlined),
-                        label: const Text('Serahkan ke Kurir'),
+                        label: const Text('Siap Diantar / Serahkan ke Kurir'),
                       ),
                     ],
                     if (pesanan.status == StatusPesanan.diantar) ...[
                       const SizedBox(height: 12),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: OC.primary,
+                          backgroundColor: const Color(0xFF10B981),
                           foregroundColor: Colors.white,
                           minimumSize: const Size.fromHeight(50),
                           shape: RoundedRectangleBorder(
@@ -848,14 +890,9 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                         ),
                         onPressed: _memproses
                             ? null
-                            : () => _ubahTahap(
-                                pesanan,
-                                context
-                                    .read<UmkmDataService>()
-                                    .selesaikanPesanan,
-                              ),
-                        icon: const Icon(Icons.task_alt),
-                        label: const Text('Tandai Pesanan Selesai'),
+                            : () => _konfirmasiPesananSampai(pesanan),
+                        icon: const Icon(Icons.where_to_vote_outlined),
+                        label: const Text('Pesanan Telah Sampai ke Pembeli'),
                       ),
                     ],
                     const SizedBox(height: 12),
