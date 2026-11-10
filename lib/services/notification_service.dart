@@ -87,11 +87,19 @@ class NotificationService extends ChangeNotifier {
 
   void syncOrders(List<Order> orders) {
     final orderIds = orders.map((order) => order.id).toSet();
+    // Hapus notifikasi yang pesanannya sudah tidak ada di list terbaru.
     _items.removeWhere(
       (item) => item.orderId != null && !orderIds.contains(item.orderId),
     );
     for (final order in orders) {
+      // Jangan buat notifikasi baru untuk pesanan yang sudah selesai/ditolak.
+      // Notifikasi untuk status terminal hanya dibuat sekali saat status berubah
+      // (via push() langsung), bukan dari sync berulang.
+      if (!order.status.isActive) continue;
+
+      // Jika sudah ada notifikasi untuk pesanan ini, skip.
       if (_items.any((item) => item.orderId == order.id)) continue;
+
       push(
         title: order.status == OrderStatus.waitingPayment
             ? 'Menunggu Pembayaran'
