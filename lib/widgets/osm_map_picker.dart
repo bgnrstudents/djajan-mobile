@@ -57,8 +57,8 @@ class OsmMapPicker extends StatefulWidget {
 }
 
 class _OsmMapPickerState extends State<OsmMapPicker> {
-  // Pusat Desa Kreyongan Atas, Patrang, Jember
-  static const _defaultCenter = LatLng(-8.1585, 113.7025);
+  // Pusat Sentra UMKM Desa Kreyongan / Pasar Kreongan, Patrang, Jember
+  static const _defaultCenter = LatLng(-8.1556187, 113.7027475);
   static const _defaultZoom = 15.0;
   static const _searchZoom = 16.0;
 
@@ -164,7 +164,8 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     try {
       final uri = Uri.parse(
         'https://nominatim.openstreetmap.org/search'
-        '?q=${Uri.encodeComponent(query)}&format=json&limit=5&accept-language=id',
+        '?q=${Uri.encodeComponent(query)}&format=json&limit=6&accept-language=id'
+        '&viewbox=113.60,-8.10,113.80,-8.25&bounded=0',
       );
       final res = await http.get(uri, headers: {
         'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
