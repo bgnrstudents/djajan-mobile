@@ -35,6 +35,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   final OrderService _service = OrderService();
   bool _busy = false;
 
+  /// Cache lokal penilaian (rating & ulasan) per ID pesanan.
+  static final Map<String, int> _orderRatings = {};
+  static final Map<String, String> _orderReviews = {};
+
   @override
   void initState() {
     super.initState();
@@ -191,8 +195,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   }
 
   void _showRatingDialog(Order o) {
-    int rating = 5;
-    final noteCtrl = TextEditingController();
+    int rating = _orderRatings[o.id] ?? 5;
+    final noteCtrl = TextEditingController(text: _orderReviews[o.id] ?? '');
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -217,9 +221,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   final star = index + 1;
                   return IconButton(
                     icon: Icon(
-                      star <= rating ? Icons.star : Icons.star_border,
+                      star <= rating ? Icons.star_rounded : Icons.star_outline_rounded,
                       color: const Color(0xFFF59E0B),
-                      size: 32,
+                      size: 34,
                     ),
                     onPressed: () => setModalState(() => rating = star),
                   );
@@ -248,10 +252,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               child: const Text('Nanti Saja'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: OC.primary),
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)),
               onPressed: () {
+                setState(() {
+                  _orderRatings[o.id] = rating;
+                  if (noteCtrl.text.trim().isNotEmpty) {
+                    _orderReviews[o.id] = noteCtrl.text.trim();
+                  }
+                });
                 Navigator.pop(ctx);
-                showToast(context, 'Terima kasih atas penilaian Anda!');
+                showToast(context, 'Terima kasih atas penilaian Anda ($rating ★)!');
               },
               child: const Text('Kirim Ulasan'),
             ),
@@ -736,6 +746,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         toneBg = OC.mint;
         toneFg = OC.mintText;
         icon = Icons.check_circle_outline;
+        action = OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFB45309),
+            backgroundColor: const Color(0xFFFEF3C7),
+            side: const BorderSide(color: Color(0xFFF59E0B)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () => _showRatingDialog(o),
+          icon: const Icon(Icons.star_rounded, size: 20, color: Color(0xFFF59E0B)),
+          label: Text(
+            _orderRatings.containsKey(o.id)
+                ? 'Penilaian Anda: ${_orderRatings[o.id]} ★ (Ubah)'
+                : 'Beri Bintang & Ulasan Toko',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        );
         break;
       case OrderStatus.cancelled:
         tag = 'Dibatalkan';
@@ -1939,6 +1967,42 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               label: const Text(
                 'Pesanan Sudah Diterima',
                 style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (o.status == OrderStatus.completed) ...[
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _orderRatings.containsKey(o.id)
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFF59E0B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 1,
+              ),
+              onPressed: () => _showRatingDialog(o),
+              icon: Icon(
+                _orderRatings.containsKey(o.id)
+                    ? Icons.check_circle_outline
+                    : Icons.star_rounded,
+                size: 22,
+              ),
+              label: Text(
+                _orderRatings.containsKey(o.id)
+                    ? 'Sudah Dinilai (${_orderRatings[o.id]} ★) • Ubah Ulasan'
+                    : 'Beri Penilaian & Ulasan Toko',
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.2,
