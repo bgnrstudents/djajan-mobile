@@ -11,6 +11,7 @@ class Umkm {
   final double? courierFee;
   final double rating;
   final int soldCount;
+  final int reviewCount;
   final bool isVerified;
   final String phone;
   final bool codAvailable;
@@ -25,6 +26,7 @@ class Umkm {
     this.courierFee,
     this.rating = 0.0,
     this.soldCount = 0,
+    this.reviewCount = 0,
     this.isVerified = true,
     this.phone = '',
     this.codAvailable = true,
@@ -52,6 +54,7 @@ class Umkm {
     double? courierFee,
     double? rating,
     int? soldCount,
+    int? reviewCount,
     bool? isVerified,
     String? phone,
     bool? codAvailable,
@@ -66,6 +69,7 @@ class Umkm {
       courierFee: courierFee ?? this.courierFee,
       rating: rating ?? this.rating,
       soldCount: soldCount ?? this.soldCount,
+      reviewCount: reviewCount ?? this.reviewCount,
       isVerified: isVerified ?? this.isVerified,
       phone: phone ?? this.phone,
       codAvailable: codAvailable ?? this.codAvailable,
@@ -87,6 +91,7 @@ class Umkm {
       courierFee: (json['courier_fee'] as num?)?.toDouble(),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       soldCount: (json['sold_count'] as num?)?.toInt() ?? 0,
+      reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
       isVerified: json['is_verified'] as bool? ?? true,
       phone: (json['phone'] ?? json['no_telp_usaha']) as String? ?? '',
       codAvailable: json['cod_available'] as bool? ??
@@ -105,6 +110,7 @@ class Umkm {
       'courier_fee': courierFee,
       'rating': rating,
       'sold_count': soldCount,
+      'review_count': reviewCount,
       'is_verified': isVerified,
       'phone': phone,
       'cod_available': codAvailable,

@@ -195,8 +195,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   }
 
   void _showRatingDialog(Order o) {
-    int rating = _orderRatings[o.id] ?? 5;
-    final noteCtrl = TextEditingController(text: _orderReviews[o.id] ?? '');
+    int rating = _orderRatings[o.id] ?? o.rating ?? 5;
+    final noteCtrl = TextEditingController(text: _orderReviews[o.id] ?? o.reviewNote ?? '');
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -253,15 +253,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)),
-              onPressed: () {
+              onPressed: () async {
+                final commentText = noteCtrl.text.trim();
+                Navigator.pop(ctx);
                 setState(() {
                   _orderRatings[o.id] = rating;
-                  if (noteCtrl.text.trim().isNotEmpty) {
-                    _orderReviews[o.id] = noteCtrl.text.trim();
+                  if (commentText.isNotEmpty) {
+                    _orderReviews[o.id] = commentText;
                   }
                 });
-                Navigator.pop(ctx);
-                showToast(context, 'Terima kasih atas penilaian Anda ($rating ★)!');
+                try {
+                  await _service.submitOrderReview(
+                    orderId: o.id,
+                    rating: rating,
+                    comment: commentText.isNotEmpty ? commentText : null,
+                  );
+                  // Muat ulang katalog agar rating rata-rata UMKM langsung ter-update
+                  CatalogService().loadFromApi();
+                  if (mounted) {
+                    showToast(context, 'Terima kasih atas penilaian Anda ($rating ★)!');
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    showToast(context, 'Ulasan berhasil disimpan ($rating ★)');
+                  }
+                }
               },
               child: const Text('Kirim Ulasan'),
             ),
@@ -746,6 +762,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         toneBg = OC.mint;
         toneFg = OC.mintText;
         icon = Icons.check_circle_outline;
+        final currentRating = _orderRatings[o.id] ?? o.rating;
         action = OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFFB45309),
@@ -758,8 +775,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           onPressed: () => _showRatingDialog(o),
           icon: const Icon(Icons.star_rounded, size: 20, color: Color(0xFFF59E0B)),
           label: Text(
-            _orderRatings.containsKey(o.id)
-                ? 'Penilaian Anda: ${_orderRatings[o.id]} ★ (Ubah)'
+            currentRating != null
+                ? 'Penilaian Anda: $currentRating ★ (Ubah)'
                 : 'Beri Bintang & Ulasan Toko',
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
@@ -1977,12 +1994,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           const SizedBox(height: 10),
         ],
         if (o.status == OrderStatus.completed) ...[
+          final currentRating = _orderRatings[o.id] ?? o.rating;
           SizedBox(
             width: double.infinity,
             height: 52,
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: _orderRatings.containsKey(o.id)
+                backgroundColor: currentRating != null
                     ? const Color(0xFF10B981)
                     : const Color(0xFFF59E0B),
                 foregroundColor: Colors.white,
@@ -1993,14 +2011,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               ),
               onPressed: () => _showRatingDialog(o),
               icon: Icon(
-                _orderRatings.containsKey(o.id)
+                currentRating != null
                     ? Icons.check_circle_outline
                     : Icons.star_rounded,
                 size: 22,
               ),
               label: Text(
-                _orderRatings.containsKey(o.id)
-                    ? 'Sudah Dinilai (${_orderRatings[o.id]} ★) • Ubah Ulasan'
+                currentRating != null
+                    ? 'Sudah Dinilai ($currentRating ★) • Ubah Ulasan'
                     : 'Beri Penilaian & Ulasan Toko',
                 style: const TextStyle(
                   fontSize: 15,

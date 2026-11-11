@@ -5,6 +5,7 @@ import '../../../config/app_config.dart';
 import '../../../data/sample_catalog.dart';
 import '../../../models/product.dart';
 import '../../../models/umkm.dart';
+import '../../../services/api_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../widgets/favorite_button.dart';
 import '../../../widgets/product_card.dart';
@@ -34,10 +35,46 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   String _orderTypeFilter = 'Semua';
+  bool _loadingReviews = false;
+  double _avgRating = 0.0;
+  int _totalReviews = 0;
+  List<Map<String, dynamic>> _reviews = [];
 
   Umkm get umkm => widget.umkm;
 
   CatalogService? get _catalog => Provider.of<CatalogService?>(context, listen: false);
+
+  @override
+  void initState() {
+    super.initState();
+    _avgRating = widget.umkm.rating;
+    _totalReviews = widget.umkm.reviewCount;
+    _loadReviews();
+  }
+
+  Future<void> _loadReviews() async {
+    setState(() => _loadingReviews = true);
+    try {
+      final res = await ApiService.get('umkm/ulasan', query: {'id_umkm': umkm.id});
+      if (res is Map && res['data'] is Map) {
+        final data = res['data'] as Map;
+        if (mounted) {
+          setState(() {
+            _avgRating = (data['rata_rata'] as num?)?.toDouble() ?? _avgRating;
+            _totalReviews = (data['total_ulasan'] as num?)?.toInt() ?? _totalReviews;
+            final list = data['daftar_ulasan'];
+            if (list is List) {
+              _reviews = list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+            }
+          });
+        }
+      }
+    } catch (_) {
+      // Offline fallback
+    } finally {
+      if (mounted) setState(() => _loadingReviews = false);
+    }
+  }
 
   List<Product> get _storeProducts {
     final catalog = _catalog;
@@ -149,6 +186,8 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                   ),
                   const SizedBox(height: 12),
                   _buildProductGrid(),
+                  const SizedBox(height: 24),
+                  _buildReviewsSection(),
                 ],
               ),
             ),
@@ -376,6 +415,11 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   // ---------------------------------------------------------------- Stats
   Widget _buildStatsRow(int productCount) {
+    final displayRating = _avgRating > 0
+        ? _avgRating.toStringAsFixed(1)
+        : (umkm.rating > 0 ? umkm.rating.toStringAsFixed(1) : 'Baru');
+    final ratingLabel = _totalReviews > 0 ? 'Rating ($_totalReviews)' : 'Rating';
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
@@ -385,7 +429,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
       ),
       child: Row(
         children: [
-          _statItem('${umkm.rating}', 'Rating', Icons.star,
+          _statItem(displayRating, ratingLabel, Icons.star_rounded,
               const Color(0xFFF29B00)),
           _divider(),
           _statItem('$productCount', 'Produk', Icons.inventory_2_outlined,
@@ -668,6 +712,192 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
           onAddToCart: () => _addToCart(product),
         );
       },
+    );
+  }
+
+  // ---------------------------------------------------------------- Ulasan
+  Widget _buildReviewsSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4E9EF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.star_rounded, color: Color(0xFFF29B00), size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'Ulasan Pembeli',
+                style: TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.bold,
+                  color: textDark,
+                ),
+              ),
+              const Spacer(),
+              if (_avgRating > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFED7AA)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.star, size: 14, color: Color(0xFFF29B00)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_avgRating.toStringAsFixed(1)} ($_totalReviews)',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFC2410C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (_loadingReviews)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: CircularProgressIndicator(strokeWidth: 2, color: primaryGreen),
+              ),
+            )
+          else if (_reviews.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.rate_review_outlined, size: 36, color: Color(0xFF94A3B8)),
+                  SizedBox(height: 8),
+                  Text(
+                    'Belum Ada Ulasan',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                      color: textDark,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Jadilah pembeli pertama yang memberikan penilaian & ulasan untuk UMKM ini!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _reviews.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(color: Color(0xFFF1F5F9), height: 20),
+              itemBuilder: (context, i) {
+                final r = _reviews[i];
+                final rating = (r['rating'] as num?)?.toInt() ?? 5;
+                final nama = (r['nama_pelanggan'] ?? 'Warga DJajan').toString();
+                final komentar = (r['komentar'] ?? '').toString();
+                final tanggal = (r['tanggal'] ?? '').toString();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: const Color(0xFFE2E8F0),
+                          child: Text(
+                            nama.isNotEmpty ? nama[0].toUpperCase() : 'W',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: textDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nama,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: textDark,
+                                ),
+                              ),
+                              if (tanggal.isNotEmpty)
+                                Text(
+                                  tanggal,
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: textMuted,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (starIndex) => Icon(
+                              starIndex < rating
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              size: 16,
+                              color: const Color(0xFFF29B00),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (komentar.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          komentar,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: textDark,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 

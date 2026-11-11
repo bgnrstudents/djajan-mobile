@@ -336,6 +336,8 @@ class Order {
   final String? refundStatus;
   final DateTime? deliveredAt;
   final DateTime? completedAt;
+  final int? rating;
+  final String? reviewNote;
 
   const Order({
     required this.id,
@@ -361,6 +363,8 @@ class Order {
     this.refundStatus,
     this.deliveredAt,
     this.completedAt,
+    this.rating,
+    this.reviewNote,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -470,6 +474,12 @@ class Order {
       refundStatus: _asString(json['status_refund']) ?? 'none',
       deliveredAt: _asDate(json['waktu_diantar']),
       completedAt: _asDate(json['waktu_selesai']),
+      rating: json['ulasan'] is Map
+          ? (json['ulasan']['rating'] as num?)?.toInt()
+          : null,
+      reviewNote: json['ulasan'] is Map
+          ? _asString(json['ulasan']['komentar'])
+          : null,
     );
   }
 
@@ -507,6 +517,8 @@ class Order {
     String? refundStatus,
     DateTime? deliveredAt,
     DateTime? completedAt,
+    int? rating,
+    String? reviewNote,
   }) {
     return Order(
       id: id,
@@ -534,6 +546,8 @@ class Order {
       refundStatus: refundStatus ?? this.refundStatus,
       deliveredAt: deliveredAt ?? this.deliveredAt,
       completedAt: completedAt ?? this.completedAt,
+      rating: rating ?? this.rating,
+      reviewNote: reviewNote ?? this.reviewNote,
     );
   }
 

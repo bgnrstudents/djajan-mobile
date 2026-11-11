@@ -702,6 +702,44 @@ class OrderService extends ChangeNotifier {
     return updated;
   }
 
+  Future<void> submitOrderReview({
+    required String orderId,
+    required int rating,
+    String? comment,
+  }) async {
+    final order = _require(orderId);
+    if (order.status != OrderStatus.completed) {
+      throw const OrderException(
+        'Hanya pesanan yang sudah selesai yang dapat diberi ulasan.',
+      );
+    }
+
+    try {
+      await ApiService.postJson('pesanan/ulasan', {
+        'id_pesanan': orderId,
+        'rating': rating,
+        if (comment != null && comment.trim().isNotEmpty)
+          'komentar': comment.trim(),
+      });
+    } on ApiException catch (e) {
+      if (e.pesan.contains('Endpoint API tidak ditemukan') ||
+          e.pesan.contains('Tidak dapat terhubung') ||
+          e.pesan.contains('Terjadi kesalahan koneksi')) {
+        // Fallback offline
+      } else {
+        throw OrderException(e.pesan);
+      }
+    } catch (_) {
+      // Fallback offline
+    }
+
+    final updated = order.copyWith(
+      rating: rating,
+      reviewNote: comment,
+    );
+    _replace(updated);
+  }
+
   Future<void> deleteOrder(String orderId) async {
     final order = _require(orderId);
     if (order.status.isActive) {
