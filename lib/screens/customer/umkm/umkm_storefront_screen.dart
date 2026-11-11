@@ -808,7 +808,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _reviews.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const Divider(color: Color(0xFFF1F5F9), height: 20),
               itemBuilder: (context, i) {
                 final r = _reviews[i];

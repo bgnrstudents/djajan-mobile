@@ -200,7 +200,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
+        builder: (dialogCtx, setModalState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'Beri Ulasan ${_shortName(o.mainVendor.umkmName)}',
@@ -268,15 +268,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     rating: rating,
                     comment: commentText.isNotEmpty ? commentText : null,
                   );
-                  // Muat ulang katalog agar rating rata-rata UMKM langsung ter-update
-                  CatalogService().loadFromApi();
-                  if (mounted) {
-                    showToast(context, 'Terima kasih atas penilaian Anda ($rating ★)!');
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    showToast(context, 'Ulasan berhasil disimpan ($rating ★)');
-                  }
+                } catch (_) {
+                  // Fallback offline
+                }
+                if (mounted) {
+                  showToast(context, 'Terima kasih atas penilaian Anda ($rating ★)!');
                 }
               },
               child: const Text('Kirim Ulasan'),
@@ -1955,6 +1951,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   Widget _actions(Order o) {
     final main = o.mainVendor;
+    final currentRating = _orderRatings[o.id] ?? o.rating;
     return Column(
       children: [
         if (o.canComplete) ...[
@@ -1994,7 +1991,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           const SizedBox(height: 10),
         ],
         if (o.status == OrderStatus.completed) ...[
-          final currentRating = _orderRatings[o.id] ?? o.rating;
           SizedBox(
             width: double.infinity,
             height: 52,
