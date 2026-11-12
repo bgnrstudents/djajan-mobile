@@ -56,18 +56,21 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
     setState(() => _loadingReviews = true);
     try {
       final res = await ApiService.get('umkm/ulasan', query: {'id_umkm': umkm.id});
-      if (res is Map && res['data'] is Map) {
-        final data = res['data'] as Map;
-        if (mounted) {
-          setState(() {
-            _avgRating = (data['rata_rata'] as num?)?.toDouble() ?? _avgRating;
-            _totalReviews = (data['total_ulasan'] as num?)?.toInt() ?? _totalReviews;
-            final list = data['daftar_ulasan'];
-            if (list is List) {
-              _reviews = list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
-            }
-          });
-        }
+      // ApiService._proses mengembalikan json['data'] langsung.
+      // Antisipasi jika data ada di res langsung atau dibungkus dalam key 'data'.
+      final Map? data = (res is Map && res['data'] is Map)
+          ? (res['data'] as Map)
+          : (res is Map ? res : null);
+
+      if (data != null && mounted) {
+        setState(() {
+          _avgRating = (data['rata_rata'] as num?)?.toDouble() ?? _avgRating;
+          _totalReviews = (data['total_ulasan'] as num?)?.toInt() ?? _totalReviews;
+          final list = data['daftar_ulasan'];
+          if (list is List) {
+            _reviews = list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+          }
+        });
       }
     } catch (_) {
       // Offline fallback

@@ -214,11 +214,31 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     }
   }
 
-  void _confirm() {
+  Future<void> _confirm() async {
+    var alamat = _alamatTeks.trim();
+    if (alamat.isEmpty) {
+      setState(() => _loading = true);
+      try {
+        final uri = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse'
+          '?lat=${_pinCenter.latitude}&lon=${_pinCenter.longitude}&format=json&accept-language=id',
+        );
+        final res = await http.get(uri, headers: {
+          'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
+        }).timeout(const Duration(seconds: 4));
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body) as Map<String, dynamic>;
+          alamat = data['display_name']?.toString() ?? '';
+        }
+      } catch (_) {}
+      if (mounted) setState(() => _loading = false);
+    }
+
+    if (!mounted) return;
     Navigator.of(context).pop(OsmPickerResult(
       latitude: _pinCenter.latitude,
       longitude: _pinCenter.longitude,
-      alamatTeks: _alamatTeks,
+      alamatTeks: alamat,
     ));
   }
 

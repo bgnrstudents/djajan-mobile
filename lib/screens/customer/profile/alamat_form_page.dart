@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../../models/customer_settings_models.dart';
@@ -62,6 +66,7 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
   double? _latitude;
   double? _longitude;
   bool _saving = false;
+  bool _gettingGps = false;
 
   @override
   void initState() {
@@ -100,11 +105,88 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
     setState(() {
       _latitude = result.latitude;
       _longitude = result.longitude;
-      // Isi otomatis kolom alamat jika masih kosong atau pengguna mau update
-      if (_addressCtrl.text.isEmpty && result.alamatTeks.isNotEmpty) {
+      // Isi otomatis kolom alamat lengkap sesuai titik yang dipilih di peta
+      if (result.alamatTeks.isNotEmpty) {
         _addressCtrl.text = result.alamatTeks;
       }
     });
+    if (result.alamatTeks.isNotEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Alamat lengkap diperbarui sesuai titik di peta.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _getCurrentGpsLocation() async {
+    setState(() => _gettingGps = true);
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever ||
+          perm == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Izin GPS tidak diberikan.')),
+          );
+        }
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+      if (!mounted) return;
+      _latitude = pos.latitude;
+      _longitude = pos.longitude;
+
+      // Reverse geocoding via Nominatim OpenStreetMap
+      String alamat = '';
+      try {
+        final uri = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse'
+          '?lat=${pos.latitude}&lon=${pos.longitude}&format=json&accept-language=id',
+        );
+        final res = await http.get(uri, headers: {
+          'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
+        }).timeout(const Duration(seconds: 6));
+        if (res.statusCode == 200 && mounted) {
+          final data = json.decode(res.body) as Map<String, dynamic>;
+          alamat = data['display_name']?.toString() ?? '';
+          if (alamat.isNotEmpty) {
+            _addressCtrl.text = alamat;
+          }
+        }
+      } catch (_) {}
+
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              alamat.isNotEmpty
+                  ? 'Lokasi GPS & alamat lengkap berhasil diisi otomatis.'
+                  : 'Lokasi GPS berhasil disetel.',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membaca GPS: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _gettingGps = false);
+    }
   }
 
   void _clearLocation() {
@@ -344,6 +426,33 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
           ),
         ),
         const SizedBox(height: 12),
+        // Tombol Gunakan GPS Saat Ini
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _gettingGps ? null : _getCurrentGpsLocation,
+            icon: _gettingGps
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.my_location, color: Colors.white, size: 20),
+            label: Text(
+              _gettingGps ? 'Mendeteksi Lokasi GPS...' : 'Gunakan Lokasi GPS Saya Saat Ini',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: OC.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Tombol Buka Peta OSM
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -353,8 +462,8 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
               color: OC.primary,
             ),
             label: Text(
-              hasLocation ? 'Ubah Lokasi di Peta' : 'Pilih Lokasi di Peta',
-              style: const TextStyle(color: OC.primary),
+              hasLocation ? 'Ubah Titik di Peta OpenStreetMap' : 'Pilih Titik di Peta OpenStreetMap',
+              style: const TextStyle(color: OC.primary, fontWeight: FontWeight.w600),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
