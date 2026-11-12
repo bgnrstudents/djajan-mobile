@@ -66,7 +66,9 @@ class FavoriteButton extends StatelessWidget {
                 return;
               }
 
-              _showFavoriteSnackBar(context, nowFavorite);
+              if (context.mounted) {
+                _showFavoriteSnackBar(context, nowFavorite);
+              }
             },
             child: Padding(
               padding: const EdgeInsets.all(6),

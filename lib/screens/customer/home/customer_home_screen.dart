@@ -18,6 +18,8 @@ import '../order/order_widgets.dart';
 import '../profile/profil.dart';
 import '../cart/cart.dart';
 import '../../../services/cart_service.dart';
+import '../../../services/customer_settings_service.dart';
+import '../order/address_picker_sheet.dart';
 import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
 
@@ -36,11 +38,35 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   CatalogService? _catalog;
 
+  // Lokasi aktif dari alamat tersimpan pelanggan
+  String _locationLabel = 'Desa Kreyongan Atas';
+
   List<Product> get products =>
       _catalog == null ? SampleCatalog.products : _catalog!.products;
 
   List<Umkm> get umkms =>
       _catalog == null ? SampleCatalog.umkms : _catalog!.umkms;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocation();
+  }
+
+  Future<void> _loadLocation() async {
+    try {
+      final settings = CustomerSettingsService();
+      await settings.load();
+      if (!mounted) return;
+      final primary = settings.primaryAddress ??
+          (settings.addresses.isNotEmpty ? settings.addresses.first : null);
+      if (primary != null && primary.label.isNotEmpty) {
+        setState(() {
+          _locationLabel = primary.label;
+        });
+      }
+    } catch (_) {}
+  }
 
   void _openStorefront(Umkm umkm) {
     Navigator.of(
@@ -61,9 +87,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void dispose() {
     searchController.dispose();
     super.dispose();
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     _catalog = Provider.of<CatalogService?>(context);
     return Scaffold(
@@ -201,38 +225,51 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final auth = context.watch<AuthService>();
     return DjajanPageHeader(
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
-      leftWidget: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Lokasi Anda',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.location_on,
-                size: 20,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 4),
-              const Flexible(
-                child: Text(
-                  'Desa Kreyongan Atas',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+      leftWidget: GestureDetector(
+        onTap: auth.isLoggedIn
+            ? () async {
+                await showAddressPickerSheet(context);
+                if (mounted) await _loadLocation();
+              }
+            : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Lokasi Anda',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(
+                  Icons.location_on,
+                  size: 20,
+                  color: Color(0xFF175D2B),
                 ),
-              ),
-              const SizedBox(width: 2),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                size: 18,
-                color: Colors.grey,
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    _locationLabel,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (auth.isLoggedIn) ...[
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 18,
+                    color: Colors.grey,
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
       rightAction: Row(
         mainAxisSize: MainAxisSize.min,

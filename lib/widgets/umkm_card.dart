@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../models/umkm.dart';
+import 'app_network_image.dart';
 
 /// Kartu ringkas UMKM untuk carousel di beranda.
 class UmkmCard extends StatelessWidget {
@@ -47,10 +48,10 @@ class UmkmCard extends StatelessWidget {
                     children: [
                       Positioned.fill(
                         child: umkm.imageUrl.isNotEmpty
-                            ? Image.network(
-                                umkm.imageUrl,
+                            ? AppNetworkImage(
+                                url: umkm.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => _bannerFallback(),
+                                errorWidget: _bannerFallback(),
                               )
                             : _bannerFallback(),
                       ),

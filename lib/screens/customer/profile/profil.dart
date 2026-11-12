@@ -376,7 +376,12 @@ class _ProfilScreenState extends State<ProfilScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_settings.loading) const LinearProgressIndicator(minHeight: 2),
+            if (_settings.loading)
+              const LinearProgressIndicator(
+                minHeight: 2,
+                color: Color(0xFF175D2B),
+                backgroundColor: Color(0xFFEAF3EC),
+              ),
             if (_settings.errorMessage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),

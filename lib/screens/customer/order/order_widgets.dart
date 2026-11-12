@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/app_config.dart';
 import '../../../models/order.dart';
+import '../../../widgets/app_network_image.dart';
 
 /// Palet tunggal untuk seluruh halaman pesanan.
 ///
@@ -620,14 +621,12 @@ class NetImage extends StatelessWidget {
       borderRadius: BorderRadius.circular(radius),
       child: url.isEmpty
           ? _placeholder()
-          : Image.network(
-              url,
+          : AppNetworkImage(
+              url: url,
               width: width,
               height: height,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _placeholder(),
-              loadingBuilder: (c, child, p) =>
-                  p == null ? child : _placeholder(),
+              errorWidget: _placeholder(),
             ),
     );
   }

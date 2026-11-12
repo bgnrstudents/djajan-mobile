@@ -174,7 +174,7 @@ class GambarJaringan extends StatelessWidget {
   Widget build(BuildContext context) {
     var urlFix = sesuaikanUrlGambar(url);
     if (urlFix != null && urlFix.isNotEmpty && cacheBuster != null) {
-      urlFix += (urlFix.contains('?') ? '&' : '?') + 'cb=$cacheBuster';
+      urlFix += '${urlFix.contains('?') ? '&' : '?'}cb=$cacheBuster';
     }
 
     final kosong = urlFix == null || urlFix.isEmpty;
@@ -195,7 +195,7 @@ class GambarJaringan extends StatelessWidget {
                 // Di Flutter Web: bila gambar ditolak karena CORS, pakai elemen
                 // <img> HTML biasa yang tidak terkena aturan CORS.
                 webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-                errorBuilder: (_, __, ___) => _placeholder(ikonKosong),
+                errorBuilder: (_, _, _) => _placeholder(ikonKosong),
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) return child;
                   return Container(
@@ -250,7 +250,7 @@ Future<void> tampilkanZoomGambarJaringan(
                 urlFix,
                 fit: BoxFit.contain,
                 webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   padding: const EdgeInsets.all(24),
                   color: Colors.white12,
                   child: const Column(
@@ -307,7 +307,7 @@ class PratinjauGambarLokal extends StatelessWidget {
         width: width,
         height: height,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(Icons.broken_image_outlined),
+        errorBuilder: (_, _, _) => _placeholder(Icons.broken_image_outlined),
       ),
     );
   }

@@ -13,18 +13,34 @@ class AppBottomNavigation extends StatelessWidget {
   });
 
   static const Color primaryColor = Color(0xFF175D2B);
-  static const Color inactiveColor = Color(0xFF8A939B);
+  static const Color inactiveColor = Color(0xFF718096);
   static const Color activeBackground = Color(0xFFEAF3EC);
 
   @override
   Widget build(BuildContext context) {
     final cartService = CartService();
 
-    final items = [
-      {'icon': Icons.home_outlined, 'activeIcon': Icons.home},
-      {'icon': Icons.receipt_long_outlined, 'activeIcon': Icons.receipt_long},
-      {'icon': Icons.shopping_cart_outlined, 'activeIcon': Icons.shopping_cart},
-      {'icon': Icons.person_outline, 'activeIcon': Icons.person},
+    final items = const [
+      {
+        'label': 'Beranda',
+        'icon': Icons.home_outlined,
+        'activeIcon': Icons.home_rounded,
+      },
+      {
+        'label': 'Pesanan',
+        'icon': Icons.receipt_long_outlined,
+        'activeIcon': Icons.receipt_long_rounded,
+      },
+      {
+        'label': 'Keranjang',
+        'icon': Icons.shopping_cart_outlined,
+        'activeIcon': Icons.shopping_cart_rounded,
+      },
+      {
+        'label': 'Profil',
+        'icon': Icons.person_outline_rounded,
+        'activeIcon': Icons.person_rounded,
+      },
     ];
 
     return AnimatedBuilder(
@@ -33,137 +49,99 @@ class AppBottomNavigation extends StatelessWidget {
         final int cartCount = cartService.totalQuantity;
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: SafeArea(
             top: false,
             child: Container(
-              height: 70,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(32),
+                borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: const Color(0xFFE8ECEF), width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withValues(alpha: 0.07),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double itemWidth = constraints.maxWidth / items.length;
+              child: Row(
+                children: List.generate(items.length, (index) {
+                  final bool isSelected = currentIndex == index;
+                  final item = items[index];
 
-                  return Stack(
-                    children: [
-                      AnimatedPositioned(
-                        duration: const Duration(milliseconds: 350),
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => onDestinationSelected(index),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
                         curve: Curves.easeOutCubic,
-                        left: (itemWidth * currentIndex) + (itemWidth - 50) / 2,
-                        top: 10,
-                        width: 50,
-                        height: 50,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: activeBackground,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected ? activeBackground : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ),
-
-                      Row(
-                        children: List.generate(items.length, (index) {
-                          final bool isSelected = currentIndex == index;
-
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                onDestinationSelected(index);
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: Center(
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    AnimatedScale(
-                                      scale: isSelected ? 1.0 : 0.88,
-                                      duration: const Duration(milliseconds: 250),
-                                      curve: Curves.easeOutBack,
-                                      child: AnimatedSwitcher(
-                                        duration:
-                                            const Duration(milliseconds: 180),
-                                        switchInCurve: Curves.easeOutBack,
-                                        switchOutCurve: Curves.easeIn,
-                                        transitionBuilder: (
-                                          Widget child,
-                                          Animation<double> animation,
-                                        ) {
-                                          return ScaleTransition(
-                                            scale: animation,
-                                            child: FadeTransition(
-                                              opacity: animation,
-                                              child: child,
-                                            ),
-                                          );
-                                        },
-                                        child: Icon(
-                                          (isSelected
-                                                  ? items[index]['activeIcon']
-                                                  : items[index]['icon'])
-                                              as IconData,
-                                          key: ValueKey(isSelected),
-                                          size: 30,
-                                          color: isSelected
-                                              ? primaryColor
-                                              : inactiveColor,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  (isSelected ? item['activeIcon'] : item['icon']) as IconData,
+                                  size: 23,
+                                  color: isSelected ? primaryColor : inactiveColor,
+                                ),
+                                if (index == 2 && cartCount > 0)
+                                  Positioned(
+                                    top: -4,
+                                    right: -8,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFBA1A1A),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        cartCount > 99 ? '99+' : '$cartCount',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1,
                                         ),
                                       ),
                                     ),
-
-                                    // Badge Counter on Cart icon
-                                    if (index == 2 && cartCount > 0)
-                                      Positioned(
-                                        top: -3,
-                                        right: -7,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(3.5),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFBA1A1A),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 18,
-                                            minHeight: 18,
-                                          ),
-                                          child: Text(
-                                            cartCount > 99
-                                                ? '99+'
-                                                : '$cartCount',
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.bold,
-                                              height: 1,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              item['label'] as String,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected ? primaryColor : inactiveColor,
                               ),
                             ),
-                          );
-                        }),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   );
-                },
+                }),
               ),
             ),
           ),

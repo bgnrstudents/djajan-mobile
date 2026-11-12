@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+import 'app_network_image.dart';
 import 'favorite_button.dart';
 
 class ProductCard extends StatelessWidget {
@@ -20,7 +21,7 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPreOrder = product.orderType == 'Pre-Order';
+    final bool isPreOrder = product.isPreOrder;
 
     return Material(
       color: Colors.transparent,
@@ -39,51 +40,56 @@ class ProductCard extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  Container(
+                  AppNetworkImage(
+                    url: product.imageUrl,
                     height: 105,
                     width: double.infinity,
-                    color: const Color(0xFFE9EDF0),
-                    child: product.imageUrl.isNotEmpty
-                        ? Image.network(
-                            product.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
-                              Icons.image_outlined,
-                              size: 40,
-                              color: Colors.grey,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.image_outlined,
-                            size: 40,
-                            color: Colors.grey,
-                          ),
+                    fit: BoxFit.cover,
                   ),
 
                   Positioned(
-                    top: 10,
-                    left: 10,
+                    top: 8,
+                    left: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
+                        horizontal: 7,
+                        vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
                         color: isPreOrder
-                            ? const Color(0xFFFFF0D8)
-                            : const Color(0xFFDDF6E9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        product.orderType,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                            ? const Color(0xFFFFF7ED)
+                            : const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
                           color: isPreOrder
-                              ? const Color(0xFFC56500)
-                              : const Color(0xFF08753E),
+                              ? const Color(0xFFFED7AA)
+                              : const Color(0xFFA7F3D0),
                         ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isPreOrder
+                                ? Icons.schedule_rounded
+                                : Icons.bolt_rounded,
+                            size: 11,
+                            color: isPreOrder
+                                ? const Color(0xFFEA580C)
+                                : const Color(0xFF15803D),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            isPreOrder ? 'Pre-Order' : 'Ready Stock',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: isPreOrder
+                                  ? const Color(0xFFEA580C)
+                                  : const Color(0xFF15803D),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
