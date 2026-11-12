@@ -1248,77 +1248,109 @@ class _TabPesananState extends State<_TabPesanan> {
       onRefresh: widget.onRefresh,
       child: Column(
         children: [
-          // Filter Tabs Horizontal
+          // ---- Baris 1: Filter Status Pesanan ----
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+            color: OC.bg,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Status Pesanan',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: OC.muted,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _filterButton('Semua', 0, semua.length),
+                      const SizedBox(width: 8),
+                      _filterButton(
+                        'Perlu Konfirmasi',
+                        1,
+                        jumlahPoBaru,
+                        dangerBadge: jumlahPoBaru > 0,
+                      ),
+                      const SizedBox(width: 8),
+                      _filterButton(
+                        'Diterima',
+                        2,
+                        semua
+                            .where((p) => p.status == StatusPesanan.diterima)
+                            .length,
+                      ),
+                      const SizedBox(width: 8),
+                      _filterButton(
+                        'Berjalan',
+                        3,
+                        semua
+                            .where(
+                              (p) =>
+                                  p.status == StatusPesanan.diproses ||
+                                  p.status == StatusPesanan.diantar,
+                            )
+                            .length,
+                      ),
+                      const SizedBox(width: 8),
+                      _filterButton(
+                        'Selesai',
+                        4,
+                        semua
+                            .where((p) => p.status == StatusPesanan.selesai)
+                            .length,
+                      ),
+                      const SizedBox(width: 8),
+                      _filterButton(
+                        'Ditolak',
+                        5,
+                        semua
+                            .where((p) => p.status == StatusPesanan.ditolak)
+                            .length,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Divider tipis antar filter
+          const Divider(height: 1, indent: 16, endIndent: 16, color: Color(0xFFEEF0F4)),
+          // ---- Baris 2: Filter Jenis Pesanan (Ready / PO) ----
           Container(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             color: OC.bg,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _filterButton('Semua', 0, semua.length),
-                  const SizedBox(width: 8),
-                  _filterButton(
-                    'Perlu Konfirmasi',
-                    1,
-                    jumlahPoBaru,
-                    dangerBadge: jumlahPoBaru > 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Jenis Pesanan',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: OC.muted,
+                    letterSpacing: 0.4,
                   ),
-                  const SizedBox(width: 8),
-                  _filterButton(
-                    'Diterima',
-                    2,
-                    semua
-                        .where((p) => p.status == StatusPesanan.diterima)
-                        .length,
+                ),
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _tipeChip('Semua', 0),
+                      const SizedBox(width: 8),
+                      _tipeChip('⚡ Ready ($jumlahReady)', 1),
+                      const SizedBox(width: 8),
+                      _tipeChip('🎂 Pre-Order / Acara ($jumlahPo)', 2),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  _filterButton(
-                    'Berjalan',
-                    3,
-                    semua
-                        .where(
-                          (p) =>
-                              p.status == StatusPesanan.diproses ||
-                              p.status == StatusPesanan.diantar,
-                        )
-                        .length,
-                  ),
-                  const SizedBox(width: 8),
-                  _filterButton(
-                    'Selesai',
-                    4,
-                    semua
-                        .where((p) => p.status == StatusPesanan.selesai)
-                        .length,
-                  ),
-                  const SizedBox(width: 8),
-                  _filterButton(
-                    'Ditolak',
-                    5,
-                    semua
-                        .where((p) => p.status == StatusPesanan.ditolak)
-                        .length,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Filter Jenis: Semua, Ready Stock, Pre-Order
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            color: OC.bg,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _tipeChip('Semua (${semua.length})', 0),
-                  const SizedBox(width: 8),
-                  _tipeChip('⚡ Ready ($jumlahReady)', 1),
-                  const SizedBox(width: 8),
-                  _tipeChip('🎂 Pre-Order / Acara ($jumlahPo)', 2),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           Expanded(

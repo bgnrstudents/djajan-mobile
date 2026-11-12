@@ -116,58 +116,122 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final spesialisCtrl = TextEditingController(text: p.spesialis);
     final telpCtrl = TextEditingController(text: p.noTelpUsaha);
 
-    final simpan = await showDialog<bool>(
+    final simpan = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Ubah Informasi Usaha'),
-        content: SingleChildScrollView(
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            left: 20,
+            right: 20,
+            top: 4,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: OC.mint,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.storefront_outlined,
+                        color: OC.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ubah Informasi Usaha',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: OC.ink,
+                          ),
+                        ),
+                        Text(
+                          'Perbarui identitas warung Anda',
+                          style: TextStyle(fontSize: 12, color: OC.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _sheetField(
                 controller: namaCtrl,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Nama Usaha',
-                  hintText: 'Nama warung/dapur Anda',
-                  prefixIcon: Icon(Icons.storefront_outlined),
-                ),
+                label: 'Nama Usaha',
+                hint: 'Nama warung/dapur Anda',
+                icon: Icons.storefront_outlined,
+                capitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 14),
-              TextField(
+              _sheetField(
                 controller: spesialisCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Spesialis / Kategori Makanan',
-                  hintText: 'Contoh: Aneka Jajanan Pasar & Tumpeng',
-                  prefixIcon: Icon(Icons.restaurant_menu_outlined),
-                ),
+                label: 'Spesialis / Kategori Makanan',
+                hint: 'Contoh: Aneka Jajanan Pasar & Tumpeng',
+                icon: Icons.restaurant_menu_outlined,
               ),
               const SizedBox(height: 14),
-              TextField(
+              _sheetField(
                 controller: telpCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Nomor WhatsApp Usaha',
-                  hintText: '08xxxxxxxxxx',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                ),
+                label: 'Nomor WhatsApp Usaha',
+                hint: '08xxxxxxxxxx',
+                icon: Icons.phone_outlined,
+                inputType: TextInputType.phone,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: OC.line),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text('Batal',
+                          style: TextStyle(color: OC.muted)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      icon: const Icon(Icons.check_circle_outline, size: 18),
+                      label: const Text('Simpan Perubahan',
+                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: OC.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (simpan != true) return;
@@ -242,6 +306,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final lama = TextEditingController();
     final baru = TextEditingController();
     final konfirmasi = TextEditingController();
+    final service = context.read<UmkmDataService>();
     final simpan = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -286,7 +351,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     );
     if (simpan != true) return;
     try {
-      final pesan = await context.read<UmkmDataService>().ubahPassword(
+      final pesan = await service.ubahPassword(
         passwordLama: lama.text,
         passwordBaru: baru.text,
         konfirmasi: konfirmasi.text,
@@ -446,6 +511,42 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   }
 
   // ================================================= UI COMPONENTS
+
+  /// TextField bergaya DJajan untuk dipakai di bottom sheet form.
+  static Widget _sheetField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType inputType = TextInputType.text,
+    TextCapitalization capitalization = TextCapitalization.none,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: inputType,
+      textCapitalization: capitalization,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, size: 20, color: OC.muted),
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OC.line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OC.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OC.primary, width: 1.8),
+        ),
+      ),
+    );
+  }
 
   Widget _judulSeksi(IconData ikon, String judul, String subjudul) {
     return Padding(
