@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../models/order.dart';
 import '../../../services/api_service.dart';
+import '../../../services/auth_service.dart';
 import '../../../services/order_service.dart';
+import '../../auth/login_screen.dart';
 import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
@@ -30,6 +33,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
   }
 
   Future<void> _fetchOrders() async {
+    final auth = context.read<AuthService>();
+    if (!auth.isLoggedIn || !auth.isPelanggan) return;
     if (!mounted) return;
     setState(() => _loading = true);
     try {
@@ -65,6 +70,18 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    if (!auth.isLoggedIn || !auth.isPelanggan) {
+      return Container(
+        color: OC.bg,
+        child: RefreshIndicator(
+          onRefresh: () async {},
+          color: OC.primary,
+          child: _buildGuestState(),
+        ),
+      );
+    }
+
     return Container(
       color: OC.bg,
       child: RefreshIndicator(
@@ -101,6 +118,105 @@ class _OrderListScreenState extends State<OrderListScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildGuestState() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+      children: [
+        const DjajanPageHeader(
+          title: 'Pesanan Saya',
+          subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
+          padding: EdgeInsets.zero,
+        ),
+        const SizedBox(height: 48),
+        Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: OC.mint,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 36,
+                  color: OC.primary,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Yuk Masuk untuk Cek Pesanan!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: OC.ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Masuk atau buat akun DJajan untuk memantau status pesanan, riwayat jajan, dan memberikan ulasan kepada warung desa.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: OC.muted,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final loggedIn = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                    if (loggedIn == true && mounted) {
+                      _fetchOrders();
+                    }
+                  },
+                  icon: const Icon(Icons.login_rounded, color: Colors.white, size: 20),
+                  label: const Text(
+                    'Masuk / Daftar Akun',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: OC.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

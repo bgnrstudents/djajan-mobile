@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.pushReplacementNamed(
       context,
       session == null
-          ? AppRoutes.login
+          ? AppRoutes.customerHome
           : session.role == AuthRole.umkm
           ? AppRoutes.umkmDashboard
           : AppRoutes.customerHome,

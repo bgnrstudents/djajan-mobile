@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../routes/app_routes.dart';
+import '../../../services/auth_service.dart';
 import '../../../data/sample_catalog.dart';
 import '../../../services/catalog_service.dart';
 import '../../../models/product.dart';
@@ -196,6 +198,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildHeader() {
+    final auth = context.watch<AuthService>();
     return DjajanPageHeader(
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
       leftWidget: Column(
@@ -231,50 +234,77 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           ),
         ],
       ),
-      rightAction: AnimatedBuilder(
-        animation: NotificationService(),
-        builder: (context, _) {
-          final unread = NotificationService().unreadCount;
-          return IconButton(
-            tooltip: 'Notifikasi',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NotificationScreen()),
+      rightAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!auth.isLoggedIn) ...[
+            TextButton.icon(
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+              icon: const Icon(Icons.login_rounded, size: 16, color: Color(0xFF00A86B)),
+              label: const Text(
+                'Masuk',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF00A86B),
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFE8F5E9),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications_none, size: 27),
-                if (unread > 0)
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(9),
-                        border: Border.all(color: Colors.white, width: 1.2),
-                      ),
-                      child: Text(
-                        unread > 9 ? '9+' : '$unread',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
+            const SizedBox(width: 4),
+          ],
+          AnimatedBuilder(
+            animation: NotificationService(),
+            builder: (context, _) {
+              final unread = NotificationService().unreadCount;
+              return IconButton(
+                tooltip: 'Notifikasi',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                ),
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_none, size: 27),
+                    if (unread > 0)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(9),
+                            border: Border.all(color: Colors.white, width: 1.2),
+                          ),
+                          child: Text(
+                            unread > 9 ? '9+' : '$unread',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

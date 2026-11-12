@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../order/midtrans_payment_screen.dart';
 import '../order/order_detail_screen.dart';
 import '../../../models/order.dart';
+import '../../../services/auth_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../services/order_service.dart';
+import '../../auth/login_screen.dart';
 import '../order/order_widgets.dart';
 import '../../../services/cart_service.dart';
 import '../../../services/customer_settings_service.dart';
@@ -209,10 +211,118 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  Future<bool?> _showLoginRequiredSheet() {
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: OC.mint,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 32,
+                  color: OC.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Masuk Dulu Yuk!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: OC.ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Untuk melanjutkan pesanan dan menentukan alamat pengantaran di Desa Kreyongan, silakan masuk ke akun DJajan Anda.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: OC.muted,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx, true);
+                    final ok = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                    if (ok == true && mounted) {
+                      _handleCheckout();
+                    }
+                  },
+                  icon: const Icon(Icons.login_rounded, color: Colors.white, size: 20),
+                  label: const Text(
+                    'Masuk / Daftar Sekarang',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.5,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: OC.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Lanjut Lihat Menu Lain',
+                  style: TextStyle(color: OC.muted, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   DateTime? _lastCheckoutTime;
 
   Future<void> _handleCheckout() async {
     if (_isSubmitting) return;
+
+    final auth = context.read<AuthService>();
+    if (!auth.isLoggedIn || !auth.isPelanggan) {
+      await _showLoginRequiredSheet();
+      return;
+    }
     
     // 1.5s minimum delay to prevent rapid successive calls
     if (_lastCheckoutTime != null && 

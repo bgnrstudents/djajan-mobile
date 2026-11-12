@@ -198,9 +198,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
         phoneNumber: data['no_telp']?.toString() ?? '',
         email: data['email']?.toString() ?? '',
       );
+      _settings.load();
+      _loadBusinessApplication();
     }
-    _settings.load();
-    _loadBusinessApplication();
   }
 
   Future<void> _loadBusinessApplication() async {
@@ -364,6 +364,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    if (!auth.isLoggedIn || !auth.isPelanggan) {
+      return _buildGuestProfile(context);
+    }
+
     return AnimatedBuilder(
       animation: Listenable.merge([FavoriteService(), _settings]),
       builder: (context, _) => SingleChildScrollView(
@@ -411,6 +416,177 @@ class _ProfilScreenState extends State<ProfilScreen> {
             const _SafetyNotice(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGuestProfile(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const DjajanPageHeader(
+            title: 'Profil Saya',
+            subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
+            padding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: 16),
+          // Guest Header Card
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 68,
+                  height: 68,
+                  decoration: const BoxDecoration(
+                    color: OC.mint,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    size: 38,
+                    color: OC.primary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Halo, Pengunjung Desa!',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: OC.ink,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Masuk ke akun DJajan Anda untuk kemudahan memesan jajanan, menyimpan alamat, dan melacak pesanan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: OC.muted,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                    icon: const Icon(Icons.login_rounded, color: Colors.white, size: 20),
+                    label: const Text(
+                      'Masuk / Buat Akun Baru',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: OC.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Mitra UMKM Banner
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFF7ED), Color(0xFFFEF3C7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFED7AA)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF97316).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    color: Color(0xFFEA580C),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Punya Usaha Kuliner di Desa?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.5,
+                          color: Color(0xFF9A3412),
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Kelola menu & pesanan lewat dashboard UMKM',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFFC2410C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFC2410C),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  child: const Text('Masuk'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Info Menu
+          _ProfileMenu(
+            items: [
+              ProfileMenuItem(
+                icon: Icons.info_outline,
+                title: 'Tentang DJajan',
+                subtitle: 'Pemberdayaan kuliner & UMKM Desa Kreyongan Atas',
+                iconColor: const Color(0xFF7094B6),
+                onTap: _openAboutDjajan,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const _SafetyNotice(),
+        ],
       ),
     );
   }
@@ -791,7 +967,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
       OrderService().clear();
       NotificationService().clear();
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.customerHome, (_) => false);
     }
   }
 }

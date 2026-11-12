@@ -51,7 +51,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
       } else {
         await context.read<OrderService>().loadFromApi();
-        Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+        if (!mounted) return;
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, true);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+        }
       }
     } on ApiException catch (error) {
       if (mounted) {
@@ -87,7 +92,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
       } else {
         await context.read<OrderService>().loadFromApi();
-        Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+        if (!mounted) return;
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, true);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+        }
       }
     } on ApiException catch (error) {
       if (mounted) {

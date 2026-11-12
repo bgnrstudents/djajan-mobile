@@ -37,6 +37,9 @@ class AuthService extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
   AuthSession? get session => _session;
+  bool get isLoggedIn => _session != null;
+  bool get isPelanggan => _session?.role == AuthRole.pelanggan;
+  bool get isUmkm => _session?.role == AuthRole.umkm;
 
   Future<AuthSession?> restoreSession() async {
     final preferences = await SharedPreferences.getInstance();
