@@ -253,15 +253,25 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
     super.initState();
     final p = widget.produkToEdit;
     _namaCtrl = TextEditingController(text: p?.namaProduk ?? '');
-    _hargaCtrl =
-        TextEditingController(text: p != null ? p.harga.toString() : '');
+    // Format harga dengan titik ribuan saat mode edit agar field terbaca jelas
+    _hargaCtrl = TextEditingController(
+      text: p != null
+          ? p.harga
+              .toString()
+              .replaceAllMapped(
+                RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+                (m) => '${m[1]}.',
+              )
+          : '',
+    );
     _deskripsiCtrl = TextEditingController(text: p?.deskripsi ?? '');
     _minOrderCtrl =
         TextEditingController(text: (p?.minOrderPO ?? 20).toString());
     _stokCtrl = TextEditingController(text: (p?.stok ?? 15).toString());
     _kategori = p?.kategori ?? 'Makanan & Catering';
     _idKategori = p?.idKategori;
-    Future.microtask(() => context.read<CategoryService>().load());
+    final categoryService = context.read<CategoryService>();
+    Future.microtask(() => categoryService.load());
     _mode = p?.modePenjualan ?? ModePenjualan.keduanya;
     _waktuMasak = p?.waktuMasakPO ?? 'H-2 Hari';
     if (!_waktuMasakOptions.contains(_waktuMasak)) _waktuMasak = 'H-2 Hari';
@@ -603,23 +613,93 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
               ModePenjualan.keduanya)),
     ],
                   ),
-                  const SizedBox(height: 14),
-                  if (_mode != ModePenjualan.preOrder) ...[
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                  const SizedBox(height: 10),
+                  // Info banner sesuai mode yang dipilih
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      key: ValueKey(_mode),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: OC.box,
-                        borderRadius: BorderRadius.circular(12),
+                        color: _mode == ModePenjualan.ready
+                            ? const Color(0xFFE8F5E9)
+                            : _mode == ModePenjualan.preOrder
+                                ? const Color(0xFFFFF7ED)
+                                : OC.mint,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Expanded(
-                            child: Text('Stok Ready Hari Ini',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
+                          Icon(
+                            _mode == ModePenjualan.ready
+                                ? Icons.bolt_rounded
+                                : _mode == ModePenjualan.preOrder
+                                    ? Icons.event_note_rounded
+                                    : Icons.done_all_rounded,
+                            size: 16,
+                            color: _mode == ModePenjualan.ready
+                                ? const Color(0xFF15803D)
+                                : _mode == ModePenjualan.preOrder
+                                    ? const Color(0xFFEA580C)
+                                    : OC.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _mode == ModePenjualan.ready
+                                  ? 'Ready Stock: produk tersedia sekarang, stok dibatasi per hari. Pelanggan bisa langsung beli.'
+                                  : _mode == ModePenjualan.preOrder
+                                      ? 'Pre-Order: pelanggan memesan dulu, Anda masak sesuai jumlah pesanan. Tidak ada stok harian.'
+                                      : 'Keduanya: tampil sebagai ready stock DAN bisa dipesan via Pre-Order untuk acara/katering.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _mode == ModePenjualan.ready
+                                    ? const Color(0xFF15803D)
+                                    : _mode == ModePenjualan.preOrder
+                                        ? const Color(0xFFEA580C)
+                                        : OC.primary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  if (_mode != ModePenjualan.preOrder) ...[
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                      decoration: BoxDecoration(
+                        color: OC.box,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Stok Ready Hari Ini',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14)),
+                                Text(
+                                  _mode == ModePenjualan.keduanya
+                                      ? 'Porsi tersedia hari ini untuk beli langsung'
+                                      : 'Jumlah porsi yang bisa dipesan hari ini',
+                                  style: const TextStyle(
+                                      fontSize: 11.5, color: OC.muted),
+                                ),
+                              ],
+                            ),
                           ),
                           IconButton(
                             onPressed: () => _ubahStok(-1),
-                            icon: const Icon(Icons.remove_circle_outline),
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: OC.primary),
                           ),
                           SizedBox(
                             width: 62,
@@ -632,9 +712,12 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                                 LengthLimitingTextInputFormatter(
                                     _stokMaksimal.toString().length),
                               ],
-                              style: const TextStyle(fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 16),
                               decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.symmetric(vertical: 10)),
+                                  border: InputBorder.none,
+                                  contentPadding:
+                                      EdgeInsets.symmetric(vertical: 10)),
                               onChanged: (v) {
                                 final n = int.tryParse(v);
                                 if (n != null && n > _stokMaksimal) {
@@ -647,7 +730,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                           ),
                           IconButton(
                             onPressed: () => _ubahStok(1),
-                            icon: const Icon(Icons.add_circle_outline),
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: OC.primary),
                           ),
                         ],
                       ),
