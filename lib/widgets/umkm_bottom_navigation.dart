@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Floating pill navigation bar untuk halaman UMKM.
-/// 2 tab: Produk (index 0) dan Pesanan (index 1).
-/// Mendukung badge merah pada tab Pesanan untuk pesanan baru.
+/// Floating pill navigation bar untuk halaman UMKM dengan label teks.
+/// 4 tab: Home (0), Katalog (1), Pesanan (2), Setelan (3).
+/// Mendukung badge merah pada tab Pesanan untuk pesanan baru yang perlu konfirmasi.
 class UmkmBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -17,161 +17,135 @@ class UmkmBottomNavigation extends StatelessWidget {
     this.pesananBaru = 0,
   });
 
-  static const Color _primary = Color(0xFF175D2B);
-  static const Color _inactive = Color(0xFF8A939B);
-  static const Color _activeBg = Color(0xFFEAF3EC);
+  static const Color primaryColor = Color(0xFF175D2B);
+  static const Color inactiveColor = Color(0xFF718096);
+  static const Color activeBackground = Color(0xFFEAF3EC);
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      _NavItem(
+      const _NavItem(
+        label: 'Home',
         icon: Icons.storefront_outlined,
-        activeIcon: Icons.storefront,
+        activeIcon: Icons.storefront_rounded,
         badge: 0,
       ),
-      _NavItem(
+      const _NavItem(
+        label: 'Katalog',
         icon: Icons.inventory_2_outlined,
-        activeIcon: Icons.inventory_2,
+        activeIcon: Icons.inventory_2_rounded,
         badge: 0,
       ),
       _NavItem(
+        label: 'Pesanan',
         icon: Icons.receipt_long_outlined,
-        activeIcon: Icons.receipt_long,
+        activeIcon: Icons.receipt_long_rounded,
         badge: pesananBaru,
       ),
-      _NavItem(
+      const _NavItem(
+        label: 'Setelan',
         icon: Icons.settings_outlined,
-        activeIcon: Icons.settings,
+        activeIcon: Icons.settings_rounded,
         badge: 0,
       ),
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: SafeArea(
         top: false,
         child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(color: const Color(0xFFE8ECEF), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double itemWidth = constraints.maxWidth / items.length;
+          child: Row(
+            children: List.generate(items.length, (index) {
+              final bool isSelected = currentIndex == index;
+              final item = items[index];
 
-              return Stack(
-                children: [
-                  // Animated highlight pill
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 350),
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onDestinationSelected(index),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
-                    left: (itemWidth * currentIndex) + (itemWidth - 50) / 2,
-                    top: 10,
-                    width: 50,
-                    height: 50,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _activeBg,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isSelected ? activeBackground : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ),
-
-                  Row(
-                    children: List.generate(items.length, (index) {
-                      final bool isSelected = currentIndex == index;
-                      final item = items[index];
-
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => onDestinationSelected(index),
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                AnimatedScale(
-                                  scale: isSelected ? 1.0 : 0.88,
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOutBack,
-                                  child: AnimatedSwitcher(
-                                    duration:
-                                        const Duration(milliseconds: 180),
-                                    switchInCurve: Curves.easeOutBack,
-                                    switchOutCurve: Curves.easeIn,
-                                    transitionBuilder: (child, animation) {
-                                      return ScaleTransition(
-                                        scale: animation,
-                                        child: FadeTransition(
-                                          opacity: animation,
-                                          child: child,
-                                        ),
-                                      );
-                                    },
-                                    child: Icon(
-                                      isSelected
-                                          ? item.activeIcon
-                                          : item.icon,
-                                      key: ValueKey(isSelected),
-                                      size: 30,
-                                      color: isSelected ? _primary : _inactive,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              isSelected ? item.activeIcon : item.icon,
+                              size: 23,
+                              color: isSelected ? primaryColor : inactiveColor,
+                            ),
+                            if (item.badge > 0)
+                              Positioned(
+                                top: -4,
+                                right: -8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFBA1A1A),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    item.badge > 99 ? '99+' : '${item.badge}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1,
                                     ),
                                   ),
                                 ),
-
-                                // Badge pesanan baru
-                                if (item.badge > 0)
-                                  Positioned(
-                                    top: -3,
-                                    right: -7,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(3.5),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFBA1A1A),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 18,
-                                        minHeight: 18,
-                                      ),
-                                      child: Text(
-                                        item.badge > 99
-                                            ? '99+'
-                                            : '${item.badge}',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.bold,
-                                          height: 1,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected ? primaryColor : inactiveColor,
                           ),
                         ),
-                      );
-                    }),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               );
-            },
+            }),
           ),
         ),
       ),
@@ -180,11 +154,13 @@ class UmkmBottomNavigation extends StatelessWidget {
 }
 
 class _NavItem {
+  final String label;
   final IconData icon;
   final IconData activeIcon;
   final int badge;
 
   const _NavItem({
+    required this.label,
     required this.icon,
     required this.activeIcon,
     this.badge = 0,
