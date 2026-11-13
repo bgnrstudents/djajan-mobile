@@ -9,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/osm_map_picker.dart';
+import '../../widgets/umkm_app_bar.dart';
 import '../customer/order/order_widgets.dart';
 
 /// Satu baris form zona ongkir yang sedang diedit di layar ini.
@@ -119,116 +120,174 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final simpan = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-            left: 20,
-            right: 20,
-            top: 4,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
                     width: 40,
-                    height: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: OC.mint,
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    child: const Icon(Icons.storefront_outlined,
-                        color: OC.primary, size: 20),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                ),
+                // Header Sheet
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: OC.mint,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.storefront_outlined,
+                            color: OC.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ubah Informasi Usaha',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16.5,
+                                color: OC.ink,
+                              ),
+                            ),
+                            Text(
+                              'Perbarui identitas warung Anda',
+                              style: TextStyle(fontSize: 12, color: OC.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon:
+                            const Icon(Icons.close, color: OC.muted, size: 20),
+                        onPressed: () => Navigator.pop(ctx, false),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+
+                // Form Fields dengan padding lega (16px - 24px) dan label di luar
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Ubah Informasi Usaha',
+                        const Text(
+                          'Nama Usaha',
                           style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: OC.ink,
                           ),
                         ),
-                        Text(
-                          'Perbarui identitas warung Anda',
-                          style: TextStyle(fontSize: 12, color: OC.muted),
+                        const SizedBox(height: 8),
+                        _sheetField(
+                          controller: namaCtrl,
+                          hint: 'Nama warung/dapur Anda',
+                          icon: Icons.storefront_outlined,
+                          capitalization: TextCapitalization.words,
                         ),
+                        const SizedBox(height: 20),
+
+                        const Text(
+                          'Spesialis / Kategori Makanan',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: OC.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _sheetField(
+                          controller: spesialisCtrl,
+                          hint: 'Contoh: Aneka Jajanan Pasar & Tumpeng',
+                          icon: Icons.restaurant_menu_outlined,
+                        ),
+                        const SizedBox(height: 20),
+
+                        const Text(
+                          'Nomor WhatsApp Usaha',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: OC.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _sheetField(
+                          controller: telpCtrl,
+                          hint: '08xxxxxxxxxx',
+                          icon: Icons.phone_outlined,
+                          inputType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _sheetField(
-                controller: namaCtrl,
-                label: 'Nama Usaha',
-                hint: 'Nama warung/dapur Anda',
-                icon: Icons.storefront_outlined,
-                capitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 14),
-              _sheetField(
-                controller: spesialisCtrl,
-                label: 'Spesialis / Kategori Makanan',
-                hint: 'Contoh: Aneka Jajanan Pasar & Tumpeng',
-                icon: Icons.restaurant_menu_outlined,
-              ),
-              const SizedBox(height: 14),
-              _sheetField(
-                controller: telpCtrl,
-                label: 'Nomor WhatsApp Usaha',
-                hint: '08xxxxxxxxxx',
-                icon: Icons.phone_outlined,
-                inputType: TextInputType.phone,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: OC.line),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text('Batal',
-                          style: TextStyle(color: OC.muted)),
+                ),
+
+                // Sticky button "Simpan Perubahan" full-width di bagian paling bawah
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(color: Colors.grey.shade200, width: 1),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton.icon(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
                       onPressed: () => Navigator.pop(ctx, true),
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Simpan Perubahan',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
-                      style: FilledButton.styleFrom(
+                      icon: const Icon(Icons.check_circle_outline,
+                          color: Colors.white, size: 18),
+                      label: const Text(
+                        'Simpan Perubahan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: OC.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -512,10 +571,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
   // ================================================= UI COMPONENTS
 
-  /// TextField bergaya DJajan untuk dipakai di bottom sheet form.
+  /// TextField bergaya modern DJajan untuk dipakai di bottom sheet form.
   static Widget _sheetField({
     required TextEditingController controller,
-    required String label,
     required String hint,
     required IconData icon,
     TextInputType inputType = TextInputType.text,
@@ -526,291 +584,92 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       keyboardType: inputType,
       textCapitalization: capitalization,
       decoration: InputDecoration(
-        labelText: label,
         hintText: hint,
+        hintStyle: const TextStyle(color: OC.faint, fontSize: 13.5),
         prefixIcon: Icon(icon, size: 20, color: OC.muted),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: OC.line),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: OC.line),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: OC.primary, width: 1.8),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          borderSide: BorderSide(color: OC.primary, width: 1.5),
         ),
       ),
     );
   }
 
-  Widget _judulSeksi(IconData ikon, String judul, String subjudul) {
+  Widget _sectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: OC.primarySoft,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(ikon, color: OC.primary, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  judul,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: OC.ink,
-                  ),
-                ),
-                Text(
-                  subjudul,
-                  style: const TextStyle(color: OC.muted, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+          color: OC.muted,
+        ),
       ),
     );
   }
 
-  Widget _toggleTile({
-    required String judul,
-    String? badge,
-    required String subjudul,
-    required bool nilai,
-    required ValueChanged<bool> onChanged,
-    IconData? ikon,
-  }) {
+  Widget _groupedCard({required List<Widget> children}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: nilai ? OC.primarySoft : OC.line),
-      ),
-      child: Row(
-        children: [
-          if (ikon != null) ...[
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: nilai ? OC.mint : OC.box,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                ikon,
-                size: 18,
-                color: nilai ? OC.primary : OC.muted,
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        judul,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: OC.ink,
-                        ),
-                      ),
-                    ),
-                    if (badge != null) ...[
-                      const SizedBox(width: 6),
-                      MiniBadge(badge, bg: OC.peach, fg: OC.amber),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subjudul,
-                  style: const TextStyle(color: OC.muted, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          Transform.scale(
-            scale: 0.85,
-            child: Switch.adaptive(
-              value: nilai,
-              activeThumbColor: OC.primary,
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------- Profil Usaha Card
-  Widget _cardProfilUsaha(UmkmProfile profile) {
-    return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: OC.line),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
-        children: [
-          Row(
-            children: [
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  GambarJaringan(
-                    url: profile.fotoProfilUrl,
-                    width: 68,
-                    height: 68,
-                    radius: 34,
-                    ikonKosong: Icons.storefront,
-                    cacheBuster:
-                        DateTime.now().millisecondsSinceEpoch.toString(),
-                  ),
-                  GestureDetector(
-                    onTap: _mengunggahFoto ? null : _gantiFoto,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: OC.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: _mengunggahFoto
-                          ? const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.photo_camera,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.namaUsaha,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16.5,
-                        color: OC.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (profile.terverifikasi)
-                      const MiniBadge(
-                        'Mitra Terverifikasi',
-                        bg: OC.mint,
-                        fg: OC.primary,
-                        ikon: Icons.verified,
-                      )
-                    else
-                      const MiniBadge(
-                        'Menunggu Verifikasi',
-                        bg: OC.peach,
-                        fg: OC.amber,
-                      ),
-                    if (profile.spesialis.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        profile.spesialis,
-                        style: const TextStyle(
-                          color: OC.muted,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ],
-                    if (profile.noTelpUsaha.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'WhatsApp: ${profile.noTelpUsaha}',
-                        style: const TextStyle(
-                          color: OC.muted,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: _editIdentitas,
-                icon: const Icon(Icons.edit_outlined, color: OC.primary),
-                tooltip: 'Ubah Informasi Usaha',
-                style: IconButton.styleFrom(
-                  backgroundColor: OC.primarySoft,
-                ),
-              ),
-            ],
-          ),
-        ],
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
       ),
     );
   }
 
-  // ---------------------------------- Status Toko Card
-  Widget _cardStatusToko() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _tokoAktif ? OC.primary.withValues(alpha: 0.3) : OC.line,
-        ),
-      ),
+  Widget _groupRowDivider() {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      color: Color(0xFFF3F4F6),
+      indent: 54,
+      endIndent: 16,
+    );
+  }
+
+  Widget _switchRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    Color iconColor = OC.primary,
+    Color iconBg = OC.mint,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: _tokoAktif ? OC.mint : OC.box,
-              borderRadius: BorderRadius.circular(12),
+              color: value ? iconBg : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              _tokoAktif ? Icons.storefront : Icons.storefront_outlined,
-              color: _tokoAktif ? OC.primary : OC.muted,
+              icon,
               size: 20,
+              color: value ? iconColor : const Color(0xFF9CA3AF),
             ),
           ),
           const SizedBox(width: 12),
@@ -819,365 +678,289 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _tokoAktif ? 'Toko Buka (Menerima Pesanan)' : 'Toko Tutup / Libur',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: _tokoAktif ? OC.ink : OC.muted,
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                    color: OC.ink,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _tokoAktif
-                      ? 'Produk Anda tampil di etalase pembeli dan siap dipesan.'
-                      : 'Matikan saat toko libur agar pesanan baru tidak masuk.',
-                  style: const TextStyle(fontSize: 12, color: OC.muted),
+                  subtitle,
+                  style: const TextStyle(
+                    color: OC.muted,
+                    fontSize: 11.5,
+                    height: 1.25,
+                  ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Switch.adaptive(
-            value: _tokoAktif,
+            value: value,
             activeThumbColor: OC.primary,
-            onChanged: (v) => setState(() => _tokoAktif = v),
+            onChanged: onChanged,
           ),
         ],
       ),
     );
   }
 
-  // ---------------------------------- Unified Lokasi Dapur & Titik GPS
-  Widget _cardLokasiDapurTunggal(UmkmProfile profile) {
-    final hasLocation = profile.latitude != null && profile.longitude != null;
+  Widget _actionRow({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    required VoidCallback onTap,
+    Color iconColor = OC.ink,
+    Color iconBg = const Color(0xFFF3F4F6),
+    Color textColor = OC.ink,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                      color: textColor,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: OC.muted,
+                        fontSize: 11.5,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            trailing ??
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: Color(0xFF9CA3AF),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------- Hero Card (Profil + Live Status)
+  Widget _buildHeroCard(UmkmProfile profile) {
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: hasLocation ? OC.primary.withValues(alpha: 0.3) : const Color(0xFFFDE8D0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: hasLocation ? OC.mint : const Color(0xFFFDE8D0),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  hasLocation ? Icons.location_on : Icons.location_off_outlined,
-                  size: 20,
-                  color: hasLocation ? OC.primary : const Color(0xFFE67E22),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Stack(
+                  alignment: Alignment.bottomRight,
                   children: [
-                    Text(
-                      hasLocation
-                          ? 'Titik GPS Tersimpan'
-                          : 'Titik GPS Belum Disetel',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: hasLocation ? OC.ink : const Color(0xFFE67E22),
-                      ),
+                    GambarJaringan(
+                      url: profile.fotoProfilUrl,
+                      width: 64,
+                      height: 64,
+                      radius: 32,
+                      ikonKosong: Icons.storefront,
+                      cacheBuster:
+                          DateTime.now().millisecondsSinceEpoch.toString(),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      profile.alamat.isNotEmpty
-                          ? profile.alamat
-                          : 'Belum ada alamat dapur tersimpan.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: profile.alamat.isNotEmpty ? OC.ink : OC.muted,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      hasLocation
-                          ? 'Koordinat: ${profile.latitude!.toStringAsFixed(6)}, ${profile.longitude!.toStringAsFixed(6)}'
-                          : 'Layanan kurir desa mewajibkan titik koordinat untuk menghitung ongkir.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: hasLocation ? OC.primary : const Color(0xFFE67E22),
-                        fontFamily: hasLocation ? 'monospace' : null,
+                    GestureDetector(
+                      onTap: _mengunggahFoto ? null : _gantiFoto,
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: OC.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: _mengunggahFoto
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.photo_camera,
+                                size: 13,
+                                color: Colors.white,
+                              ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _pilihLokasiUMKM,
-              icon: Icon(
-                hasLocation
-                    ? Icons.edit_location_alt_outlined
-                    : Icons.add_location_outlined,
-                color: OC.primary,
-                size: 18,
-              ),
-              label: Text(
-                hasLocation
-                    ? 'Ubah Titik Lokasi di Peta'
-                    : 'Pilih Titik Lokasi Dapur di Peta',
-                style: const TextStyle(
-                  color: OC.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: OC.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Center(
-            child: Text(
-              'Memilih lokasi di peta otomatis mengisi nama jalan dan titik GPS dapur.',
-              style: TextStyle(fontSize: 11, color: OC.muted),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------- Jarak & Ongkir Card
-  Widget _cardOngkirInfo() {
-    final radiusGratis =
-        double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0;
-    final jarakMaksimal = _zonaBaris.isEmpty
-        ? radiusGratis
-        : (double.tryParse(
-                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.'),
-              ) ??
-              radiusGratis);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: OC.box,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: OC.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.route_outlined, size: 18, color: OC.primary),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Jarak Maksimal Pengantaran',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: OC.line),
-                ),
-                child: Text(
-                  '${_fmtKm(jarakMaksimal)} KM',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: OC.primary,
-                    fontSize: 13,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profile.namaUsaha,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16.5,
+                          color: OC.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      if (profile.terverifikasi)
+                        const MiniBadge(
+                          'Mitra Terverifikasi',
+                          bg: OC.mint,
+                          fg: OC.primary,
+                          ikon: Icons.verified,
+                        )
+                      else
+                        const MiniBadge(
+                          'Menunggu Verifikasi',
+                          bg: OC.peach,
+                          fg: OC.amber,
+                        ),
+                      if (profile.spesialis.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          profile.spesialis,
+                          style: const TextStyle(
+                            color: OC.muted,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      if (profile.noTelpUsaha.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'WA: ${profile.noTelpUsaha}',
+                          style: const TextStyle(
+                            color: OC.muted,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Ongkir dihitung otomatis dari titik koordinat GPS dapur Anda ke titik pengiriman pembeli menggunakan rumus jarak Haversine.',
-            style: TextStyle(color: OC.muted, fontSize: 11.5, height: 1.3),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------- Pembayaran Card
-  Widget _cardKebijakanPembayaran() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: OC.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              color: OC.banner,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.verified_user_outlined, size: 18, color: OC.primary),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Pembayaran online diproses via Midtrans. Aktifkan COD jika siap menerima uang tunai saat pesanan sampai.',
-                    style: TextStyle(fontSize: 12, color: OC.muted),
+                IconButton(
+                  onPressed: _editIdentitas,
+                  icon: const Icon(Icons.edit_outlined,
+                      color: OC.primary, size: 20),
+                  tooltip: 'Ubah Profil Usaha',
+                  style: IconButton.styleFrom(
+                    backgroundColor: OC.mintSoft,
+                    padding: const EdgeInsets.all(8),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          _toggleTile(
-            judul: 'COD (Bayar di Tempat)',
-            subjudul: 'Titip uang tunai ke kurir saat pesanan sampai',
-            nilai: _codAktif,
-            ikon: Icons.payments_outlined,
-            onChanged: (v) => setState(() => _codAktif = v),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'Skema Pembayaran Pre-Order (PO)',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Aturan uang muka saat pesanan dalam porsi katering besar',
-            style: TextStyle(color: OC.muted, fontSize: 12),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _skemaPO,
-            isExpanded: true,
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            items: _skemaOptions
-                .map(
-                  (s) => DropdownMenuItem(
-                    value: s,
-                    child: Text(s, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: _tokoAktif ? OC.mint : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                )
-                .toList(),
-            onChanged: (v) => setState(() => _skemaPO = v!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------- Akun & Sesi Card
-  Widget _cardAkunDanSesi() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: OC.line),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: OC.box,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.password_outlined, size: 18, color: OC.muted),
+                  child: Icon(
+                    _tokoAktif ? Icons.storefront : Icons.storefront_outlined,
+                    color: _tokoAktif ? OC.primary : const Color(0xFF9CA3AF),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _tokoAktif
+                                ? 'Status Toko: Buka'
+                                : 'Status Toko: Tutup',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                              color: _tokoAktif
+                                  ? OC.ink
+                                  : const Color(0xFF6B7280),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 6.5,
+                            height: 6.5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _tokoAktif
+                                  ? const Color(0xFF10B981)
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _tokoAktif
+                            ? 'Menerima pesanan & tampil di etalase pembeli'
+                            : 'Toko libur sementara, pesanan baru dijeda',
+                        style: const TextStyle(fontSize: 11.5, color: OC.muted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _tokoAktif,
+                  activeThumbColor: OC.primary,
+                  onChanged: (v) => setState(() => _tokoAktif = v),
+                ),
+              ],
             ),
-            title: const Text(
-              'Ubah Kata Sandi',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-            ),
-            subtitle: const Text(
-              'Perbarui kata sandi akun UMKM Anda',
-              style: TextStyle(color: OC.muted, fontSize: 12),
-            ),
-            trailing: const Icon(Icons.chevron_right, color: OC.muted),
-            onTap: _ubahPassword,
-          ),
-          const Divider(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: OC.mintSoft,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.swap_horiz_rounded, size: 20, color: OC.primary),
-            ),
-            title: const Text(
-              'Beralih ke Akun Pembeli',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: OC.primary),
-            ),
-            subtitle: const Text(
-              'Kembali belanja kuliner lokal sebagai pelanggan',
-              style: TextStyle(color: OC.muted, fontSize: 12),
-            ),
-            trailing: const Icon(Icons.chevron_right, color: OC.primary),
-            onTap: _switchToCustomer,
-          ),
-          const Divider(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: OC.dangerSoft,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.logout_rounded, size: 18, color: OC.danger),
-            ),
-            title: const Text(
-              'Keluar Akun',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: OC.danger),
-            ),
-            subtitle: const Text(
-              'Selesaikan sesi login UMKM di perangkat ini',
-              style: TextStyle(color: OC.muted, fontSize: 12),
-            ),
-            trailing: const Icon(Icons.chevron_right, color: OC.danger),
-            onTap: _confirmLogout,
           ),
         ],
       ),
@@ -1187,111 +970,352 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<UmkmDataService>().profile;
+    final hasLocation = profile.latitude != null && profile.longitude != null;
+    final radiusGratis =
+        double.tryParse(_radiusCtrl.text.replaceAll(',', '.')) ?? 0;
+    final jarakMaksimal = _zonaBaris.isEmpty
+        ? radiusGratis
+        : (double.tryParse(
+                _zonaBaris.last.sampaiCtrl.text.replaceAll(',', '.'),
+              ) ??
+              radiusGratis);
 
     final bodyContent = ListView(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        widget.isTab ? 10 : 8,
-        16,
-        widget.isTab ? 110 : 30,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        // 1. Profil Usaha
-        _cardProfilUsaha(profile),
-        const SizedBox(height: 18),
+        // 1. Hero Card: Profil & Status Toko Terintegrasi
+        _buildHeroCard(profile),
 
-        // 2. Status Operasional Toko
-        _judulSeksi(
-          Icons.schedule_outlined,
-          'Operasional Toko',
-          'Atur kesiapan dapur menerima order baru',
-        ),
-        _cardStatusToko(),
-        const SizedBox(height: 20),
-
-        // 3. Lokasi Dapur & Alamat GPS (Tunggal & Terintegrasi)
-        _judulSeksi(
-          Icons.location_on_outlined,
-          'Lokasi Dapur & Titik GPS',
-          'Titik koordinat untuk kalkulasi ongkir kurir otomatis',
-        ),
-        _cardLokasiDapurTunggal(profile),
-        const SizedBox(height: 20),
-
-        // 4. Layanan Pengiriman & Ongkir
-        _judulSeksi(
-          Icons.local_shipping_outlined,
-          'Layanan Pengiriman',
-          'Pilihan cara penerimaan makanan oleh pembeli',
-        ),
-        _toggleTile(
-          judul: 'Pickup / Ambil di Dapur',
-          subjudul: 'Pelanggan mengambil langsung ke alamat dapur Anda',
-          nilai: _pickupAktif,
-          ikon: Icons.storefront_outlined,
-          onChanged: (v) => setState(() => _pickupAktif = v),
-        ),
-        const SizedBox(height: 10),
-        _toggleTile(
-          judul: 'Diantar UMKM / Kurir Warga',
-          subjudul: 'Pengantaran kurir langsung ke titik rumah pembeli',
-          nilai: _kurirAktif,
-          ikon: Icons.delivery_dining_outlined,
-          onChanged: (v) => setState(() => _kurirAktif = v),
-        ),
-        if (_kurirAktif) ...[
-          const SizedBox(height: 10),
-          _cardOngkirInfo(),
-        ],
-        const SizedBox(height: 20),
-
-        // 5. Kebijakan Pembayaran
-        _judulSeksi(
-          Icons.account_balance_wallet_outlined,
-          'Kebijakan Pembayaran',
-          'Atur metode penerimaan uang pesanan',
-        ),
-        _cardKebijakanPembayaran(),
-        const SizedBox(height: 20),
-
-        // 6. Akun, Keamanan, & Sesi
-        _judulSeksi(
-          Icons.manage_accounts_outlined,
-          'Akun & Keamanan',
-          'Kata sandi dan manajemen sesi perangkat',
-        ),
-        _cardAkunDanSesi(),
-        const SizedBox(height: 24),
-
-        // Tombol Simpan jika dalam mode Tab
-        if (widget.isTab) ...[
-          ElevatedButton.icon(
-            onPressed: _menyimpan ? null : _simpanPengaturan,
-            icon: _menyimpan
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+        // 2. Group Operasional & Pengiriman
+        _sectionHeader('OPERASIONAL & PENGIRIMAN'),
+        _groupedCard(
+          children: [
+            _actionRow(
+              icon: Icons.location_on_outlined,
+              iconColor: hasLocation ? OC.primary : const Color(0xFFD97706),
+              iconBg: hasLocation ? OC.mint : const Color(0xFFFEF3C7),
+              title: 'Lokasi Dapur & Pengiriman',
+              subtitle: profile.alamat.isNotEmpty
+                  ? profile.alamat
+                  : 'Atur titik lokasi dapur untuk kalkulasi kurir',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: hasLocation ? OC.mint : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  )
-                : const Icon(Icons.check_circle_outline),
-            label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                    child: Text(
+                      hasLocation ? 'Tersimpan' : 'Atur Titik',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            hasLocation ? OC.primary : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right_rounded,
+                      size: 20, color: Color(0xFF9CA3AF)),
+                ],
+              ),
+              onTap: _pilihLokasiUMKM,
+            ),
+            _groupRowDivider(),
+            _switchRow(
+              icon: Icons.storefront_outlined,
+              title: 'Ambil di Tempat (Self-Pickup)',
+              subtitle: 'Pelanggan mengambil pesanan langsung ke dapur Anda',
+              value: _pickupAktif,
+              onChanged: (v) => setState(() => _pickupAktif = v),
+            ),
+            _groupRowDivider(),
+            _switchRow(
+              icon: Icons.delivery_dining_outlined,
+              title: 'Pengantaran Kurir Toko / Warga',
+              subtitle: 'Pesanan diantar langsung ke rumah pembeli',
+              value: _kurirAktif,
+              onChanged: (v) => setState(() => _kurirAktif = v),
+            ),
+            if (_kurirAktif) ...[
+              Container(
+                margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.route_outlined,
+                            size: 16, color: OC.primary),
+                        const SizedBox(width: 6),
+                        const Expanded(
+                          child: Text(
+                            'Jangkauan Pengantaran',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                              color: OC.ink,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                          ),
+                          child: Text(
+                            'Maks. ${_fmtKm(jarakMaksimal)} KM',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: OC.primary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Ongkir dihitung otomatis berdasarkan jarak tempuh ke titik lokasi pembeli.',
+                      style:
+                          TextStyle(color: OC.muted, fontSize: 11, height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+
+        // 3. Group Pembayaran & Pre-Order
+        _sectionHeader('PEMBAYARAN & PRE-ORDER'),
+        _groupedCard(
+          children: [
+            Container(
+              margin: const EdgeInsets.fromLTRB(14, 14, 14, 4),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: OC.mintSoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.shield_outlined, size: 16, color: OC.primary),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pembayaran online diproses otomatis. Aktifkan COD bila Anda menerima uang tunai saat pengantaran.',
+                      style:
+                          TextStyle(fontSize: 11.5, color: OC.ink, height: 1.3),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-        ],
+            _switchRow(
+              icon: Icons.payments_outlined,
+              title: 'Bayar di Tempat (COD)',
+              subtitle:
+                  'Pelanggan membayar tunai kepada pengantar saat pesanan tiba',
+              value: _codAktif,
+              onChanged: (v) => setState(() => _codAktif = v),
+            ),
+            _groupRowDivider(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.event_note_outlined,
+                          size: 20,
+                          color: OC.ink,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Skema Uang Muka Pre-Order (PO)',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                                color: OC.ink,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Ketentuan pembayaran untuk pesanan katering porsi besar',
+                              style: TextStyle(color: OC.muted, fontSize: 11.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _skemaPO,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      filled: true,
+                      fillColor: const Color(0xFFF9FAFB),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        borderSide: BorderSide(color: OC.primary, width: 1.5),
+                      ),
+                    ),
+                    items: _skemaOptions
+                        .map(
+                          (s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(
+                              s,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12.5, color: OC.ink),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) setState(() => _skemaPO = v);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        // 4. Group Akun & Keamanan
+        _sectionHeader('AKUN & KEAMANAN'),
+        _groupedCard(
+          children: [
+            _actionRow(
+              icon: Icons.lock_outline_rounded,
+              iconColor: const Color(0xFF4B5563),
+              iconBg: const Color(0xFFF3F4F6),
+              title: 'Ubah Kata Sandi',
+              subtitle: 'Perbarui kata sandi akun UMKM Anda',
+              onTap: _ubahPassword,
+            ),
+            _groupRowDivider(),
+            _actionRow(
+              icon: Icons.shopping_bag_outlined,
+              iconColor: OC.primary,
+              iconBg: OC.mintSoft,
+              title: 'Beralih ke Akun Pelanggan',
+              subtitle: 'Beli aneka kuliner lokal sebagai pembeli',
+              textColor: OC.primary,
+              trailing: const Icon(Icons.chevron_right_rounded,
+                  size: 20, color: OC.primary),
+              onTap: _switchToCustomer,
+            ),
+            _groupRowDivider(),
+            _actionRow(
+              icon: Icons.logout_rounded,
+              iconColor: OC.danger,
+              iconBg: OC.dangerSoft,
+              title: 'Keluar Akun UMKM',
+              subtitle: 'Akhiri sesi login mitra di perangkat ini',
+              textColor: OC.danger,
+              trailing: const Icon(Icons.chevron_right_rounded,
+                  size: 20, color: OC.danger),
+              onTap: _confirmLogout,
+            ),
+          ],
+        ),
       ],
     );
 
     if (widget.isTab) {
-      return Scaffold(backgroundColor: OC.bg, body: bodyContent);
+      return Scaffold(
+        backgroundColor: OC.bg,
+        body: Column(
+          children: [
+            Expanded(child: bodyContent),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: _menyimpan ? null : _simpanPengaturan,
+                  icon: _menyimpan
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check_circle_outline,
+                          color: Colors.white),
+                  label: Text(
+                    _menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.5,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: OC.primary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Scaffold(
@@ -1299,9 +1323,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            DjajanPageHeader(
+            UmkmAppBar(
               title: 'Pengaturan Usaha',
-              subtitle: 'Profil, operasional, & ongkir warung',
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
                 onPressed: () => Navigator.maybePop(context),
@@ -1311,26 +1334,47 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: ElevatedButton.icon(
-            onPressed: _menyimpan ? null : _simpanPengaturan,
-            icon: _menyimpan
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.check_circle_outline),
-            label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade200, width: 1),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _menyimpan ? null : _simpanPengaturan,
+                icon: _menyimpan
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check_circle_outline,
+                        color: Colors.white),
+                label: Text(
+                  _menyimpan ? 'Menyimpan...' : 'Simpan Pengaturan',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: OC.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ),
