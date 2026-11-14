@@ -906,7 +906,7 @@ class _TabProdukState extends State<_TabProduk> {
                 ),
                 const SizedBox(height: 14),
 
-                // Category filters
+                // Kategori Filter
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
