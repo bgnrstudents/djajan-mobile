@@ -341,7 +341,7 @@ class _TabBeranda extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 110),
         children: [
-          // 1. HERO CARD TOTAL PENDAPATAN
+          // 1. TOTAL PENDAPATAN
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -731,7 +731,7 @@ class _TabBeranda extends StatelessWidget {
           ],
           const SizedBox(height: 18),
 
-          // 4. PERINGATAN STOK HABIS (JIKA ADA)
+          // 4. PERINGATAN STOK HABIS
           if (stokHabis > 0) ...[
             InkWell(
               borderRadius: BorderRadius.circular(14),
@@ -781,7 +781,7 @@ class _TabBeranda extends StatelessWidget {
   }
 }
 
-// ======================================================== TAB PRODUK ===
+// TAB PRODUK 
 class _TabProduk extends StatefulWidget {
   final UmkmDataService service;
   final String kataKunci;
@@ -808,7 +808,7 @@ class _TabProdukState extends State<_TabProduk> {
   Widget build(BuildContext context) {
     final semua = widget.service.produkList;
 
-    // Ambil daftar kategori unik dari data produk
+    // Ambil daftar kategori dari data produk
     final kategoriSet = <String>{'Semua'};
     for (final p in semua) {
       if (p.kategori.isNotEmpty) kategoriSet.add(p.kategori);
