@@ -10,6 +10,7 @@ import '../../services/category_service.dart';
 import '../../models/category.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/umkm_app_bar.dart';
 import '../customer/order/order_widgets.dart';
 
 /// HALAMAN 3 — Tambah / Edit Produk.
@@ -142,12 +143,12 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
           ? () => tampilkanZoomGambarLokal(context, _fotoBaruBytes!)
           : _pilihFoto,
       child: AspectRatio(
-        aspectRatio: 16 / 10,
+        aspectRatio: 16 / 9,
         child: Container(
           decoration: BoxDecoration(
             color: OC.box,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.garis),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade300, width: 1),
           ),
           clipBehavior: Clip.antiAlias,
           child: Stack(
@@ -307,6 +308,44 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
 
   bool get _isEdit => widget.isEditMode;
 
+  InputDecoration _modernInputDecoration({
+    String? hintText,
+    String? counterText = '',
+    String? suffixText,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: OC.faint, fontSize: 13.5),
+      counterText: counterText,
+      suffixText: suffixText,
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: OC.primary, width: 1.5),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: OC.danger, width: 1),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: OC.danger, width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -314,7 +353,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            DjajanPageHeader(
+            UmkmAppBar(
               title: _isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
@@ -327,597 +366,615 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                 child: Form(
                   key: _formKey,
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
                     children: [
-              // =================== FOTO PRODUK (UPLOAD ASLI) ===================
-              KartuPutih(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Foto Produk',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16)),
-                    const SizedBox(height: 12),
-                    _kotakFoto(),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pilihFoto,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: OC.primary,
-                              side: const BorderSide(color: OC.primary),
-                              minimumSize: const Size.fromHeight(44),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            icon: const Icon(Icons.photo_camera_outlined,
-                                size: 18),
-                            label: Text(_adaFoto ? 'Ganti Foto' : 'Pilih Foto'),
-                          ),
+                      // =================== FOTO PRODUK (UPLOAD ASLI) ===================
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: Colors.grey.shade200, width: 1),
                         ),
-                        if (_fotoBaru != null) ...[
-                          const SizedBox(width: 10),
-                          OutlinedButton.icon(
-                            onPressed: () => setState(() {
-                              _fotoBaru = null;
-                              _fotoBaruBytes = null;
-                            }),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.danger,
-                              side: const BorderSide(color: AppColors.danger),
-                              minimumSize: const Size(0, 44),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            icon: const Icon(Icons.close, size: 18),
-                            label: const Text('Batal'),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _fotoBaru != null
-                          ? '${_fotoBaru!.name} • ${_ukuranFoto()} — akan diunggah saat disimpan'
-                          : 'Format JPG, PNG, atau WEBP, maksimal 5 MB',
-                      style: TextStyle(
-                        color: _fotoBaru != null
-                            ? OC.primary
-                            : OC.muted,
-                        fontSize: 12,
-                        fontWeight: _fotoBaru != null
-                            ? FontWeight.w600
-                            : FontWeight.w400),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // ===================== INFORMASI PRODUK ====================
-              _kartuSessi(
-                ikon: Icons.restaurant_menu,
-                judul: 'Informasi Produk',
-                children: [
-                  _label('Nama Produk', wajib: true),
-                  TextFormField(
-                    controller: _namaCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    maxLength: _namaMaksPanjang,
-                    inputFormatters: [
-                      // Memblokir simbol aneh (@#$%^*_+=<>[]{}|\\~`!?;:) saat
-                      // diketik, bukan cuma ditolak belakangan saat submit.
-                      FilteringTextInputFormatter.allow(_polaKarakterNamaValid),
-                      LengthLimitingTextInputFormatter(_namaMaksPanjang),
-                    ],
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: Nasi Kotak Ayam Geprek Spesial',
-                      counterText: '',
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: OC.primary, width: 1.6),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.danger),
-                      ),
-                    ),
-                    onChanged: (_) {
-                      if (_errNamaServer != null) {
-                        setState(() => _errNamaServer = null);
-                      }
-                    },
-                    validator: (v) {
-                      if (_errNamaServer != null) return _errNamaServer;
-                      final teks = (v ?? '').trim();
-                      if (teks.isEmpty) return 'Nama produk wajib diisi';
-                      if (teks.length < _namaMinPanjang) {
-                        return 'Nama produk minimal $_namaMinPanjang karakter';
-                      }
-                      if (!_polaAdaHuruf.hasMatch(teks)) {
-                        return 'Nama produk harus mengandung huruf, tidak boleh hanya angka/simbol';
-                      }
-                      if (_polaAdaAngka.hasMatch(teks)) {
-                        return 'Nama produk tidak boleh mengandung angka';
-                      }
-                      if (!_polaKarakterNamaValid.hasMatch(teks)) {
-                        return "Hanya boleh huruf, spasi, dan tanda & - ' ( ) , .";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _label('Kategori Produk', wajib: true),
-                  Consumer<CategoryService>(
-                    builder: (context, categoryService, _) {
-                      final categories = categoryService.categories;
-                      final selected = categories.any((c) => c.id == _idKategori)
-                          ? _idKategori
-                          : null;
-                      return DropdownButtonFormField<int>(
-                    initialValue: selected,
-                    isExpanded: true,
-                    items: categories
-                        .map((Category category) => DropdownMenuItem(
-                              value: category.id,
-                              child: Text(category.name),
-                            ))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v == null) return;
-                      final category = categories.firstWhere((c) => c.id == v);
-                      setState(() {
-                        _idKategori = v;
-                        _kategori = category.name;
-                      });
-                    },
-                    validator: (v) => v == null
-                        ? categoryService.loading
-                            ? 'Kategori sedang dimuat'
-                            : categoryService.errorMessage ??
-                                'Kategori wajib dipilih'
-                        : null,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: OC.primary, width: 1.6),
-                      ),
-                    ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _label('Harga Satuan', wajib: true),
-                  TextFormField(
-                    controller: _hargaCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      // Maksimal 7 digit supaya angka tidak bisa "kebablasan".
-                      LengthLimitingTextInputFormatter(7),
-                      _PemformatRibuan(),
-                    ],
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: OC.primary, width: 1.6),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.danger),
-                      ),
-                    ),
-                    validator: (v) {
-                      final bersih = (v ?? '').replaceAll('.', '');
-                      if (bersih.isEmpty) return 'Harga wajib diisi';
-                      final n = int.tryParse(bersih);
-                      if (n == null) return 'Harga harus berupa angka';
-                      if (n < _hargaMinimal) {
-                        return 'Harga minimal ${formatRupiah(_hargaMinimal)}';
-                      }
-                      if (n > _hargaMaksimal) {
-                        return 'Harga maksimal ${formatRupiah(_hargaMaksimal)}';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _label('Deskripsi Menu'),
-                  TextFormField(
-                    controller: _deskripsiCtrl,
-                    maxLines: 3,
-                    maxLength: _deskripsiMaksPanjang,
-                    textCapitalization: TextCapitalization.sentences,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(_deskripsiMaksPanjang),
-                    ],
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      hintText: 'Ceritakan bahan & keunggulan produk...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: OC.primary, width: 1.6),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // ==================== MODE PENJUALAN ====================
-              _kartuSessi(
-                ikon: Icons.tune,
-                judul: 'Mode Penjualan Warung',
-                children: [
-                  const Text(
-                      'Sesuaikan kesiapan dapur & kapasitas produksi Anda',
-                      style:
-                          TextStyle(color: OC.muted, fontSize: 13)),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-      Expanded(
-          child: _tombolMode('Ready', Icons.bolt, ModePenjualan.ready)),
-      const SizedBox(width: 8),
-      Expanded(
-          child: _tombolMode('Pre-Order', Icons.event_note,
-              ModePenjualan.preOrder)),
-      const SizedBox(width: 8),
-      Expanded(
-          child: _tombolMode('Keduanya', Icons.done_all,
-              ModePenjualan.keduanya)),
-    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Info banner sesuai mode yang dipilih
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      key: ValueKey(_mode),
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _mode == ModePenjualan.ready
-                            ? const Color(0xFFE8F5E9)
-                            : _mode == ModePenjualan.preOrder
-                                ? const Color(0xFFFFF7ED)
-                                : OC.mint,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _mode == ModePenjualan.ready
-                                ? Icons.bolt_rounded
-                                : _mode == ModePenjualan.preOrder
-                                    ? Icons.event_note_rounded
-                                    : Icons.done_all_rounded,
-                            size: 16,
-                            color: _mode == ModePenjualan.ready
-                                ? const Color(0xFF15803D)
-                                : _mode == ModePenjualan.preOrder
-                                    ? const Color(0xFFEA580C)
-                                    : OC.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _mode == ModePenjualan.ready
-                                  ? 'Ready Stock: produk tersedia sekarang, stok dibatasi per hari. Pelanggan bisa langsung beli.'
-                                  : _mode == ModePenjualan.preOrder
-                                      ? 'Pre-Order: pelanggan memesan dulu, Anda masak sesuai jumlah pesanan. Tidak ada stok harian.'
-                                      : 'Keduanya: tampil sebagai ready stock DAN bisa dipesan via Pre-Order untuk acara/katering.',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Foto Produk',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: _mode == ModePenjualan.ready
-                                    ? const Color(0xFF15803D)
-                                    : _mode == ModePenjualan.preOrder
-                                        ? const Color(0xFFEA580C)
-                                        : OC.primary,
-                                height: 1.4,
+                                  fontWeight: FontWeight.w700, fontSize: 16),
+                            ),
+                            const SizedBox(height: 12),
+                            _kotakFoto(),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: _pilihFoto,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: OC.primary,
+                                      side: const BorderSide(color: OC.primary),
+                                      minimumSize: const Size.fromHeight(44),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                    icon: const Icon(
+                                        Icons.photo_camera_outlined,
+                                        size: 18),
+                                    label: Text(
+                                        _adaFoto ? 'Ganti Foto' : 'Pilih Foto'),
+                                  ),
+                                ),
+                                if (_fotoBaru != null) ...[
+                                  const SizedBox(width: 10),
+                                  OutlinedButton.icon(
+                                    onPressed: () => setState(() {
+                                      _fotoBaru = null;
+                                      _fotoBaruBytes = null;
+                                    }),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.danger,
+                                      side: const BorderSide(
+                                          color: AppColors.danger),
+                                      minimumSize: const Size(0, 44),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                    icon: const Icon(Icons.close, size: 18),
+                                    label: const Text('Batal'),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _fotoBaru != null
+                                  ? '${_fotoBaru!.name} • ${_ukuranFoto()} — akan diunggah saat disimpan'
+                                  : 'Format JPG, PNG, atau WEBP, maksimal 5 MB',
+                              style: TextStyle(
+                                  color: _fotoBaru != null
+                                      ? OC.primary
+                                      : OC.muted,
+                                  fontSize: 12,
+                                  fontWeight: _fotoBaru != null
+                                      ? FontWeight.w600
+                                      : FontWeight.w400),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ===================== INFORMASI PRODUK ====================
+                      _kartuSessi(
+                        ikon: Icons.restaurant_menu,
+                        judul: 'Informasi Produk',
+                        children: [
+                          _label('Nama Produk', wajib: true),
+                          TextFormField(
+                            controller: _namaCtrl,
+                            textCapitalization: TextCapitalization.words,
+                            maxLength: _namaMaksPanjang,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  _polaKarakterNamaValid),
+                              LengthLimitingTextInputFormatter(_namaMaksPanjang),
+                            ],
+                            decoration: _modernInputDecoration(
+                              hintText: 'Contoh: Nasi Kotak Ayam Geprek Spesial',
+                            ),
+                            onChanged: (_) {
+                              if (_errNamaServer != null) {
+                                setState(() => _errNamaServer = null);
+                              }
+                            },
+                            validator: (v) {
+                              if (_errNamaServer != null) return _errNamaServer;
+                              final teks = (v ?? '').trim();
+                              if (teks.isEmpty) return 'Nama produk wajib diisi';
+                              if (teks.length < _namaMinPanjang) {
+                                return 'Nama produk minimal $_namaMinPanjang karakter';
+                              }
+                              if (!_polaAdaHuruf.hasMatch(teks)) {
+                                return 'Nama produk harus mengandung huruf, tidak boleh hanya angka/simbol';
+                              }
+                              if (_polaAdaAngka.hasMatch(teks)) {
+                                return 'Nama produk tidak boleh mengandung angka';
+                              }
+                              if (!_polaKarakterNamaValid.hasMatch(teks)) {
+                                return "Hanya boleh huruf, spasi, dan tanda & - ' ( ) , .";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _label('Kategori Produk', wajib: true),
+                          Consumer<CategoryService>(
+                            builder: (context, categoryService, _) {
+                              final categories = categoryService.categories;
+                              final selected = categories
+                                      .any((c) => c.id == _idKategori)
+                                  ? _idKategori
+                                  : null;
+                              return DropdownButtonFormField<int>(
+                                initialValue: selected,
+                                isExpanded: true,
+                                items: categories
+                                    .map((Category category) =>
+                                        DropdownMenuItem(
+                                          value: category.id,
+                                          child: Text(category.name),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) {
+                                  if (v == null) return;
+                                  final category =
+                                      categories.firstWhere((c) => c.id == v);
+                                  setState(() {
+                                    _idKategori = v;
+                                    _kategori = category.name;
+                                  });
+                                },
+                                validator: (v) => v == null
+                                    ? categoryService.loading
+                                        ? 'Kategori sedang dimuat'
+                                        : categoryService.errorMessage ??
+                                            'Kategori wajib dipilih'
+                                    : null,
+                                decoration: _modernInputDecoration(),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _label('Harga Satuan', wajib: true),
+                          TextFormField(
+                            controller: _hargaCtrl,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(7),
+                              _PemformatRibuan(),
+                            ],
+                            decoration: _modernInputDecoration(
+                              hintText: 'Contoh: 15.000',
+                              prefixIcon: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 14),
+                                child: Text('Rp',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: OC.primary)),
                               ),
                             ),
+                            validator: (v) {
+                              final bersih = (v ?? '').replaceAll('.', '');
+                              if (bersih.isEmpty) return 'Harga wajib diisi';
+                              final n = int.tryParse(bersih);
+                              if (n == null) return 'Harga harus berupa angka';
+                              if (n < _hargaMinimal) {
+                                return 'Harga minimal ${formatRupiah(_hargaMinimal)}';
+                              }
+                              if (n > _hargaMaksimal) {
+                                return 'Harga maksimal ${formatRupiah(_hargaMaksimal)}';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _label('Deskripsi Menu'),
+                          TextFormField(
+                            controller: _deskripsiCtrl,
+                            maxLines: 3,
+                            maxLength: _deskripsiMaksPanjang,
+                            textCapitalization: TextCapitalization.sentences,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(
+                                  _deskripsiMaksPanjang),
+                            ],
+                            decoration: _modernInputDecoration(
+                              hintText: 'Ceritakan bahan & keunggulan produk...',
+                              counterText: null,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  if (_mode != ModePenjualan.preOrder) ...[
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-                      decoration: BoxDecoration(
-                        color: OC.box,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Row(
+                      const SizedBox(height: 16),
+
+                      // ==================== MODE PENJUALAN ====================
+                      _kartuSessi(
+                        ikon: Icons.tune,
+                        judul: 'Mode Penjualan Warung',
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Stok Ready Hari Ini',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14)),
-                                Text(
-                                  _mode == ModePenjualan.keduanya
-                                      ? 'Porsi tersedia hari ini untuk beli langsung'
-                                      : 'Jumlah porsi yang bisa dipesan hari ini',
-                                  style: const TextStyle(
-                                      fontSize: 11.5, color: OC.muted),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => _ubahStok(-1),
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: OC.primary),
-                          ),
-                          SizedBox(
-                            width: 62,
-                            child: TextFormField(
-                              controller: _stokCtrl,
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(
-                                    _stokMaksimal.toString().length),
-                              ],
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 16),
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding:
-                                      EdgeInsets.symmetric(vertical: 10)),
-                              onChanged: (v) {
-                                final n = int.tryParse(v);
-                                if (n != null && n > _stokMaksimal) {
-                                  _stokCtrl.text = _stokMaksimal.toString();
-                                  _stokCtrl.selection = TextSelection.collapsed(
-                                      offset: _stokCtrl.text.length);
-                                }
-                              },
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => _ubahStok(1),
-                            icon: const Icon(Icons.add_circle_outline,
-                                color: OC.primary),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (_mode != ModePenjualan.ready)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: OC.box,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          const Text(
+                              'Sesuaikan kesiapan dapur & kapasitas produksi Anda',
+                              style:
+                                  TextStyle(color: OC.muted, fontSize: 13)),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
-                                child: Text('Ketentuan Pre-Order (PO Acara)',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.w700)),
-                              ),
-                              MiniBadge('Catering',
-                                  bg: OC.peach,
-                                  fg: OC.amber),
+                                  child: _tombolMode(
+                                      'Ready', Icons.bolt, ModePenjualan.ready)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: _tombolMode('Pre-Order',
+                                      Icons.event_note, ModePenjualan.preOrder)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                  child: _tombolMode('Keduanya', Icons.done_all,
+                                      ModePenjualan.keduanya)),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                          // Info banner sesuai mode yang dipilih
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Container(
+                              key: ValueKey(_mode),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _mode == ModePenjualan.ready
+                                    ? const Color(0xFFE8F5E9)
+                                    : _mode == ModePenjualan.preOrder
+                                        ? const Color(0xFFFFF7ED)
+                                        : OC.mint,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _mode == ModePenjualan.ready
+                                        ? Icons.bolt_rounded
+                                        : _mode == ModePenjualan.preOrder
+                                            ? Icons.event_note_rounded
+                                            : Icons.done_all_rounded,
+                                    size: 16,
+                                    color: _mode == ModePenjualan.ready
+                                        ? const Color(0xFF15803D)
+                                        : _mode == ModePenjualan.preOrder
+                                            ? const Color(0xFFEA580C)
+                                            : OC.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _mode == ModePenjualan.ready
+                                          ? 'Ready Stock: produk tersedia sekarang, stok dibatasi per hari. Pelanggan bisa langsung beli.'
+                                          : _mode == ModePenjualan.preOrder
+                                              ? 'Pre-Order: pelanggan memesan dulu, Anda masak sesuai jumlah pesanan. Tidak ada stok harian.'
+                                              : 'Keduanya: tampil sebagai ready stock DAN bisa dipesan via Pre-Order untuk acara/katering.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: _mode == ModePenjualan.ready
+                                            ? const Color(0xFF15803D)
+                                            : _mode == ModePenjualan.preOrder
+                                                ? const Color(0xFFEA580C)
+                                                : OC.primary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          if (_mode != ModePenjualan.preOrder) ...[
+                            Container(
+                              padding:
+                                  const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                              decoration: BoxDecoration(
+                                color: OC.box,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Stok Ready Hari Ini',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 14)),
+                                        Text(
+                                          _mode == ModePenjualan.keduanya
+                                              ? 'Porsi tersedia hari ini untuk beli langsung'
+                                              : 'Jumlah porsi yang bisa dipesan hari ini',
+                                          style: const TextStyle(
+                                              fontSize: 11.5,
+                                              color: OC.muted),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _ubahStok(-1),
+                                    icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                        color: OC.primary),
+                                  ),
+                                  SizedBox(
+                                    width: 62,
+                                    child: TextFormField(
+                                      controller: _stokCtrl,
+                                      textAlign: TextAlign.center,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(
+                                            _stokMaksimal.toString().length),
+                                      ],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16),
+                                      decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 10)),
+                                      onChanged: (v) {
+                                        final n = int.tryParse(v);
+                                        if (n != null && n > _stokMaksimal) {
+                                          _stokCtrl.text =
+                                              _stokMaksimal.toString();
+                                          _stokCtrl.selection =
+                                              TextSelection.collapsed(
+                                                  offset:
+                                                      _stokCtrl.text.length);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _ubahStok(1),
+                                    icon: const Icon(Icons.add_circle_outline,
+                                        color: OC.primary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          if (_mode != ModePenjualan.ready)
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: OC.box,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
                                     children: [
-                                      const Text('Min. Order',
-                                          style: TextStyle(fontSize: 12)),
-                                      const SizedBox(height: 4),
-                                      TextFormField(
-                                        controller: _minOrderCtrl,
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly,
-                                          LengthLimitingTextInputFormatter(
-                                              _minOrderMaksimal
-                                                  .toString()
-                                                  .length),
-                                        ],
-                                        decoration: const InputDecoration(
-                                            suffixText: 'Porsi'),
-                                        validator: (v) {
-                                          if (_mode == ModePenjualan.ready) {
-                                            return null;
-                                          }
-                                          final n = int.tryParse(v ?? '');
-                                          if (n == null || n < 1) {
-                                            return 'Minimal order harus 1 porsi atau lebih';
-                                          }
-                                          return null;
-                                        },
+                                      const Expanded(
+                                        child: Text(
+                                            'Ketentuan Pre-Order (PO Acara)',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w700)),
+                                      ),
+                                      MiniBadge('Catering',
+                                          bg: OC.peach, fg: OC.amber),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Min. Order',
+                                                style: TextStyle(fontSize: 12)),
+                                            const SizedBox(height: 4),
+                                            TextFormField(
+                                              controller: _minOrderCtrl,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly,
+                                                LengthLimitingTextInputFormatter(
+                                                    _minOrderMaksimal
+                                                        .toString()
+                                                        .length),
+                                              ],
+                                              decoration:
+                                                  _modernInputDecoration(
+                                                      suffixText: 'Porsi'),
+                                              validator: (v) {
+                                                if (_mode ==
+                                                    ModePenjualan.ready) {
+                                                  return null;
+                                                }
+                                                final n =
+                                                    int.tryParse(v ?? '');
+                                                if (n == null || n < 1) {
+                                                  return 'Minimal order harus 1 porsi atau lebih';
+                                                }
+                                                return null;
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Waktu Masak',
+                                                style: TextStyle(fontSize: 12)),
+                                            const SizedBox(height: 4),
+                                            DropdownButtonFormField<String>(
+                                              initialValue: _waktuMasak,
+                                              isExpanded: true,
+                                              items: _waktuMasakOptions
+                                                  .map((w) => DropdownMenuItem(
+                                                      value: w, child: Text(w)))
+                                                  .toList(),
+                                              decoration:
+                                                  _modernInputDecoration(),
+                                              onChanged: (v) => setState(
+                                                  () => _waktuMasak = v!),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Waktu Masak',
-                                          style: TextStyle(fontSize: 12)),
-                                      const SizedBox(height: 4),
-                                      DropdownButtonFormField<String>(
-                                        initialValue: _waktuMasak,
-                                        isExpanded: true,
-                                        items: _waktuMasakOptions
-                                            .map((w) => DropdownMenuItem(
-                                                value: w, child: Text(w)))
-                                            .toList(),
-                                        onChanged: (v) => setState(() => _waktuMasak = v!),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                         ],
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-              KartuPutih(
-                radius: 16,
-                child: Row(
-                  children: [
-                    const Icon(Icons.storefront, color: OC.primary),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Tampilkan di Warung',
-                              style: TextStyle(fontWeight: FontWeight.w700)),
-                          Text('Produk langsung terlihat oleh pembeli sekitar',
-                              style: TextStyle(
-                                  color: OC.muted, fontSize: 12)),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: Colors.grey.shade200, width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.storefront, color: OC.primary),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Tampilkan di Warung',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w700)),
+                                  Text(
+                                      'Produk langsung terlihat oleh pembeli sekitar',
+                                      style: TextStyle(
+                                          color: OC.muted, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _tampilkanDiWarung,
+                              activeThumbColor: OC.primary,
+                              onChanged: (v) =>
+                                  setState(() => _tampilkanDiWarung = v),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Switch(
-                      value: _tampilkanDiWarung,
-                      activeThumbColor: OC.primary,
-                      onChanged: (v) => setState(() => _tampilkanDiWarung = v),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: OC.mint,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color: Colors.grey.shade200, width: 1),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.eco, color: OC.primary, size: 18),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Bahan pangan bersumber langsung dari kelompok tani mitra binaan Djajan UMKM.',
+                                style: TextStyle(fontSize: 12.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: OC.mint,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.eco, color: OC.primary, size: 18),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Bahan pangan bersumber langsung dari kelompok tani mitra binaan Djajan UMKM.',
-                        style: TextStyle(fontSize: 12.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    ),
-  ],
-),
-),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Row(
-            children: [
-              if (!_isEdit) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    color: OC.box,
-                    borderRadius: BorderRadius.circular(14),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border:
+              Border(top: BorderSide(color: Colors.grey.shade200, width: 1)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _menyimpan ? null : () => _simpan(tayangan: true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: OC.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: _menyimpan
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.check_circle_outline,
+                            color: Colors.white),
+                    label: Text(
+                      _menyimpan
+                          ? 'Menyimpan...'
+                          : (_isEdit
+                              ? 'Simpan Perubahan'
+                              : 'Simpan & Tayangkan'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  child: IconButton(
+                ),
+                if (!_isEdit) ...[
+                  const SizedBox(height: 6),
+                  TextButton(
                     onPressed:
                         _menyimpan ? null : () => _simpan(tayangan: false),
-                    icon: const Icon(Icons.bookmark_border,
-                        color: OC.primary),
-                    tooltip: 'Simpan sebagai draft (belum tayang)',
+                    child: const Text(
+                      'Simpan sebagai Draft (Belum Tayang)',
+                      style: TextStyle(
+                        color: OC.muted,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
+                ],
               ],
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _menyimpan ? null : () => _simpan(tayangan: true),
-                  icon: _menyimpan
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.check_circle_outline),
-                  label: Text(_menyimpan
-                      ? 'Menyimpan ke database...'
-                      : (_isEdit ? 'Simpan Perubahan' : 'Simpan & Tayangkan')),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -957,7 +1014,13 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
     required String judul,
     required List<Widget> children,
   }) {
-    return KartuPutih(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -968,7 +1031,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
               Expanded(
                 child: Text(judul,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 16.5)),
+                        fontWeight: FontWeight.w700, fontSize: 16)),
               ),
             ],
           ),
