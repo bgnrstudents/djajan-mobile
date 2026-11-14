@@ -797,47 +797,6 @@ class _TabBeranda extends StatelessWidget {
             const SizedBox(height: 14),
           ],
 
-          // 4. SHORTCUT / AKSI CEPAT (FLAT DESIGN)
-          Row(
-            children: [
-              Expanded(
-                child: _TombolShortcut(
-                  ikon: Icons.add_circle_outline,
-                  label: 'Tambah Produk',
-                  warnaIkon: OC.primary,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const TambahProdukScreen(),
-                      ),
-                    );
-                    onRefresh();
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _TombolShortcut(
-                  ikon: Icons.format_list_bulleted,
-                  label: 'Katalog Produk',
-                  warnaIkon: OC.primary,
-                  onTap: () => onPindahTab(1),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _TombolShortcut(
-                  ikon: Icons.receipt_long_outlined,
-                  label: 'Semua PO',
-                  warnaIkon: OC.primary,
-                  onTap: () => onPindahTab(2),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-
         ],
       ),
     );
@@ -1096,47 +1055,6 @@ class _KartuRingkasanBeranda extends StatelessWidget {
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TombolShortcut extends StatelessWidget {
-  final IconData ikon;
-  final String label;
-  final Color warnaIkon;
-  final VoidCallback onTap;
-
-  const _TombolShortcut({
-    required this.ikon,
-    required this.label,
-    required this.warnaIkon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
-        ),
-        child: Column(
-          children: [
-            Icon(ikon, color: warnaIkon, size: 22),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: OT.caption.copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),
