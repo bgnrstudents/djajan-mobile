@@ -7,6 +7,7 @@ import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../services/catalog_service.dart';
 import '../../../widgets/product_card.dart';
+import '../../../widgets/umkm_app_bar.dart';
 import '../../../widgets/umkm_card.dart';
 import '../cart/cart.dart';
 import '../../../services/cart_service.dart';
@@ -125,23 +126,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
     final hasError = catalog?.errorMessage != null;
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        backgroundColor: background,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Cari Produk & UMKM',
-          style: TextStyle(
-            color: textDark,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
-      ),
+      appBar: const DjajanAppBar(title: 'Cari Produk & UMKM'),
       body: isLoading && !hasProducts
           ? const Center(child: CircularProgressIndicator())
           : hasError && !hasProducts

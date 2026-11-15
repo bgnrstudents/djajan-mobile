@@ -5,6 +5,7 @@ import '../order/order_detail_screen.dart';
 import '../../../services/order_service.dart';
 import '../order/order_widgets.dart';
 import '../../../services/notification_service.dart';
+import '../../../widgets/umkm_app_bar.dart';
 
 /// Halaman pusat notifikasi: update pesanan, pembayaran, dan promo.
 class NotificationScreen extends StatelessWidget {
@@ -21,22 +22,8 @@ class NotificationScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        backgroundColor: background,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Notifikasi',
-          style: TextStyle(
-            color: textDark,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
+      appBar: DjajanAppBar(
+        title: 'Notifikasi',
         actions: [
           AnimatedBuilder(
             animation: service,

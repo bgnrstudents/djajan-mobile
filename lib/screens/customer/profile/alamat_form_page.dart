@@ -9,6 +9,7 @@ import '../../../models/customer_settings_models.dart';
 import '../../../services/api_service.dart';
 import '../../../services/customer_settings_service.dart';
 import '../../../widgets/osm_map_picker.dart';
+import '../../../widgets/umkm_app_bar.dart';
 import '../order/order_widgets.dart';
 
 /// Hasil yang dikembalikan oleh [AlamatFormPage] ke pemanggil.
@@ -74,7 +75,9 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
     final e = widget.existing;
     _labelCtrl = TextEditingController(text: e?.label ?? '');
     _addressCtrl = TextEditingController(text: e?.address ?? '');
-    _recipientCtrl = TextEditingController(text: e?.recipient ?? widget.defaultName);
+    _recipientCtrl = TextEditingController(
+      text: e?.recipient ?? widget.defaultName,
+    );
     _phoneCtrl = TextEditingController(text: e?.phone ?? widget.defaultPhone);
     _noteCtrl = TextEditingController(text: e?.note ?? '');
     _latitude = e?.latitude;
@@ -153,9 +156,14 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
           'https://nominatim.openstreetmap.org/reverse'
           '?lat=${pos.latitude}&lon=${pos.longitude}&format=json&accept-language=id',
         );
-        final res = await http.get(uri, headers: {
-          'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
-        }).timeout(const Duration(seconds: 6));
+        final res = await http
+            .get(
+              uri,
+              headers: {
+                'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
+              },
+            )
+            .timeout(const Duration(seconds: 6));
         if (res.statusCode == 200 && mounted) {
           final data = json.decode(res.body) as Map<String, dynamic>;
           alamat = data['display_name']?.toString() ?? '';
@@ -180,9 +188,8 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membaca GPS: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Gagal membaca GPS: $e')));
       }
     } finally {
       if (mounted) setState(() => _gettingGps = false);
@@ -212,15 +219,17 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
         primary: true,
       );
       if (!mounted) return;
-      Navigator.of(context).pop(AlamatFormResult(
-        label: _labelCtrl.text.trim(),
-        address: _addressCtrl.text.trim(),
-        recipient: _recipientCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
-        note: _noteCtrl.text.trim(),
-        latitude: _latitude,
-        longitude: _longitude,
-      ));
+      Navigator.of(context).pop(
+        AlamatFormResult(
+          label: _labelCtrl.text.trim(),
+          address: _addressCtrl.text.trim(),
+          recipient: _recipientCtrl.text.trim(),
+          phone: _phoneCtrl.text.trim(),
+          note: _noteCtrl.text.trim(),
+          latitude: _latitude,
+          longitude: _longitude,
+        ),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -237,22 +246,7 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
 
     return Scaffold(
       backgroundColor: OC.bg,
-      appBar: AppBar(
-        backgroundColor: OC.bg,
-        elevation: 0,
-        title: Text(
-          isEdit ? 'Edit Alamat' : 'Tambah Alamat',
-          style: const TextStyle(
-            color: OC.ink,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
+      appBar: DjajanAppBar(title: isEdit ? 'Edit Alamat' : 'Tambah Alamat'),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -411,10 +405,10 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
                 child: Text(
                   hasLocation
                       ? '${_latitude!.toStringAsFixed(6)}, '
-                          '${_longitude!.toStringAsFixed(6)}\n'
-                          'Lokasi tersimpan — kurir dapat menghitung ongkir otomatis'
+                            '${_longitude!.toStringAsFixed(6)}\n'
+                            'Lokasi tersimpan — kurir dapat menghitung ongkir otomatis'
                       : 'Lokasi belum disetel. Tanpa lokasi, layanan kurir tidak dapat '
-                          'menghitung ongkir otomatis.',
+                            'menghitung ongkir otomatis.',
                   style: TextStyle(
                     fontSize: 12.5,
                     color: hasLocation ? OC.primary : OC.muted,
@@ -435,12 +429,20 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.my_location, color: Colors.white, size: 20),
             label: Text(
-              _gettingGps ? 'Mendeteksi Lokasi GPS...' : 'Gunakan Lokasi GPS Saya Saat Ini',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              _gettingGps
+                  ? 'Mendeteksi Lokasi GPS...'
+                  : 'Gunakan Lokasi GPS Saya Saat Ini',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: OC.primary,
@@ -458,12 +460,19 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
           child: OutlinedButton.icon(
             onPressed: _pickLocation,
             icon: Icon(
-              hasLocation ? Icons.edit_location_alt_outlined : Icons.add_location_outlined,
+              hasLocation
+                  ? Icons.edit_location_alt_outlined
+                  : Icons.add_location_outlined,
               color: OC.primary,
             ),
             label: Text(
-              hasLocation ? 'Ubah Titik di Peta OpenStreetMap' : 'Pilih Titik di Peta OpenStreetMap',
-              style: const TextStyle(color: OC.primary, fontWeight: FontWeight.w600),
+              hasLocation
+                  ? 'Ubah Titik di Peta OpenStreetMap'
+                  : 'Pilih Titik di Peta OpenStreetMap',
+              style: const TextStyle(
+                color: OC.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -484,4 +493,3 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
     );
   }
 }
-

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_config.dart';
 import '../../../models/order.dart';
 import '../../../services/order_service.dart';
+import '../../../widgets/umkm_app_bar.dart';
 import 'order_widgets.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
@@ -19,26 +20,18 @@ class OrderConfirmationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
+      appBar: DjajanAppBar(
+        centerTitle: true,
+        titleWidget: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/images/logoNoBg.png',
-              height: 24,
-            ),
+            Image.asset('assets/images/logoNoBg.png', height: 24),
             const Text(
               'Djajan · Dari Desa',
               style: TextStyle(fontSize: 8, color: Colors.grey),
             ),
           ],
         ),
-        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -68,17 +61,10 @@ class OrderConfirmationScreen extends StatelessWidget {
               color: AppConfig.primaryColor,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 40,
-            ),
+            child: const Icon(Icons.check, color: Colors.white, size: 40),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Pembayaran Berhasil!',
-            style: OT.pageTitle,
-          ),
+          const Text('Pembayaran Berhasil!', style: OT.pageTitle),
           const SizedBox(height: 8),
           Text(
             'Pesanan ${order.refId} telah dikonfirmasi',
@@ -115,14 +101,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      order.vendorNames,
-                      style: OT.cardTitle,
-                    ),
-                    Text(
-                      order.vendors.first.umkmType,
-                      style: OT.caption,
-                    ),
+                    Text(order.vendorNames, style: OT.cardTitle),
+                    Text(order.vendors.first.umkmType, style: OT.caption),
                   ],
                 ),
               ),
@@ -135,14 +115,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'TOTAL',
-                      style: OT.label,
-                    ),
-                    Text(
-                      rupiah(order.total),
-                      style: OT.moneyLarge,
-                    ),
+                    Text('TOTAL', style: OT.label),
+                    Text(rupiah(order.total), style: OT.moneyLarge),
                   ],
                 ),
               ),
@@ -151,17 +125,28 @@ class OrderConfirmationScreen extends StatelessWidget {
                 children: [
                   Text(
                     'STATUS',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(
                       'Diterima',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
                     ),
                   ),
                 ],
@@ -214,15 +199,13 @@ class OrderConfirmationScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Langkah Selanjutnya',
-            style: OT.sectionTitle,
-          ),
+          const Text('Langkah Selanjutnya', style: OT.sectionTitle),
           const SizedBox(height: 20),
           _buildNextStepItem(
             icon: Icons.notifications_active,
             title: 'Notifikasi UMKM',
-            description: '${order.vendorNames} akan menerima notifikasi pembayaran pesanan Anda.',
+            description:
+                '${order.vendorNames} akan menerima notifikasi pembayaran pesanan Anda.',
           ),
           const SizedBox(height: 16),
           _buildNextStepItem(
@@ -234,7 +217,8 @@ class OrderConfirmationScreen extends StatelessWidget {
           _buildNextStepItem(
             icon: Icons.track_changes,
             title: 'Pantau Status',
-            description: 'Pantau perkembangan pesanan Anda di halaman "Pesanan".',
+            description:
+                'Pantau perkembangan pesanan Anda di halaman "Pesanan".',
           ),
         ],
       ),
@@ -262,9 +246,22 @@ class OrderConfirmationScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(description, style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.3)),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                  height: 1.3,
+                ),
+              ),
             ],
           ),
         ),
@@ -297,11 +294,17 @@ class OrderConfirmationScreen extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConfig.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text(
                 'Kembali ke Beranda',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -315,16 +318,28 @@ class OrderConfirmationScreen extends StatelessWidget {
                 },
                 child: const Text(
                   'Lihat Detail Pesanan',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppConfig.primaryColor),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppConfig.primaryColor,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               IconButton(
-                icon: const Icon(Icons.share, color: AppConfig.primaryColor, size: 20),
+                icon: const Icon(
+                  Icons.share,
+                  color: AppConfig.primaryColor,
+                  size: 20,
+                ),
                 onPressed: () {},
               ),
               IconButton(
-                icon: const Icon(Icons.download, color: AppConfig.primaryColor, size: 20),
+                icon: const Icon(
+                  Icons.download,
+                  color: AppConfig.primaryColor,
+                  size: 20,
+                ),
                 onPressed: () {},
               ),
             ],
