@@ -367,22 +367,25 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: OC.bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            UmkmAppBar(
-              title: _isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
-              leading: DjajanBackButton(
-                onPressed: () => Navigator.maybePop(context),
-              ),
-            ),
-            Expanded(
-              child: AbsorbPointer(
-                absorbing: _menyimpan,
-                child: Form(
-                  key: _formKey,
-                  child: ListView(
+      backgroundColor: const Color(0xFFF3F7F3),
+      body: Stack(
+        children: [
+          const HeaderBotanicalBackdrop(height: 250),
+          SafeArea(
+            child: Column(
+              children: [
+                UmkmAppBar(
+                  title: _isEdit ? 'Edit Produk' : 'Tambah Produk Baru',
+                  leading: DjajanBackButton(
+                    onPressed: () => Navigator.maybePop(context),
+                  ),
+                ),
+                Expanded(
+                  child: AbsorbPointer(
+                    absorbing: _menyimpan,
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                     children: [
                       // =================== FOTO PRODUK (UPLOAD ASLI) ===================
@@ -986,7 +989,9 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
+    ],
+  ),
+  bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
