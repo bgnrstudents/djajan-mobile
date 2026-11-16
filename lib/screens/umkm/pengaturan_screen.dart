@@ -1493,9 +1493,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final bodyContent = ListView(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 32),
       children: [
-        // 0. HEADER SCROLLABLE PENGATURAN USAHA ALA MOCKUP (Floating Glass Card)
-        UmkmFloatingHeaderCard(
-          margin: const EdgeInsets.only(top: 4, bottom: 20),
+        // 0. HEADER SCROLLABLE PENGATURAN USAHA ALA MOCKUP (Seamless Edge-to-Edge)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
           child: Row(
             children: [
               if (!widget.isTab) ...[

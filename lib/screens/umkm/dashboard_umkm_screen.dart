@@ -165,10 +165,9 @@ class _TabBeranda extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
         children: [
-          // 0. HEADER BERANDA ALA MOCKUP (Floating Glass Card)
-          UmkmFloatingHeaderCard(
-            margin: const EdgeInsets.only(top: 4, bottom: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          // 0. HEADER BERANDA ALA MOCKUP (Seamless Edge-to-Edge)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
             child: Row(
               children: [
                 SizedBox(
@@ -309,9 +308,16 @@ class _TabBeranda extends StatelessWidget {
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDF6ED),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFFD3E7D3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F2E1B).withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -735,40 +741,49 @@ class _TabBeranda extends StatelessWidget {
             }),
 
           if (r.produkTerlaris.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             const Text('Produk Terlaris', style: OT.cardTitle),
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                children: r.produkTerlaris.take(3).map((produk) {
-                  String? gambarUrl;
-                  for (final item in semuaProduk) {
-                    if (item.namaProduk == produk.namaProduk) {
-                      gambarUrl = item.gambarUrl;
-                      break;
-                    }
-                  }
+            ...r.produkTerlaris.take(3).map((produk) {
+              String? gambarUrl;
+              for (final item in semuaProduk) {
+                if (item.namaProduk == produk.namaProduk) {
+                  gambarUrl = item.gambarUrl;
+                  break;
+                }
+              }
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    child: Row(
-                      children: [
-                        GambarJaringan(
-                          url: gambarUrl,
-                          width: 42,
-                          height: 42,
-                          radius: 9,
-                          ikonKosong: Icons.restaurant_rounded,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Row(
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2EBE2), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F2E1B).withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    GambarJaringan(
+                      url: gambarUrl,
+                      width: 48,
+                      height: 48,
+                      radius: 12,
+                      ikonKosong: Icons.restaurant_rounded,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
                             children: [
                               Flexible(
                                 child: Text(
@@ -776,7 +791,7 @@ class _TabBeranda extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
                                     color: OC.ink,
                                   ),
@@ -785,27 +800,57 @@ class _TabBeranda extends StatelessWidget {
                               const SizedBox(width: 4),
                               const Icon(
                                 Icons.star_rounded,
-                                size: 15,
-                                color: OC.accent,
+                                size: 16,
+                                color: Color(0xFFF59E0B),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${produk.jumlahTerjual} terjual',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: OC.muted,
+                          const SizedBox(height: 3),
+                          Text(
+                            '${produk.jumlahTerjual} terjual',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: OC.muted,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 13,
+                            color: Color(0xFFD97706),
+                          ),
+                          SizedBox(width: 3),
+                          Text(
+                            'Terlaris',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFD97706),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
           const SizedBox(height: 18),
 
@@ -1295,17 +1340,14 @@ class _TabProdukState extends State<_TabProduk> {
           ListView(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 170),
             children: [
-              // 0. HEADER SCROLLABLE KATALOG PRODUK ALA MOCKUP (Floating Glass Card)
-              const UmkmFloatingHeaderCard(
-                margin: EdgeInsets.only(top: 4, bottom: 20),
-                child: UmkmHeaderRow(
-                  padding: EdgeInsets.zero,
-                  iconBadge: UmkmSquircleIcon(
-                    icon: Icons.inventory_2_rounded,
-                  ),
-                  title: 'Katalog Produk',
-                  subtitle: 'Kelola produk dan stok jualanmu',
+              // 0. HEADER SCROLLABLE KATALOG PRODUK ALA MOCKUP (Seamless Edge-to-Edge)
+              const UmkmHeaderRow(
+                padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
+                iconBadge: UmkmSquircleIcon(
+                  icon: Icons.inventory_2_rounded,
                 ),
+                title: 'Katalog Produk',
+                subtitle: 'Kelola produk dan stok jualanmu',
               ),
 
               // 1. STATISTIK SUMMARY CARD (3 Kolom ala referensi)
@@ -2712,17 +2754,14 @@ class _TabPesananState extends State<_TabPesanan> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
         children: [
-          // 0. HEADER SCROLLABLE PESANAN ALA MOCKUP (Floating Glass Card)
-          const UmkmFloatingHeaderCard(
-            margin: EdgeInsets.only(top: 4, bottom: 20),
-            child: UmkmHeaderRow(
-              padding: EdgeInsets.zero,
-              iconBadge: UmkmSquircleIcon(
-                icon: Icons.shopping_bag_rounded,
-              ),
-              title: 'Pesanan',
-              subtitle: 'Kelola pesanan dan transaksi',
+          // 0. HEADER SCROLLABLE PESANAN ALA MOCKUP (Seamless Edge-to-Edge)
+          const UmkmHeaderRow(
+            padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
+            iconBadge: UmkmSquircleIcon(
+              icon: Icons.shopping_bag_rounded,
             ),
+            title: 'Pesanan',
+            subtitle: 'Kelola pesanan dan transaksi',
           ),
 
           // 1. STATISTIK PESANAN SUMMARY (Total Pesanan | Perlu Tindakan)
