@@ -165,10 +165,9 @@ class _TabBeranda extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
         children: [
-          // 0. HEADER BERANDA ALA MOCKUP (Floating Glass Card)
-          UmkmFloatingHeaderCard(
-            margin: const EdgeInsets.only(top: 4, bottom: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          // 0. HEADER BERANDA ALA MOCKUP (Seamless Edge-to-Edge)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
             child: Row(
               children: [
                 SizedBox(
@@ -309,9 +308,16 @@ class _TabBeranda extends StatelessWidget {
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDF6ED),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFFD3E7D3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F2E1B).withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1295,17 +1301,14 @@ class _TabProdukState extends State<_TabProduk> {
           ListView(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 170),
             children: [
-              // 0. HEADER SCROLLABLE KATALOG PRODUK ALA MOCKUP (Floating Glass Card)
-              const UmkmFloatingHeaderCard(
-                margin: EdgeInsets.only(top: 4, bottom: 20),
-                child: UmkmHeaderRow(
-                  padding: EdgeInsets.zero,
-                  iconBadge: UmkmSquircleIcon(
-                    icon: Icons.inventory_2_rounded,
-                  ),
-                  title: 'Katalog Produk',
-                  subtitle: 'Kelola produk dan stok jualanmu',
+              // 0. HEADER SCROLLABLE KATALOG PRODUK ALA MOCKUP (Seamless Edge-to-Edge)
+              const UmkmHeaderRow(
+                padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
+                iconBadge: UmkmSquircleIcon(
+                  icon: Icons.inventory_2_rounded,
                 ),
+                title: 'Katalog Produk',
+                subtitle: 'Kelola produk dan stok jualanmu',
               ),
 
               // 1. STATISTIK SUMMARY CARD (3 Kolom ala referensi)
@@ -2712,17 +2715,14 @@ class _TabPesananState extends State<_TabPesanan> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
         children: [
-          // 0. HEADER SCROLLABLE PESANAN ALA MOCKUP (Floating Glass Card)
-          const UmkmFloatingHeaderCard(
-            margin: EdgeInsets.only(top: 4, bottom: 20),
-            child: UmkmHeaderRow(
-              padding: EdgeInsets.zero,
-              iconBadge: UmkmSquircleIcon(
-                icon: Icons.shopping_bag_rounded,
-              ),
-              title: 'Pesanan',
-              subtitle: 'Kelola pesanan dan transaksi',
+          // 0. HEADER SCROLLABLE PESANAN ALA MOCKUP (Seamless Edge-to-Edge)
+          const UmkmHeaderRow(
+            padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
+            iconBadge: UmkmSquircleIcon(
+              icon: Icons.shopping_bag_rounded,
             ),
+            title: 'Pesanan',
+            subtitle: 'Kelola pesanan dan transaksi',
           ),
 
           // 1. STATISTIK PESANAN SUMMARY (Total Pesanan | Perlu Tindakan)

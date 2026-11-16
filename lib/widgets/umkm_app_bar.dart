@@ -440,7 +440,7 @@ class UmkmHeaderRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.rightAction,
-    this.padding = const EdgeInsets.fromLTRB(16, 12, 16, 14),
+    this.padding = const EdgeInsets.fromLTRB(0, 4, 0, 16),
   });
 
   @override
