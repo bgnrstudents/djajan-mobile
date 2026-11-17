@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../../models/umkm_seller_models.dart';
 import '../../services/api_service.dart';
+import '../../services/category_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/umkm_app_bar.dart';
 import 'detail_pesanan_screen.dart';
 import '../auth/customer/order/order_widgets.dart';
 import '../../widgets/umkm_bottom_navigation.dart';
@@ -27,6 +29,7 @@ class DashboardUmkmScreen extends StatefulWidget {
 class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
   int _tab = 0;
   String _kataKunci = '';
+  bool _pendapatanBulanan = true;
 
   @override
   void initState() {
@@ -40,80 +43,10 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
   Future<void> _refresh() =>
       context.read<UmkmDataService>().muatSemua(tampilkanLoading: false);
 
-  Widget _buildDynamicHeader(UmkmProfile profile, UmkmDataService service) {
-    switch (_tab) {
-      case 0:
-        return DjajanPageHeader(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          leftWidget: Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: GambarJaringan(
-                  url: profile.fotoProfilUrl,
-                  width: 44,
-                  height: 44,
-                  radius: 22,
-                  ikonKosong: Icons.storefront,
-                  cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(profile.namaUsaha, style: OT.pageTitle),
-                    const SizedBox(height: 3),
-                    MiniBadge(
-                      profile.tokoAktif ? 'Toko Aktif' : 'Toko Tutup',
-                      bg: profile.tokoAktif ? OC.mint : OC.box,
-                      fg: profile.tokoAktif ? OC.mintText : OC.muted,
-                      ikon: profile.tokoAktif
-                          ? Icons.check_circle
-                          : Icons.do_not_disturb_on,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          rightAction: IconButton(
-            icon: const Icon(Icons.swap_horiz_rounded, color: OC.muted),
-            tooltip: 'Mode Pelanggan',
-            onPressed: _switchToCustomer,
-          ),
-        );
-      case 1:
-        return DjajanPageHeader(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: 'Katalog Produk',
-          subtitle: '${service.produkList.length} produk terdaftar',
-        );
-      case 2:
-        return DjajanPageHeader(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: 'Pesanan Masuk',
-          subtitle: '${service.pesananList.length} total pesanan pelanggan',
-        );
-      case 3:
-      default:
-        return const DjajanPageHeader(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-          title: 'Pengaturan Usaha',
-          subtitle: 'Kelola profil, operasional, & ongkir',
-        );
-    }
+  Future<void> _tambahProduk() async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const TambahProdukScreen()));
+    if (mounted) await _refresh();
   }
 
   Future<void> _switchToCustomer() async {
@@ -142,61 +75,50 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final profile = service.profile;
-
     return Scaffold(
-      backgroundColor: OC.bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildDynamicHeader(profile, service),
-            Expanded(
-              child:
-                  service.memuat &&
-                      service.produkList.isEmpty &&
-                      service.pesananList.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : service.pesanError != null && service.produkList.isEmpty
-                  ? TampilanError(
-                      pesan: service.pesanError!,
-                      onCobaLagi: () => service.muatSemua(),
-                    )
-                  : IndexedStack(
-                      index: _tab,
-                      children: [
-                        _TabBeranda(
-                          service: service,
-                          onPindahTab: (i) => setState(() => _tab = i),
-                          onRefresh: _refresh,
-                        ),
-                        _TabProduk(
-                          service: service,
-                          kataKunci: _kataKunci,
-                          onCari: (v) => setState(() => _kataKunci = v),
-                          onRefresh: _refresh,
-                        ),
-                        _TabPesanan(service: service, onRefresh: _refresh),
-                        const PengaturanScreen(isTab: true),
-                      ],
-                    ),
-            ),
-          ],
-        ),
+      backgroundColor: const Color(0xFFF3F7F3),
+      body: Stack(
+        children: [
+          // 1. Decorative Botanical Leaf Gradient Header (ala referensi mockup)
+          const HeaderBotanicalBackdrop(height: 250),
+
+          // 2. Main Content (Scrollable dengan Header di dalam masing-masing tab)
+          SafeArea(
+            child: service.memuat &&
+                    service.produkList.isEmpty &&
+                    service.pesananList.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : service.pesanError != null && service.produkList.isEmpty
+                ? TampilanError(
+                    pesan: service.pesanError!,
+                    onCobaLagi: () => service.muatSemua(),
+                  )
+                : IndexedStack(
+                    index: _tab,
+                    children: [
+                      _TabBeranda(
+                        service: service,
+                        onPindahTab: (i) => setState(() => _tab = i),
+                        onRefresh: _refresh,
+                        periodeBulanan: _pendapatanBulanan,
+                        onPilihPeriodeBulanan: (value) =>
+                            setState(() => _pendapatanBulanan = value),
+                        onPindahCustomer: _switchToCustomer,
+                      ),
+                      _TabProduk(
+                        service: service,
+                        kataKunci: _kataKunci,
+                        onCari: (v) => setState(() => _kataKunci = v),
+                        onRefresh: _refresh,
+                        onTambah: _tambahProduk,
+                      ),
+                      _TabPesanan(service: service, onRefresh: _refresh),
+                      const PengaturanScreen(isTab: true),
+                    ],
+                  ),
+          ),
+        ],
       ),
-      floatingActionButton: _tab == 1
-          ? FloatingActionButton.extended(
-              backgroundColor: OC.primary,
-              foregroundColor: Colors.white,
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const TambahProdukScreen()),
-                );
-                if (mounted) _refresh();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Produk'),
-            )
-          : null,
       bottomNavigationBar: UmkmBottomNavigation(
         currentIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
@@ -211,11 +133,17 @@ class _TabBeranda extends StatelessWidget {
   final UmkmDataService service;
   final ValueChanged<int> onPindahTab;
   final Future<void> Function() onRefresh;
+  final bool periodeBulanan;
+  final ValueChanged<bool> onPilihPeriodeBulanan;
+  final VoidCallback onPindahCustomer;
 
   const _TabBeranda({
     required this.service,
     required this.onPindahTab,
     required this.onRefresh,
+    required this.periodeBulanan,
+    required this.onPilihPeriodeBulanan,
+    required this.onPindahCustomer,
   });
 
   @override
@@ -223,6 +151,10 @@ class _TabBeranda extends StatelessWidget {
     final r = service.ringkasan;
     final pesananTerbaru = service.pesananList.take(3).toList();
     final semuaProduk = service.produkList;
+    final totalPendapatan = periodeBulanan ? r.omzetPeriode : r.omzetDiterima;
+    final jumlahPesananPendapatan = periodeBulanan
+        ? r.totalPesananPeriode
+        : r.pesananDiterima;
     final stokHabis = semuaProduk
         .where((p) => p.modePenjualan != ModePenjualan.preOrder && p.stok == 0)
         .length;
@@ -233,10 +165,210 @@ class _TabBeranda extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
         children: [
-          // 1. HERO CARD OMZET / TOTAL PENDAPATAN
-          KartuPutih(
-            radius: 18,
-            padding: const EdgeInsets.all(18),
+          // 0. HEADER BERANDA ALA MOCKUP (Seamless Edge-to-Edge)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFFD8EBD8),
+                            width: 1,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(13),
+                          child: service.profile.fotoProfilUrl != null &&
+                                  service.profile.fotoProfilUrl!.isNotEmpty
+                              ? GambarJaringan(
+                                  url: service.profile.fotoProfilUrl,
+                                  width: 44,
+                                  height: 44,
+                                  radius: 13,
+                                  ikonKosong: Icons.storefront_rounded,
+                                )
+                              : const Center(
+                                  child: Icon(
+                                    Icons.storefront_rounded,
+                                    size: 24,
+                                    color: Color(0xFF047857),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(width: 1.2, height: 26, color: const Color(0xFFD6E2D6)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              service.profile.namaUsaha,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w800,
+                                color: OC.ink,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                            color: OC.ink,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: service.profile.tokoAktif
+                                  ? const Color(0xFF10B981)
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              service.profile.tokoAktif
+                                  ? 'Buka · Siap Terima Pesanan'
+                                  : 'Tutup · Toko Libur',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: service.profile.tokoAktif
+                                    ? const Color(0xFF047857)
+                                    : OC.muted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onPindahCustomer,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFD3E7D3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F2E1B).withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 14,
+                            color: Color(0xFF047857),
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Mode Belanja',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF047857),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 1. TOTAL PENDAPATAN
+          Container(
+            clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.fromLTRB(19, 17, 19, 16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF103D20),
+                  Color(0xFF175D2B),
+                  Color(0xFF287842),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF103D20).withValues(alpha: 0.2),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -246,129 +378,483 @@ class _TabBeranda extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          width: 7,
+                          height: 7,
                           decoration: const BoxDecoration(
-                            color: OC.mintSoft,
+                            color: Color(0xFFFFC857),
                             shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.account_balance_wallet_outlined,
-                            size: 16,
-                            color: OC.primary,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
+                        const Text(
                           'TOTAL PENDAPATAN',
-                          style: OT.label.copyWith(letterSpacing: 0.8),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ],
                     ),
-                    MiniBadge(
-                      '${r.pesananDiterima} Selesai',
-                      bg: OC.mintSoft,
-                      fg: OC.primary,
-                      ikon: Icons.verified_outlined,
+                    PopupMenuButton<bool>(
+                      tooltip: 'Filter pendapatan',
+                      initialValue: periodeBulanan,
+                      onSelected: onPilihPeriodeBulanan,
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(value: true, child: Text('Bulan Ini')),
+                        PopupMenuItem(value: false, child: Text('Semua Waktu')),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              periodeBulanan ? 'Bulan Ini' : 'Semua Waktu',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Colors.white,
+                              size: 15,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 17),
                 Text(
-                  rupiah(r.omzetDiterima),
-                  style: OT.moneyLarge.copyWith(
-                    fontSize: 26,
-                    color: OC.primary,
-                    fontWeight: FontWeight.w900,
+                  rupiah(totalPendapatan),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.8,
+                    height: 1.05,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Akumulasi omzet bersih dari pesanan yang telah selesai.',
-                  style: OT.caption,
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.13),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.receipt_long_outlined,
+                            size: 14,
+                            color: Color(0xFFD8EBDD),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '$jumlahPesananPendapatan pesanan',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Text(
+                        periodeBulanan
+                            ? 'Omzet bersih periode ini'
+                            : 'Akumulasi omzet bersih',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFD8EBDD),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // 2. TIGA KARTU METRIK CEPAT
-          Row(
+          // 2. RINGKASAN USAHA
+          const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: Text('Ringkasan Usaha', style: OT.cardTitle),
+          ),
+          Column(
             children: [
-              Expanded(
-                child: _KartuStatistik(
-                  ikon: Icons.notifications_active_outlined,
-                  nilai: '${r.pesananBaru}',
-                  label: 'Perlu Konfirmasi',
-                  soroti: r.pesananBaru > 0,
-                  onTap: () => onPindahTab(2),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _KartuRingkasanBeranda(
+                      ikon: Icons.notifications_none_rounded,
+                      nilai: '${r.pesananBaru}',
+                      label: 'Perlu Konfirmasi',
+                      warnaAksen: OC.amber,
+                      onTap: () => onPindahTab(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _KartuRingkasanBeranda(
+                      ikon: Icons.inventory_2_outlined,
+                      nilai: '${r.pesananDiterima}',
+                      label: 'Pesanan Diterima',
+                      warnaAksen: OC.primary,
+                      onTap: () => onPindahTab(2),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _KartuStatistik(
-                  ikon: Icons.task_alt,
-                  nilai: '${r.pesananDiterima}',
-                  label: 'Selesai',
-                  onTap: () => onPindahTab(2),
-                ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _KartuRingkasanBeranda(
+                      ikon: Icons.storefront_outlined,
+                      nilai: '${r.produkTayang}',
+                      label: 'Produk Tayang',
+                      warnaAksen: OC.primary,
+                      onTap: () => onPindahTab(1),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _KartuRingkasanBeranda(
+                      ikon: Icons.remove_shopping_cart_outlined,
+                      nilai: '${r.stokHabis}',
+                      label: 'Stok Habis',
+                      warnaAksen: OC.danger,
+                      onTap: () => onPindahTab(1),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _KartuStatistik(
-                  ikon: Icons.inventory_2_outlined,
-                  nilai: '${r.produkTayang}',
-                  label: 'Tayang',
-                  onTap: () => onPindahTab(1),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // 3. PESANAN TERBARU
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Pesanan Terbaru', style: OT.cardTitle),
+              TextButton(
+                onPressed: () => onPindahTab(2),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF1B4332),
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Row(
+                  children: [
+                    Text(
+                      'Lihat Semua',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(width: 3),
+                    Icon(Icons.arrow_forward_rounded, size: 14),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-
-          KartuPutih(
-            radius: 16,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Ringkasan periode ini', style: OT.cardTitle),
-                const SizedBox(height: 8),
-                Text(
-                  '${r.totalPesananPeriode} pesanan • ${rupiah(r.omzetPeriode)} omzet',
-                  style: OT.secondary,
+          const SizedBox(height: 10),
+          if (pesananTerbaru.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: const Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 32, color: OC.faint),
+                    SizedBox(height: 7),
+                    Text('Belum ada pesanan masuk', style: OT.secondary),
+                  ],
                 ),
-                if (r.produkTerlaris.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Text('Produk terlaris', style: OT.item),
-                  const SizedBox(height: 6),
-                  ...r.produkTerlaris
-                      .take(3)
-                      .map(
-                        (produk) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
+              ),
+            )
+          else
+            ...pesananTerbaru.map((p) {
+              final itemUtama = p.items.isEmpty ? null : p.items.first;
+              final ringkasanItem = itemUtama == null
+                  ? '${p.totalPorsi} porsi'
+                  : '${itemUtama.namaProduk} (${itemUtama.jumlah} porsi)';
+              final isSelesai = p.status == StatusPesanan.selesai;
+              final isBaru = p.status == StatusPesanan.poBaru;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            DetailPesananScreen(idPesanan: p.idPesanan),
+                      ),
+                    );
+                    await onRefresh();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF1F5F2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long_outlined,
+                            size: 18,
+                            color: Color(0xFF1B4332),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  produk.namaProduk,
-                                  style: OT.secondary,
+                              Text(
+                                '${p.namaPembeli} • $ringkasanItem',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: OC.ink,
                                 ),
                               ),
+                              const SizedBox(height: 4),
                               Text(
-                                '${produk.jumlahTerjual} terjual',
-                                style: OT.caption,
+                                '${p.idPesanan} • ${DateFormat('dd MMM', 'id_ID').format(p.tanggalPesan)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: OC.faint,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              rupiah(p.totalDiterimaMitra),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: OC.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isBaru
+                                    ? OC.peach
+                                    : const Color(0xFFE7F3E9),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                p.status.label,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isBaru
+                                      ? OC.amber
+                                      : isSelesai
+                                      ? const Color(0xFF1B4332)
+                                      : OC.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
 
-          // 3. PERINGATAN STOK HABIS (JIKA ADA)
+          if (r.produkTerlaris.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Text('Produk Terlaris', style: OT.cardTitle),
+            const SizedBox(height: 10),
+            ...r.produkTerlaris.take(3).map((produk) {
+              String? gambarUrl;
+              for (final item in semuaProduk) {
+                if (item.namaProduk == produk.namaProduk) {
+                  gambarUrl = item.gambarUrl;
+                  break;
+                }
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2EBE2), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F2E1B).withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    GambarJaringan(
+                      url: gambarUrl,
+                      width: 48,
+                      height: 48,
+                      radius: 12,
+                      ikonKosong: Icons.restaurant_rounded,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  produk.namaProduk,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: OC.ink,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 16,
+                                color: Color(0xFFF59E0B),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${produk.jumlahTerjual} terjual',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: OC.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 13,
+                            color: Color(0xFFD97706),
+                          ),
+                          SizedBox(width: 3),
+                          Text(
+                            'Terlaris',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFD97706),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+          const SizedBox(height: 18),
+
+          // 4. PERINGATAN STOK HABIS
           if (stokHabis > 0) ...[
             InkWell(
               borderRadius: BorderRadius.circular(14),
@@ -379,7 +865,7 @@ class _TabBeranda extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: OC.peachSoft,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: OC.peach),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Row(
                   children: [
@@ -412,174 +898,26 @@ class _TabBeranda extends StatelessWidget {
             ),
             const SizedBox(height: 14),
           ],
-
-          // 4. SHORTCUT / AKSI CEPAT
-          Row(
-            children: [
-              Expanded(
-                child: _TombolShortcut(
-                  ikon: Icons.add_circle_outline,
-                  label: 'Tambah Produk',
-                  warnaIkon: OC.primary,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const TambahProdukScreen(),
-                      ),
-                    );
-                    onRefresh();
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _TombolShortcut(
-                  ikon: Icons.format_list_bulleted,
-                  label: 'Katalog Produk',
-                  warnaIkon: OC.primary,
-                  onTap: () => onPindahTab(1),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _TombolShortcut(
-                  ikon: Icons.receipt_long_outlined,
-                  label: 'Semua PO',
-                  warnaIkon: OC.primary,
-                  onTap: () => onPindahTab(2),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // 5. PESANAN TERBARU
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Pesanan Terbaru', style: OT.cardTitle),
-              if (service.pesananList.isNotEmpty)
-                TextButton(
-                  onPressed: () => onPindahTab(2),
-                  child: Text(
-                    'Lihat Semua',
-                    style: OT.caption.copyWith(
-                      color: OC.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-
-          if (pesananTerbaru.isEmpty)
-            const KartuPutih(
-              radius: 16,
-              padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.inbox_outlined, size: 36, color: OC.faint),
-                    SizedBox(height: 8),
-                    Text('Belum ada pesanan masuk', style: OT.secondary),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...pesananTerbaru.map(
-              (p) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            DetailPesananScreen(idPesanan: p.idPesanan),
-                      ),
-                    );
-                    await onRefresh();
-                  },
-                  child: KartuPutih(
-                    radius: 16,
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: const BoxDecoration(
-                            color: OC.box,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.receipt_outlined,
-                            size: 20,
-                            color: OC.muted,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text('#${p.idPesanan}', style: OT.item),
-                                  const Spacer(),
-                                  Text(
-                                    rupiah(p.totalDiterimaMitra),
-                                    style: OT.money.copyWith(color: OC.primary),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Text(
-                                    '${p.namaPembeli} • ${p.totalPorsi} porsi',
-                                    style: OT.caption,
-                                  ),
-                                  const Spacer(),
-                                  MiniBadge(
-                                    p.status.label,
-                                    bg: p.status == StatusPesanan.poBaru
-                                        ? OC.peach
-                                        : OC.mintSoft,
-                                    fg: p.status == StatusPesanan.poBaru
-                                        ? OC.amber
-                                        : OC.primary,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-// ======================================================== TAB PRODUK ===
+// TAB PRODUK
 class _TabProduk extends StatefulWidget {
   final UmkmDataService service;
   final String kataKunci;
   final ValueChanged<String> onCari;
   final Future<void> Function() onRefresh;
+  final Future<void> Function() onTambah;
 
   const _TabProduk({
     required this.service,
     required this.kataKunci,
     required this.onCari,
     required this.onRefresh,
+    required this.onTambah,
   });
 
   @override
@@ -588,17 +926,271 @@ class _TabProduk extends StatefulWidget {
 
 class _TabProdukState extends State<_TabProduk> {
   String _kategoriDipilih = 'Semua';
+  String _statusDipilih = 'Semua';
+  late final TextEditingController _searchCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl = TextEditingController(text: widget.kataKunci);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final categoryService = context.read<CategoryService>();
+      if (!categoryService.loading && categoryService.categories.isEmpty) {
+        categoryService.load();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _bukaFilter(List<String> kategori) async {
+    var statusSementara = _statusDipilih;
+    var kategoriSementara = _kategoriDipilih;
+
+    final hasil = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          Widget pilihan({
+            required String label,
+            required int jumlah,
+            required bool terpilih,
+            required VoidCallback onTap,
+          }) {
+            return InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 11,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      terpilih
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                      size: 20,
+                      color: terpilih ? OC.primary : OC.faint,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: terpilih ? OC.primary : OC.ink,
+                          fontSize: 13,
+                          fontWeight: terpilih
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '$jumlah',
+                      style: const TextStyle(
+                        color: OC.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final status = [
+            ('Semua status', 'Semua', widget.service.produkList.length),
+            (
+              'Tayang',
+              'Tayang',
+              widget.service.produkList
+                  .where((produk) => produk.tampilkanDiWarung)
+                  .length,
+            ),
+            (
+              'Draft',
+              'Draft',
+              widget.service.produkList
+                  .where((produk) => !produk.tampilkanDiWarung)
+                  .length,
+            ),
+            (
+              'Stok habis',
+              'Stok habis',
+              widget.service.produkList
+                  .where(
+                    (produk) =>
+                        produk.modePenjualan != ModePenjualan.preOrder &&
+                        produk.stok == 0,
+                  )
+                  .length,
+            ),
+          ];
+
+          return SafeArea(
+            top: false,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Filter produk',
+                            style: OT.cardTitle.copyWith(fontSize: 18),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded),
+                          color: OC.muted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: OC.line),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      children: [
+                        const Text('STATUS', style: OT.label),
+                        const SizedBox(height: 6),
+                        ...status.map(
+                          (option) => pilihan(
+                            label: option.$1,
+                            jumlah: option.$3,
+                            terpilih: statusSementara == option.$2,
+                            onTap: () => setSheetState(
+                              () => statusSementara = option.$2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('KATEGORI', style: OT.label),
+                        const SizedBox(height: 6),
+                        ...kategori.map((nama) {
+                          final jumlah = nama == 'Semua'
+                              ? widget.service.produkList.length
+                              : widget.service.produkList
+                                    .where((produk) => produk.kategori == nama)
+                                    .length;
+                          return pilihan(
+                            label: nama == 'Semua' ? 'Semua kategori' : nama,
+                            jumlah: jumlah,
+                            terpilih: kategoriSementara == nama,
+                            onTap: () =>
+                                setSheetState(() => kategoriSementara = nama),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => setSheetState(() {
+                              statusSementara = 'Semua';
+                              kategoriSementara = 'Semua';
+                            }),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: OC.primary,
+                              side: const BorderSide(color: OC.line),
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                            ),
+                            child: const Text('Reset'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: FilledButton(
+                            onPressed: () => Navigator.pop(context, {
+                              'status': statusSementara,
+                              'kategori': kategoriSementara,
+                            }),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: OC.primary,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                            ),
+                            child: const Text('Terapkan filter'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (!mounted || hasil == null) return;
+    setState(() {
+      _statusDipilih = hasil['status'] ?? 'Semua';
+      _kategoriDipilih = hasil['kategori'] ?? 'Semua';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final semua = widget.service.produkList;
+    final categoryService = context.watch<CategoryService>();
+    final kategoriDb = categoryService.categories
+        .map((category) => category.name.trim())
+        .where((name) => name.isNotEmpty);
+    final kategoriLama = semua
+        .map((produk) => produk.kategori.trim())
+        .where((name) => name.isNotEmpty);
+    final kategoriTersedia = <String>{...kategoriDb, ...kategoriLama};
+    final kategoriTerurut = kategoriTersedia.toList()..sort();
+    final listKategori = ['Semua', ...kategoriTerurut];
+    final kategoriAktif = listKategori.contains(_kategoriDipilih)
+        ? _kategoriDipilih
+        : 'Semua';
 
-    // Ambil daftar kategori unik dari data produk
-    final kategoriSet = <String>{'Semua'};
-    for (final p in semua) {
-      if (p.kategori.isNotEmpty) kategoriSet.add(p.kategori);
-    }
-    final listKategori = kategoriSet.toList();
+    final jumlahTayang = semua
+        .where((produk) => produk.tampilkanDiWarung)
+        .length;
+    final jumlahDraft = semua.length - jumlahTayang;
+    final jumlahStokHabis = semua
+        .where((p) => p.modePenjualan != ModePenjualan.preOrder && p.stok == 0)
+        .length;
+    final jumlahFilterAktif =
+        (kategoriAktif == 'Semua' ? 0 : 1) +
+        (_statusDipilih == 'Semua' ? 0 : 1);
 
     // Filter berdasarkan kata kunci & kategori
     final produkList = semua.where((p) {
@@ -607,153 +1199,598 @@ class _TabProdukState extends State<_TabProduk> {
           p.namaProduk.toLowerCase().contains(widget.kataKunci.toLowerCase()) ||
           p.kategori.toLowerCase().contains(widget.kataKunci.toLowerCase());
       final cocokKategori =
-          _kategoriDipilih == 'Semua' || p.kategori == _kategoriDipilih;
-      return cocokKunci && cocokKategori;
+          kategoriAktif == 'Semua' || p.kategori == kategoriAktif;
+      final cocokStatus = switch (_statusDipilih) {
+        'Tayang' => p.tampilkanDiWarung,
+        'Draft' => !p.tampilkanDiWarung,
+        'Stok habis' =>
+          p.modePenjualan != ModePenjualan.preOrder && p.stok == 0,
+        _ => true,
+      };
+      return cocokKunci && cocokKategori && cocokStatus;
     }).toList();
 
-    // Pre-Order tidak punya stok, jadi tidak ikut dihitung sebagai "stok habis".
-    final stokHabis = semua
-        .where((p) => p.modePenjualan != ModePenjualan.preOrder && p.stok == 0)
-        .length;
+    final statistik = [
+      (
+        label: 'Total Produk',
+        nilai: semua.length,
+        ikon: Icons.inventory_2_outlined,
+        warna: OC.primary,
+        aktif:
+            _statusDipilih == 'Semua' &&
+            kategoriAktif == 'Semua' &&
+            widget.kataKunci.isEmpty,
+        status: 'Semua',
+      ),
+      (
+        label: 'Tayang',
+        nilai: jumlahTayang,
+        ikon: Icons.visibility_outlined,
+        warna: const Color(0xFF16A34A),
+        aktif: _statusDipilih == 'Tayang',
+        status: 'Tayang',
+      ),
+      (
+        label: 'Draft',
+        nilai: jumlahDraft,
+        ikon: Icons.edit_note_rounded,
+        warna: OC.muted,
+        aktif: _statusDipilih == 'Draft',
+        status: 'Draft',
+      ),
+    ];
 
+    void pilihStatistik(String status) {
+      setState(() {
+        _kategoriDipilih = 'Semua';
+        _statusDipilih = status;
+        if (_searchCtrl.text.isNotEmpty) {
+          _searchCtrl.clear();
+          widget.onCari('');
+        }
+      });
+    }
+
+    Widget buatStatistik(int index) {
+      final item = statistik[index];
+      return Expanded(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => pilihStatistik(item.status),
+            borderRadius: BorderRadius.circular(16),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              decoration: BoxDecoration(
+                color: item.aktif ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: item.aktif
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2EBE2)),
+                      ),
+                      child: Icon(
+                        item.ikon,
+                        color: item.warna,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${item.nilai}',
+                            style: const TextStyle(
+                              color: OC.ink,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: OC.muted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Pre-Order tidak punya stok, jadi tidak ikut dihitung sebagai "stok habis".
     return RefreshIndicator(
       color: OC.primary,
       onRefresh: widget.onRefresh,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 8, 0, 110),
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Modern Search Bar ala Customer
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: OC.line),
-                  ),
-                  child: TextField(
-                    onChanged: widget.onCari,
-                    decoration: const InputDecoration(
-                      hintText: 'Cari nama produk...',
-                      hintStyle: TextStyle(color: OC.faint, fontSize: 13.5),
-                      prefixIcon: Icon(Icons.search, color: OC.muted, size: 22),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 13,
+          ListView(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 170),
+            children: [
+              // 0. HEADER SCROLLABLE KATALOG PRODUK ALA MOCKUP (Seamless Edge-to-Edge)
+              const UmkmHeaderRow(
+                padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
+                iconBadge: UmkmSquircleIcon(
+                  icon: Icons.inventory_2_rounded,
+                ),
+                title: 'Katalog Produk',
+                subtitle: 'Kelola produk dan stok jualanmu',
+              ),
+
+              // 1. STATISTIK SUMMARY CARD (3 Kolom ala referensi)
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDF4ED),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFDFEADF)),
+                ),
+                child: Row(
+                  children: [
+                    buatStatistik(0),
+                    Container(width: 1, height: 36, color: const Color(0xFFD6E2D6)),
+                    buatStatistik(1),
+                    Container(width: 1, height: 36, color: const Color(0xFFD6E2D6)),
+                    buatStatistik(2),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 2. SEARCH BAR + FILTER BUTTON
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: OC.line),
+                      ),
+                      child: TextField(
+                        controller: _searchCtrl,
+                        onChanged: widget.onCari,
+                        textInputAction: TextInputAction.search,
+                        textAlignVertical: TextAlignVertical.center,
+                        decoration: InputDecoration(
+                          hintText: 'Cari nama produk...',
+                          hintStyle: const TextStyle(
+                            color: OC.faint,
+                            fontSize: 13,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: OC.muted,
+                            size: 21,
+                          ),
+                          suffixIcon: widget.kataKunci.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: 'Hapus pencarian',
+                                  onPressed: () {
+                                    _searchCtrl.clear();
+                                    widget.onCari('');
+                                  },
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 19,
+                                  ),
+                                  color: OC.muted,
+                                ),
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(width: 10),
+                  InkWell(
+                    onTap: () => _bukaFilter(listKategori),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: jumlahFilterAktif > 0
+                              ? OC.primary
+                              : OC.line,
+                          width: jumlahFilterAktif > 0 ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 18,
+                            color: jumlahFilterAktif > 0
+                                ? OC.primary
+                                : OC.ink,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            jumlahFilterAktif == 0
+                                ? 'Filter'
+                                : 'Filter ($jumlahFilterAktif)',
+                            style: TextStyle(
+                              color: jumlahFilterAktif > 0
+                                  ? OC.primary
+                                  : OC.ink,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-                // Horizontal Category Pills
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: listKategori.map((kat) {
-                      final terpilih = _kategoriDipilih == kat;
+              // 3. CATEGORY PILLS BAR (Semua, Kategori dinamis, Draft)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    ...listKategori.map((kategori) {
+                      final terpilih =
+                          _statusDipilih != 'Draft' &&
+                          kategoriAktif == kategori;
+                      final iconData = _ikonKategoriProduk(kategori);
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: InkWell(
-                          onTap: () => setState(() => _kategoriDipilih = kat),
-                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            setState(() {
+                              _statusDipilih = 'Semua';
+                              _kategoriDipilih = kategori;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(14),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
-                              vertical: 8,
+                              vertical: 9,
                             ),
                             decoration: BoxDecoration(
                               color: terpilih ? OC.primary : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: terpilih ? OC.primary : OC.line,
+                                color: terpilih
+                                    ? OC.primary
+                                    : const Color(0xFFE2EBE2),
                               ),
                             ),
-                            child: Text(
-                              kat,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: terpilih
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: terpilih ? Colors.white : OC.muted,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  iconData,
+                                  size: 16,
+                                  color: terpilih ? Colors.white : OC.ink,
+                                ),
+                                const SizedBox(width: 7),
+                                Text(
+                                  kategori,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: terpilih
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: terpilih ? Colors.white : OC.ink,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                if (stokHabis > 0) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: OC.peachSoft,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: OC.peach),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          color: OC.amber,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '$stokHabis produk stoknya habis. Segera isi ulang agar siap dipesan.',
-                            style: OT.caption.copyWith(color: OC.amber),
+                    }),
+                    // Pill Tambahan: Draft
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _statusDipilih =
+                                _statusDipilih == 'Draft' ? 'Semua' : 'Draft';
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
-
-                if (produkList.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: TampilanKosong(
-                      ikon: Icons.inventory_2_outlined,
-                      judul:
-                          widget.kataKunci.isEmpty &&
-                              _kategoriDipilih == 'Semua'
-                          ? 'Belum Ada Produk'
-                          : 'Produk Tidak Ditemukan',
-                      pesan:
-                          widget.kataKunci.isEmpty &&
-                              _kategoriDipilih == 'Semua'
-                          ? 'Tekan tombol "Tambah Produk" untuk mulai berjualan di Djajan.'
-                          : 'Coba kata kunci atau filter kategori lain.',
-                    ),
-                  )
-                else
-                  Column(
-                    children: produkList
-                        .map(
-                          (p) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _KartuProduk(
-                              produk: p,
-                              service: widget.service,
-                              onRefresh: widget.onRefresh,
+                          decoration: BoxDecoration(
+                            color: _statusDipilih == 'Draft'
+                                ? OC.primary
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _statusDipilih == 'Draft'
+                                  ? OC.primary
+                                  : const Color(0xFFE2EBE2),
                             ),
                           ),
-                        )
-                        .toList(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.edit_note_rounded,
+                                size: 18,
+                                color: _statusDipilih == 'Draft'
+                                    ? Colors.white
+                                    : OC.ink,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Draft ($jumlahDraft)',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: _statusDipilih == 'Draft'
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
+                                  color: _statusDipilih == 'Draft'
+                                      ? Colors.white
+                                      : OC.ink,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              if (categoryService.errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
                   ),
+                  decoration: BoxDecoration(
+                    color: OC.peachSoft,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 17,
+                        color: OC.amber,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Kategori belum dapat dimuat.',
+                          style: TextStyle(color: OC.amber, fontSize: 11),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: categoryService.loading
+                            ? null
+                            : categoryService.load,
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: OC.primary,
+                        ),
+                        child: const Text('Coba lagi'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
               ],
+
+              if (jumlahStokHabis > 0 && _statusDipilih == 'Semua') ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: OC.peachSoft,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFF2E5CC)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: OC.amber,
+                        size: 19,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          '$jumlahStokHabis produk stoknya habis',
+                          style: const TextStyle(
+                            color: OC.amber,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _statusDipilih = 'Stok habis'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: OC.amber,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: const Text('Lihat'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // 4. LIST PRODUK
+              if (produkList.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: TampilanKosong(
+                    ikon: Icons.inventory_2_outlined,
+                    judul:
+                        widget.kataKunci.isEmpty &&
+                            kategoriAktif == 'Semua' &&
+                            _statusDipilih == 'Semua'
+                        ? 'Belum Ada Produk'
+                        : 'Produk Tidak Ditemukan',
+                    pesan:
+                        widget.kataKunci.isEmpty &&
+                            kategoriAktif == 'Semua' &&
+                            _statusDipilih == 'Semua'
+                        ? 'Tambahkan produk untuk mulai berjualan di Djajan.'
+                        : 'Ubah pencarian atau filter untuk melihat produk lainnya.',
+                  ),
+                )
+              else
+                ...produkList.map(
+                  (produk) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _KartuProduk(
+                      produk: produk,
+                      service: widget.service,
+                      onRefresh: widget.onRefresh,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          // 5. BANNER CTA "TAMBAH PRODUK BARU" (Sticky di Bawah)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
+              elevation: 4,
+              shadowColor: OC.primary.withValues(alpha: 0.3),
+              child: InkWell(
+                onTap: widget.onTambah,
+                borderRadius: BorderRadius.circular(22),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF135B38), Color(0xFF1C7A4D)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Tambah Produk Baru',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Mulai jualan dengan produk baru',
+                              style: TextStyle(
+                                color: Color(0xFFD4EED8),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: OC.primary,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -762,96 +1799,99 @@ class _TabProdukState extends State<_TabProduk> {
   }
 }
 
-class _KartuStatistik extends StatelessWidget {
+IconData _ikonKategoriProduk(String kategori) {
+  final nilai = kategori.toLowerCase();
+  if (kategori == 'Semua') return Icons.grid_view_rounded;
+  if (nilai.contains('makanan')) return Icons.restaurant_menu_rounded;
+  if (nilai.contains('minuman')) return Icons.local_cafe_outlined;
+  if (nilai.contains('camilan') || nilai.contains('snack')) {
+    return Icons.cookie_outlined;
+  }
+  if (nilai.contains('kue') || nilai.contains('roti')) {
+    return Icons.cake_outlined;
+  }
+  if (nilai.contains('sembako') ||
+      nilai.contains('bahan pokok') ||
+      nilai.contains('kelontong')) {
+    return Icons.shopping_basket_outlined;
+  }
+  return Icons.category_outlined;
+}
+
+class _KartuRingkasanBeranda extends StatelessWidget {
   final IconData ikon;
   final String nilai;
   final String label;
-  final bool soroti;
-  final VoidCallback? onTap;
+  final Color warnaAksen;
+  final VoidCallback onTap;
 
-  const _KartuStatistik({
+  const _KartuRingkasanBeranda({
     required this.ikon,
     required this.nilai,
     required this.label,
-    this.soroti = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: KartuPutih(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        radius: 16,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: soroti ? OC.peachSoft : OC.primarySoft,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                ikon,
-                color: soroti ? OC.amber : OC.primary,
-                size: 18,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              nilai,
-              style: OT.cardTitle.copyWith(
-                color: soroti ? OC.amber : OC.primary,
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: OT.caption,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TombolShortcut extends StatelessWidget {
-  final IconData ikon;
-  final String label;
-  final Color warnaIkon;
-  final VoidCallback onTap;
-
-  const _TombolShortcut({
-    required this.ikon,
-    required this.label,
-    required this.warnaIkon,
+    required this.warnaAksen,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(17),
       onTap: onTap,
-      child: KartuPutih(
-        radius: 14,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(color: OC.line),
+          boxShadow: [
+            BoxShadow(
+              color: OC.ink.withValues(alpha: 0.025),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(ikon, color: warnaIkon, size: 22),
-            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: warnaAksen.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(ikon, color: warnaAksen, size: 18),
+                ),
+                const Spacer(),
+                Text(
+                  nilai,
+                  style: TextStyle(
+                    color: warnaAksen,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 26,
+                    height: 1,
+                    letterSpacing: -0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
               label,
-              textAlign: TextAlign.center,
-              style: OT.caption.copyWith(fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+                color: OC.muted,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -889,15 +1929,92 @@ class _KartuProdukState extends State<_KartuProduk> {
     }
   }
 
+  void _dialogUbahStok() {
+    int stokSementara = widget.produk.stok;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Atur Stok Produk',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.produk.namaProduk,
+                style: const TextStyle(fontSize: 13, color: OC.muted),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filledTonal(
+                    onPressed: stokSementara > 0
+                        ? () => setDialogState(() => stokSementara--)
+                        : null,
+                    icon: const Icon(Icons.remove_rounded),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: OC.box,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Text(
+                      '$stokSementara',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton.filledTonal(
+                    onPressed: () => setDialogState(() => stokSementara++),
+                    icon: const Icon(Icons.add_rounded),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: OC.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _jalankan(
+                  () => widget.service.ubahStok(widget.produk, stokSementara),
+                );
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _konfirmasiHapus() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Hapus Produk?'),
-        content: Text(
-          '"${widget.produk.namaProduk}" akan dihapus permanen dari database beserta fotonya.',
-        ),
+        content: Text('"${widget.produk.namaProduk}" akan dihapus permanen.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -925,268 +2042,387 @@ class _KartuProdukState extends State<_KartuProduk> {
   @override
   Widget build(BuildContext context) {
     final p = widget.produk;
+    final statusColor = p.tampilkanDiWarung ? OC.primary : OC.muted;
 
-    return KartuPutih(
-      padding: const EdgeInsets.all(14),
-      radius: 16,
-      child: Opacity(
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFEBEFEB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 180),
         opacity: _sibuk ? 0.55 : 1,
-        child: Column(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () =>
-                          tampilkanZoomGambarJaringan(context, p.gambarUrl),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: OC.line),
-                        ),
-                        child: GambarJaringan(
-                          url: p.gambarUrl,
-                          width: 80,
-                          height: 80,
-                          radius: 14,
-                          cacheBuster: DateTime.now().millisecondsSinceEpoch
-                              .toString(),
-                        ),
-                      ),
+            // FOTO PRODUK SQUARE DENGAN BADGE STATUS READY / PO
+            GestureDetector(
+              onTap: () => tampilkanZoomGambarJaringan(context, p.gambarUrl),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: GambarJaringan(
+                      url: p.gambarUrl,
+                      width: 104,
+                      height: 104,
+                      radius: 16,
+                      ikonKosong: _ikonKategoriProduk(p.kategori),
+                      cacheBuster:
+                          DateTime.now().millisecondsSinceEpoch.toString(),
                     ),
-                    Positioned(
-                      top: 4,
-                      left: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: p.modePenjualan == ModePenjualan.ready
-                              ? OC.mint
-                              : OC.peach,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          p.modePenjualan == ModePenjualan.ready
-                              ? 'Ready'
-                              : 'PO',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            color: p.modePenjualan == ModePenjualan.ready
-                                ? OC.mintText
-                                : OC.amber,
+                  ),
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 4,
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: Text(
-                              p.namaProduk,
-                              style: OT.item,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: _sibuk
-                                ? null
-                                : () async {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            TambahProdukScreen(produkToEdit: p),
-                                      ),
-                                    );
-                                    if (mounted) widget.onRefresh();
-                                  },
-                            child: const Padding(
-                              padding: EdgeInsets.all(4),
-                              child: Icon(
-                                Icons.edit_outlined,
-                                size: 19,
-                                color: OC.muted,
-                              ),
+                          Container(
+                            width: 6.5,
+                            height: 6.5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: p.modePenjualan == ModePenjualan.ready
+                                  ? const Color(0xFF16A34A)
+                                  : const Color(0xFFF59E0B),
                             ),
                           ),
                           const SizedBox(width: 4),
-                          InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: _sibuk ? null : _konfirmasiHapus,
-                            child: const Padding(
-                              padding: EdgeInsets.all(4),
-                              child: Icon(
-                                Icons.delete_outline,
-                                size: 19,
-                                color: AppColors.danger,
-                              ),
+                          Text(
+                            p.modePenjualan == ModePenjualan.ready
+                                ? 'Ready'
+                                : 'Pre-Order',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: p.modePenjualan == ModePenjualan.ready
+                                  ? const Color(0xFF15803D)
+                                  : const Color(0xFFB45309),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        rupiah(p.harga),
-                        style: OT.money.copyWith(
-                          color: OC.primary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // DETAIL KONTEN TENGAH & AKSI
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // NAMA PRODUK & TOMBOL MEATBALL 3-TITIK
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          p.namaProduk,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: OC.ink,
+                            height: 1.25,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: OC.box,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              p.kategori,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: OC.muted,
-                                fontWeight: FontWeight.w600,
+                      const SizedBox(width: 2),
+                      SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: PopupMenuButton<String>(
+                          icon: const Icon(
+                            Icons.more_vert_rounded,
+                            size: 20,
+                            color: OC.muted,
+                          ),
+                          tooltip: 'Menu aksi produk',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          onSelected: (val) async {
+                            if (val == 'edit') {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      TambahProdukScreen(produkToEdit: p),
+                                ),
+                              );
+                              if (mounted) widget.onRefresh();
+                            } else if (val == 'stok') {
+                              _dialogUbahStok();
+                            } else if (val == 'hapus') {
+                              _konfirmasiHapus();
+                            }
+                          },
+                          itemBuilder: (ctx) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                    color: OC.ink,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Edit Produk',
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                ],
                               ),
                             ),
+                            if (p.modePenjualan != ModePenjualan.preOrder)
+                              const PopupMenuItem(
+                                value: 'stok',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.inventory_2_outlined,
+                                      size: 18,
+                                      color: OC.ink,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Ubah Stok',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const PopupMenuItem(
+                              value: 'hapus',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                    color: AppColors.danger,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Hapus Produk',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.danger,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+
+                  // HARGA PRODUK
+                  Text(
+                    rupiah(p.harga),
+                    style: const TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w900,
+                      color: OC.primary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // BADGE CHIPS KATEGORI & STOK / MODE
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFDCFCE7)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _ikonKategoriProduk(p.kategori),
+                              size: 12,
+                              color: const Color(0xFF16A34A),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              p.kategori.isEmpty ? 'Umum' : p.kategori,
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF15803D),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (p.modePenjualan == ModePenjualan.preOrder)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3.5,
                           ),
-                          const Spacer(),
-                          MiniBadge(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFBEB),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFEF3C7)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 12,
+                                color: Color(0xFFD97706),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Pre-Order',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFB45309),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+
+                  // INFO STOK & SWITCH TOGGLE TAYANG (Pojok Kanan Bawah)
+                  Row(
+                    children: [
+                      if (p.modePenjualan != ModePenjualan.preOrder)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 14,
+                              color: OC.muted,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              p.stok == 0 ? 'Stok 0' : 'Stok ${p.stok}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: p.stok == 0
+                                    ? OC.danger
+                                    : OC.muted,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.shopping_bag_outlined,
+                              size: 14,
+                              color: OC.muted,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Min. ${p.minOrderPO}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: OC.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      const Spacer(),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            p.tampilkanDiWarung
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            size: 14,
+                            color: statusColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
                             p.tampilkanDiWarung ? 'Tayang' : 'Draft',
-                            bg: p.tampilkanDiWarung ? OC.mintSoft : OC.box,
-                            fg: p.tampilkanDiWarung ? OC.primary : OC.faint,
-                            ikon: p.tampilkanDiWarung
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          SizedBox(
+                            width: 38,
+                            height: 26,
+                            child: FittedBox(
+                              fit: BoxFit.contain,
+                              child: Switch.adaptive(
+                                value: p.tampilkanDiWarung,
+                                activeThumbColor: OC.primary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onChanged: _sibuk
+                                    ? null
+                                    : (v) => _jalankan(
+                                        () => widget.service
+                                            .ubahStatusTayang(p, v),
+                                      ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            // ------ Baris Kontrol Bawah: Mini Stepper Stok & Switch Tayang ------
-            Row(
-              children: [
-                if (p.modePenjualan != ModePenjualan.preOrder) ...[
-                  Container(
-                    decoration: BoxDecoration(
-                      color: OC.box,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 2,
-                    ),
-                    child: Row(
-                      children: [
-                        InkWell(
-                          onTap: _sibuk || p.stok == 0
-                              ? null
-                              : () => _jalankan(
-                                  () => widget.service.ubahStok(p, p.stok - 1),
-                                ),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.remove_rounded,
-                              size: 18,
-                              color: p.stok == 0 ? OC.faint : OC.muted,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            '${p.stok} stok',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: p.stok == 0 ? AppColors.danger : OC.ink,
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: _sibuk
-                              ? null
-                              : () => _jalankan(
-                                  () => widget.service.ubahStok(p, p.stok + 1),
-                                ),
-                          borderRadius: BorderRadius.circular(8),
-                          child: const Padding(
-                            padding: EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.add_rounded,
-                              size: 18,
-                              color: OC.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else
-                  const Flexible(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.event_seat_outlined,
-                          size: 15,
-                          color: OC.muted,
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          'Porsi sesuai PO acara',
-                          style: TextStyle(fontSize: 12, color: OC.muted),
-                        ),
-                      ],
-                    ),
-                  ),
-                const Spacer(),
-                const Text(
-                  'Tayangkan',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: OC.muted,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Transform.scale(
-                  scale: 0.82,
-                  child: Switch.adaptive(
-                    value: p.tampilkanDiWarung,
-                    activeThumbColor: OC.primary,
-                    onChanged: _sibuk
-                        ? null
-                        : (v) => _jalankan(
-                            () => widget.service.ubahStatusTayang(p, v),
-                          ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -1207,570 +2443,1100 @@ class _TabPesanan extends StatefulWidget {
 }
 
 class _TabPesananState extends State<_TabPesanan> {
-  int _filterIndex = 0;
-  int _tipeIndex = 0; // 0: Semua Jenis, 1: Ready Stock, 2: Pre-Order
+  String _statusDipilih = 'semua';
+  String _kataKunci = '';
+  String _filterJenis = 'semua'; // 'semua', 'ready', 'po'
+  late final TextEditingController _searchCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _bukaFilter(Map<String, int> jumlahPerStatus) async {
+    var statusSementara = _statusDipilih;
+    var jenisSementara = _filterJenis;
+
+    final pilihanStatus = [
+      ('semua', 'Semua status', widget.service.pesananList.length),
+      ...StatusPesanan.values.map(
+        (status) =>
+            (status.kodeDb, status.label, jumlahPerStatus[status.kodeDb] ?? 0),
+      ),
+    ];
+
+    final hasil = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          Widget pilihanRadio({
+            required String label,
+            required bool terpilih,
+            required VoidCallback onTap,
+            int? jumlah,
+          }) {
+            return InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      terpilih
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                      size: 20,
+                      color: terpilih ? OC.primary : OC.faint,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: terpilih ? OC.primary : OC.ink,
+                          fontSize: 13,
+                          fontWeight: terpilih
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (jumlah != null)
+                      Text(
+                        '$jumlah',
+                        style: const TextStyle(
+                          color: OC.muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return SafeArea(
+            top: false,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Filter Pesanan',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: OC.ink,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded),
+                          color: OC.muted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: OC.line),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(left: 10, bottom: 4),
+                          child: Text('JENIS PESANAN', style: OT.label),
+                        ),
+                        pilihanRadio(
+                          label: 'Semua Jenis',
+                          terpilih: jenisSementara == 'semua',
+                          onTap: () =>
+                              setSheetState(() => jenisSementara = 'semua'),
+                        ),
+                        pilihanRadio(
+                          label: '⚡ Pesanan Langsung (Ready)',
+                          terpilih: jenisSementara == 'ready',
+                          onTap: () =>
+                              setSheetState(() => jenisSementara = 'ready'),
+                        ),
+                        pilihanRadio(
+                          label: '🕐 Pre-Order (PO)',
+                          terpilih: jenisSementara == 'po',
+                          onTap: () =>
+                              setSheetState(() => jenisSementara = 'po'),
+                        ),
+                        const SizedBox(height: 14),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 10, bottom: 4),
+                          child: Text('STATUS PESANAN', style: OT.label),
+                        ),
+                        ...pilihanStatus.map(
+                          (opt) => pilihanRadio(
+                            label: opt.$2,
+                            terpilih: statusSementara == opt.$1,
+                            jumlah: opt.$3,
+                            onTap: () =>
+                                setSheetState(() => statusSementara = opt.$1),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setSheetState(() {
+                                statusSementara = 'semua';
+                                jenisSementara = 'semua';
+                              });
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: OC.primary,
+                              side: const BorderSide(color: OC.line),
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                            ),
+                            child: const Text('Reset'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: FilledButton(
+                            onPressed: () => Navigator.pop(context, {
+                              'status': statusSementara,
+                              'jenis': jenisSementara,
+                            }),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: OC.primary,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                            ),
+                            child: const Text('Terapkan Filter'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (!mounted || hasil == null) return;
+    setState(() {
+      _statusDipilih = hasil['status'] ?? 'semua';
+      _filterJenis = hasil['jenis'] ?? 'semua';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final semua = widget.service.pesananList;
     final tanggalFmt = DateFormat('d MMM yyyy, HH:mm', 'id_ID');
 
-    final berdasarkanStatus = switch (_filterIndex) {
-      1 => semua.where((p) => p.status == StatusPesanan.poBaru).toList(),
-      2 => semua.where((p) => p.status == StatusPesanan.diterima).toList(),
-      3 =>
-        semua
-            .where(
-              (p) =>
-                  p.status == StatusPesanan.diproses ||
-                  p.status == StatusPesanan.diantar,
-            )
-            .toList(),
-      4 => semua.where((p) => p.status == StatusPesanan.selesai).toList(),
-      5 => semua.where((p) => p.status == StatusPesanan.ditolak).toList(),
-      _ => semua,
+    final jumlahPerStatus = {
+      for (final status in StatusPesanan.values)
+        status.kodeDb: semua.where((p) => p.status == status).length,
     };
 
-    final pesananTersaring = switch (_tipeIndex) {
-      1 => berdasarkanStatus.where((p) => !p.isPreOrder).toList(),
-      2 => berdasarkanStatus.where((p) => p.isPreOrder).toList(),
-      _ => berdasarkanStatus,
-    };
+    final jumlahPerluTindakan =
+        semua.where((p) => p.status == StatusPesanan.poBaru).length;
 
-    final jumlahPoBaru = semua
-        .where((p) => p.status == StatusPesanan.poBaru)
-        .length;
-    final jumlahReady = semua.where((p) => !p.isPreOrder).length;
-    final jumlahPo = semua.where((p) => p.isPreOrder).length;
+    // Filter berdasarkan kata kunci, status tab/filter, dan jenis
+    final pesananTersaring = semua.where((p) {
+      final cocokKunci = _kataKunci.isEmpty ||
+          p.idPesanan.toString().contains(_kataKunci) ||
+          p.namaPembeli.toLowerCase().contains(_kataKunci.toLowerCase()) ||
+          p.items.any((it) =>
+              it.namaProduk.toLowerCase().contains(_kataKunci.toLowerCase()));
+
+      final cocokStatus =
+          _statusDipilih == 'semua' || p.status.kodeDb == _statusDipilih;
+
+      final cocokJenis = switch (_filterJenis) {
+        'ready' => !p.isPreOrder,
+        'po' => p.isPreOrder,
+        _ => true,
+      };
+
+      return cocokKunci && cocokStatus && cocokJenis;
+    }).toList();
+
+    // Grouping pesanan berdasarkan Tanggal (Hari)
+    final Map<String, List<Pesanan>> pesananPerTanggal = {};
+    for (final p in pesananTersaring) {
+      final kunciTanggal = DateFormat('d MMMM yyyy', 'id_ID').format(p.tanggalPesan);
+      pesananPerTanggal.putIfAbsent(kunciTanggal, () => []).add(p);
+    }
+    final listTanggal = pesananPerTanggal.keys.toList();
+
+    // Daftar status untuk horizontal pills
+    final statusTabs = [
+      (kode: 'semua', label: 'Semua', count: semua.length),
+      (
+        kode: StatusPesanan.poBaru.kodeDb,
+        label: 'Konfirmasi',
+        count: jumlahPerStatus[StatusPesanan.poBaru.kodeDb] ?? 0,
+      ),
+      (
+        kode: StatusPesanan.diterima.kodeDb,
+        label: 'Diterima',
+        count: jumlahPerStatus[StatusPesanan.diterima.kodeDb] ?? 0,
+      ),
+      (
+        kode: StatusPesanan.diproses.kodeDb,
+        label: 'Diproses',
+        count: jumlahPerStatus[StatusPesanan.diproses.kodeDb] ?? 0,
+      ),
+      (
+        kode: StatusPesanan.diantar.kodeDb,
+        label: 'Diantar',
+        count: jumlahPerStatus[StatusPesanan.diantar.kodeDb] ?? 0,
+      ),
+      (
+        kode: StatusPesanan.selesai.kodeDb,
+        label: 'Selesai',
+        count: jumlahPerStatus[StatusPesanan.selesai.kodeDb] ?? 0,
+      ),
+      (
+        kode: StatusPesanan.ditolak.kodeDb,
+        label: 'Ditolak',
+        count: jumlahPerStatus[StatusPesanan.ditolak.kodeDb] ?? 0,
+      ),
+    ];
+
+    final jumlahFilterAktif =
+        (_statusDipilih != 'semua' ? 1 : 0) + (_filterJenis != 'semua' ? 1 : 0);
 
     return RefreshIndicator(
       color: OC.primary,
       onRefresh: widget.onRefresh,
-      child: Column(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 110),
         children: [
-          // ---- Baris 1: Filter Status Pesanan ----
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-            color: OC.bg,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Status Pesanan',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: OC.muted,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _filterButton('Semua', 0, semua.length),
-                      const SizedBox(width: 8),
-                      _filterButton(
-                        'Perlu Konfirmasi',
-                        1,
-                        jumlahPoBaru,
-                        dangerBadge: jumlahPoBaru > 0,
-                      ),
-                      const SizedBox(width: 8),
-                      _filterButton(
-                        'Diterima',
-                        2,
-                        semua
-                            .where((p) => p.status == StatusPesanan.diterima)
-                            .length,
-                      ),
-                      const SizedBox(width: 8),
-                      _filterButton(
-                        'Berjalan',
-                        3,
-                        semua
-                            .where(
-                              (p) =>
-                                  p.status == StatusPesanan.diproses ||
-                                  p.status == StatusPesanan.diantar,
-                            )
-                            .length,
-                      ),
-                      const SizedBox(width: 8),
-                      _filterButton(
-                        'Selesai',
-                        4,
-                        semua
-                            .where((p) => p.status == StatusPesanan.selesai)
-                            .length,
-                      ),
-                      const SizedBox(width: 8),
-                      _filterButton(
-                        'Ditolak',
-                        5,
-                        semua
-                            .where((p) => p.status == StatusPesanan.ditolak)
-                            .length,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // 0. HEADER SCROLLABLE PESANAN ALA MOCKUP (Seamless Edge-to-Edge)
+          const UmkmHeaderRow(
+            padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
+            iconBadge: UmkmSquircleIcon(
+              icon: Icons.shopping_bag_rounded,
             ),
+            title: 'Pesanan',
+            subtitle: 'Kelola pesanan dan transaksi',
           ),
-          // Divider tipis antar filter
-          const Divider(height: 1, indent: 16, endIndent: 16, color: Color(0xFFEEF0F4)),
-          // ---- Baris 2: Filter Jenis Pesanan (Ready / PO) ----
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-            color: OC.bg,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Jenis Pesanan',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: OC.muted,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _tipeChip('Semua', 0),
-                      const SizedBox(width: 8),
-                      _tipeChip('⚡ Ready ($jumlahReady)', 1),
-                      const SizedBox(width: 8),
-                      _tipeChip('🎂 Pre-Order / Acara ($jumlahPo)', 2),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: pesananTersaring.isEmpty
-                ? ListView(
-                    padding: const EdgeInsets.only(top: 60),
-                    children: const [
-                      TampilanKosong(
-                        ikon: Icons.receipt_long_outlined,
-                        judul: 'Tidak Ada Pesanan',
-                        pesan: 'Pesanan pelanggan untuk kategori filter ini belum ada.',
-                      ),
-                    ],
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
-                    itemCount: pesananTersaring.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, i) {
-                      final p = pesananTersaring[i];
-                      final (bg, fg) = _warnaStatus(p.status);
 
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  DetailPesananScreen(idPesanan: p.idPesanan),
-                            ),
-                          );
-                          await widget.onRefresh();
-                        },
-                        child: KartuPutih(
-                          padding: const EdgeInsets.all(14),
-                          radius: 16,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+          // 1. STATISTIK PESANAN SUMMARY (Total Pesanan | Perlu Tindakan)
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEDF4ED),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFDFEADF)),
+            ),
+            child: Row(
+              children: [
+                // Total Pesanan
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _statusDipilih = 'semua';
+                          _filterJenis = 'semua';
+                          _searchCtrl.clear();
+                          _kataKunci = '';
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        decoration: BoxDecoration(
+                          color: _statusDipilih == 'semua'
+                              ? Colors.white
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: _statusDipilih == 'semua'
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Header Kartu: ID Pesanan & Status Pill
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: OC.box,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '#${p.idPesanan}',
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2EBE2),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.shopping_bag_outlined,
+                                  color: OC.primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${semua.length}',
                                       style: const TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w800,
                                         color: OC.ink,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.1,
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  if (p.isPreOrder)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 3.5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF5F9F6),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: const Color(0xFFDCE8DE),
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.cake_outlined,
-                                            size: 11,
-                                            color: Color(0xFF5B9E68),
-                                          ),
-                                          SizedBox(width: 3),
-                                          Text(
-                                            'Pre-Order',
-                                            style: TextStyle(
-                                              fontSize: 10.5,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF5B9E68),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 3.5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE8F5E9),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: const Color(0xFFA5D6A7),
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.bolt_rounded,
-                                            size: 11,
-                                            color: Color(0xFF2E7D32),
-                                          ),
-                                          SizedBox(width: 3),
-                                          Text(
-                                            'Ready',
-                                            style: TextStyle(
-                                              fontSize: 10.5,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF2E7D32),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  const Spacer(),
-                                  MiniBadge(p.status.label, bg: bg, fg: fg),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Body Kartu: Nama pembeli & item preview
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Thumbnail item pertama (jika ada)
-                                  if (p.items.isNotEmpty &&
-                                      p.items.first.gambarUrl != null &&
-                                      p.items.first.gambarUrl!.isNotEmpty)
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 12),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: OC.line),
-                                      ),
-                                      child: GambarJaringan(
-                                        url: p.items.first.gambarUrl!,
-                                        width: 52,
-                                        height: 52,
-                                        radius: 10,
-                                        cacheBuster: DateTime.now()
-                                            .millisecondsSinceEpoch
-                                            .toString(),
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      width: 52,
-                                      height: 52,
-                                      margin: const EdgeInsets.only(right: 12),
-                                      decoration: BoxDecoration(
-                                        color: OC.box,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: OC.line),
-                                      ),
-                                      child: const Icon(
-                                        Icons.fastfood_outlined,
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      'Total Pesanan',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
                                         color: OC.muted,
-                                        size: 24,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          p.namaPembeli,
-                                          style: const TextStyle(
-                                            fontSize: 14.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: OC.ink,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          p.items.isNotEmpty
-                                              ? '${p.items.first.namaProduk}${p.items.length > 1 ? ' (+${p.items.length - 1} menu lainnya)' : ''}'
-                                              : 'Pesanan UMKM (${p.totalPorsi} porsi)',
-                                          style: const TextStyle(
-                                            fontSize: 12.5,
-                                            color: OC.muted,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${p.totalPorsi} porsi total',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: OC.muted,
-                                          ),
-                                        ),
-                                        if (p.isPreOrder &&
-                                            p.waktuDibutuhkan != null) ...[
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.event_available_outlined,
-                                                size: 13,
-                                                color: Color(0xFF5B9E68),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  'Acara: ${tanggalFmt.format(p.waktuDibutuhkan!)}',
-                                                  style: const TextStyle(
-                                                    fontSize: 11.5,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Color(0xFF5B9E68),
-                                                  ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Divider(height: 20),
-
-                              // Footer Kartu: Total pendapatan & Jadwal/Countdown
-                              Row(
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Pendapatan Bersih',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: OC.muted,
-                                        ),
-                                      ),
-                                      Text(
-                                        formatRupiah(p.totalDiterimaMitra),
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w900,
-                                          color: OC.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  if (p.status == StatusPesanan.poBaru)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: OC.peachSoft,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.timer_outlined,
-                                            size: 14,
-                                            color: OC.amber,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            p.isPreOrder
-                                                ? 'Konfirmasi 24 Jam'
-                                                : 'Konfirmasi 30 Mnt',
-                                            style: const TextStyle(
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w800,
-                                              color: OC.amber,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    Row(
-                                      children: [
-                                        Text(
-                                          tanggalFmt.format(p.tanggalPesan),
-                                          style: const TextStyle(
-                                            fontSize: 11.5,
-                                            color: OC.muted,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          size: 18,
-                                          color: OC.muted,
-                                        ),
-                                      ],
-                                    ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
+                ),
+                Container(width: 1, height: 36, color: const Color(0xFFD6E2D6)),
+
+                // Perlu Tindakan
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _statusDipilih = StatusPesanan.poBaru.kodeDb;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        decoration: BoxDecoration(
+                          color: _statusDipilih == StatusPesanan.poBaru.kodeDb
+                              ? Colors.white
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow:
+                              _statusDipilih == StatusPesanan.poBaru.kodeDb
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2EBE2),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.schedule_rounded,
+                                  color: Color(0xFFD97706),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '$jumlahPerluTindakan',
+                                      style: const TextStyle(
+                                        color: OC.ink,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      'Perlu Tindakan',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: OC.muted,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 14),
+
+          // 2. STATUS PILLS HORIZONTAL WITH COUNTER
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: statusTabs.map((tab) {
+                final terpilih = _statusDipilih == tab.kode;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    onTap: () => setState(() => _statusDipilih = tab.kode),
+                    borderRadius: BorderRadius.circular(14),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: terpilih ? OC.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: terpilih
+                              ? OC.primary
+                              : const Color(0xFFE2EBE2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            tab.label,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: terpilih
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: terpilih ? Colors.white : OC.ink,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: terpilih
+                                  ? Colors.white.withValues(alpha: 0.22)
+                                  : const Color(0xFFF0F5F0),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${tab.count}',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: terpilih ? Colors.white : OC.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 3. SEARCH BAR + FILTER BUTTON
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: OC.line),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (val) => setState(() => _kataKunci = val),
+                    textInputAction: TextInputAction.search,
+                    textAlignVertical: TextAlignVertical.center,
+                    decoration: InputDecoration(
+                      hintText: 'Cari pesanan...',
+                      hintStyle: const TextStyle(
+                        color: OC.faint,
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: OC.muted,
+                        size: 21,
+                      ),
+                      suffixIcon: _kataKunci.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Hapus pencarian',
+                              onPressed: () {
+                                _searchCtrl.clear();
+                                setState(() => _kataKunci = '');
+                              },
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 19,
+                              ),
+                              color: OC.muted,
+                            ),
+                      isDense: true,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              InkWell(
+                onTap: () => _bukaFilter(jumlahPerStatus),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: jumlahFilterAktif > 0 ? OC.primary : OC.line,
+                      width: jumlahFilterAktif > 0 ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.tune_rounded,
+                        size: 18,
+                        color: jumlahFilterAktif > 0 ? OC.primary : OC.ink,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        jumlahFilterAktif == 0
+                            ? 'Filter'
+                            : 'Filter ($jumlahFilterAktif)',
+                        style: TextStyle(
+                          color: jumlahFilterAktif > 0 ? OC.primary : OC.ink,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // 4. DAFTAR PESANAN BERDASARKAN GROUP TANGGAL
+          if (pesananTersaring.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 40),
+              child: TampilanKosong(
+                ikon: Icons.receipt_long_outlined,
+                judul: 'Tidak Ada Pesanan',
+                pesan: _kataKunci.isNotEmpty
+                    ? 'Tidak ditemukan pesanan dengan kata kunci "$_kataKunci".'
+                    : 'Belum ada pesanan di kategori atau filter ini.',
+              ),
+            )
+          else
+            ...listTanggal.map((tanggal) {
+              final pesananHariIni = pesananPerTanggal[tanggal]!;
+              final isTerbaru = tanggal == listTanggal.first;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Group Header Tanggal
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_month_outlined,
+                          size: 16,
+                          color: OC.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          tanggal,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: OC.ink,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (isTerbaru)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 11,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Terbaru',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF2E7D32),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Cards Pesanan Hari Ini
+                  ...pesananHariIni.map((p) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _KartuPesananBaru(
+                          pesanan: p,
+                          onRefresh: widget.onRefresh,
+                          tanggalFmt: tanggalFmt,
+                        ),
+                      )),
+                ],
+              );
+            }),
         ],
       ),
     );
   }
+}
 
-  Widget _filterButton(
-    String label,
-    int index,
-    int count, {
-    bool dangerBadge = false,
-  }) {
-    final terpilih = _filterIndex == index;
+class _KartuPesananBaru extends StatelessWidget {
+  final Pesanan pesanan;
+  final Future<void> Function() onRefresh;
+  final DateFormat tanggalFmt;
+
+  const _KartuPesananBaru({
+    required this.pesanan,
+    required this.onRefresh,
+    required this.tanggalFmt,
+  });
+
+  (Color, Color) _warnaStatus(StatusPesanan s) => switch (s) {
+        StatusPesanan.poBaru => (const Color(0xFFFFFBEB), const Color(0xFFD97706)),
+        StatusPesanan.diterima => (const Color(0xFFF0FDF4), const Color(0xFF16A34A)),
+        StatusPesanan.diproses => (const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
+        StatusPesanan.diantar => (const Color(0xFFFAF5FF), const Color(0xFF9333EA)),
+        StatusPesanan.selesai => (const Color(0xFFF0FDF4), const Color(0xFF16A34A)),
+        StatusPesanan.ditolak => (const Color(0xFFFEF2F2), const Color(0xFFDC2626)),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final p = pesanan;
+    final (bgStatus, fgStatus) = _warnaStatus(p.status);
+
     return InkWell(
-      onTap: () => setState(() => _filterIndex = index),
       borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      onTap: () async {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DetailPesananScreen(idPesanan: p.idPesanan),
+          ),
+        );
+        await onRefresh();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: terpilih ? OC.primary : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: terpilih ? OC.primary : OC.line),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: terpilih ? FontWeight.w800 : FontWeight.w600,
-                color: terpilih ? Colors.white : OC.muted,
-              ),
+          border: Border.all(color: const Color(0xFFEBEFEB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: terpilih
-                    ? Colors.white.withValues(alpha: 0.25)
-                    : dangerBadge
-                    ? AppColors.dangerBg
-                    : OC.box,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  color: terpilih
-                      ? Colors.white
-                      : dangerBadge
-                      ? AppColors.danger
-                      : OC.muted,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. HEADER CARD: ID PESANAN, BADGE JENIS, BADGE STATUS, TITIK 3
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '#${p.idPesanan}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: OC.ink,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 6),
+
+                // Badge Jenis (Pre-Order / Ready)
+                if (p.isPreOrder)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFFEDD5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 11,
+                          color: Color(0xFFEA580C),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Pre-Order',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFEA580C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFDCFCE7)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.bolt_rounded,
+                          size: 12,
+                          color: Color(0xFF16A34A),
+                        ),
+                        SizedBox(width: 3),
+                        Text(
+                          'Ready',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(width: 6),
+
+                // Badge Status
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bgStatus,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    p.status.label,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: fgStatus,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+
+                const Icon(
+                  Icons.more_vert_rounded,
+                  size: 18,
+                  color: OC.muted,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 2. BODY CARD: FOTO MENU SQUARE & INFO LENGKAP
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: p.items.isNotEmpty &&
+                          p.items.first.gambarUrl != null &&
+                          p.items.first.gambarUrl!.isNotEmpty
+                      ? GambarJaringan(
+                          url: p.items.first.gambarUrl!,
+                          width: 80,
+                          height: 80,
+                          radius: 14,
+                          cacheBuster:
+                              DateTime.now().millisecondsSinceEpoch.toString(),
+                        )
+                      : Container(
+                          width: 80,
+                          height: 80,
+                          color: const Color(0xFFF3F4F6),
+                          child: const Icon(
+                            Icons.restaurant_menu_rounded,
+                            color: OC.muted,
+                            size: 28,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.namaPembeli,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: OC.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        p.items.isNotEmpty
+                            ? '${p.items.first.namaProduk}${p.items.length > 1 ? ' (+${p.items.length - 1} lainnya)' : ''}'
+                            : 'Pesanan UMKM',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: OC.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.group_outlined,
+                            size: 13,
+                            color: OC.muted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${p.totalPorsi} porsi',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: OC.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (p.isPreOrder && p.waktuDibutuhkan != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.schedule_rounded,
+                              size: 13,
+                              color: Color(0xFFEA580C),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Acara: ${tanggalFmt.format(p.waktuDibutuhkan!)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFEA580C),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFF1F3F1)),
+            const SizedBox(height: 10),
+
+            // 3. FOOTER CARD: PENDAPATAN BERSIH & LIHAT DETAIL
+            Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pendapatan Bersih',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        color: OC.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      rupiah(p.totalDiterimaMitra),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: OC.primary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Lihat Detail',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: OC.primary,
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: OC.primary,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _tipeChip(String label, int index) {
-    final active = _tipeIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _tipeIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? OC.primary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: active ? OC.primary : OC.line,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-            color: active ? Colors.white : OC.muted,
-          ),
-        ),
-      ),
-    );
-  }
-
-  (Color, Color) _warnaStatus(StatusPesanan s) => switch (s) {
-    StatusPesanan.poBaru => (OC.peach, OC.amber),
-    StatusPesanan.diterima => (OC.mint, OC.primary),
-    StatusPesanan.diproses => (OC.banner, OC.mintText),
-    StatusPesanan.diantar => (OC.banner, OC.mintText),
-    StatusPesanan.selesai => (OC.mint, OC.primary),
-    StatusPesanan.ditolak => (AppColors.dangerBg, AppColors.danger),
-  };
 }

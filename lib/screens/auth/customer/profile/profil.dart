@@ -16,6 +16,7 @@ import '../../../../models/customer_settings_models.dart';
 import '../../../../theme/app_theme.dart';
 import 'alamat_form_page.dart';
 import '../order/order_widgets.dart';
+import '../../../widgets/umkm_app_bar.dart';
 
 const String kreonganKeyword = 'kreongan';
 
@@ -1452,23 +1453,7 @@ class _InfoPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: inkColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: inkColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: DjajanAppBar(title: title),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1573,23 +1558,7 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: inkColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          widget.title,
-          style: const TextStyle(
-            color: inkColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: DjajanAppBar(title: widget.title),
       body: Form(
         key: _formKey,
         child: ListView(

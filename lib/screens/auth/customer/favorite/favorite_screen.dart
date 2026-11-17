@@ -5,6 +5,7 @@ import '../../../../config/app_config.dart';
 import '../../../../models/product.dart';
 import '../../../../models/umkm.dart';
 import '../../../../widgets/favorite_button.dart';
+import '../../../../widgets/umkm_app_bar.dart';
 import '../../../../widgets/product_card.dart';
 import '../cart/cart.dart';
 import '../../../../services/cart_service.dart';
@@ -61,22 +62,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       length: 2,
       child: Scaffold(
         backgroundColor: background,
-        appBar: AppBar(
-          backgroundColor: background,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: textDark),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Favorit Saya',
-            style: TextStyle(
-              color: textDark,
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
-          ),
+        appBar: DjajanAppBar(
+          title: 'Favorit Saya',
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(52),
             child: AnimatedBuilder(

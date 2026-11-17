@@ -6,6 +6,7 @@ import '../../../../services/api_service.dart';
 import '../../../../services/customer_location_service.dart';
 import '../../../../services/customer_settings_service.dart';
 import '../../../../widgets/osm_map_picker.dart';
+import '../../../../widgets/umkm_app_bar.dart';
 import '../order/order_widgets.dart';
 
 /// Hasil yang dikembalikan oleh [AlamatFormPage] ke pemanggil.
@@ -226,23 +227,7 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9F6),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F9F6),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          isEdit ? 'Edit Alamat' : 'Tambah Alamat',
-          style: const TextStyle(
-            color: OC.ink,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: OC.muted),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
+      appBar: DjajanAppBar(title: isEdit ? 'Edit Alamat' : 'Tambah Alamat'),
       body: Form(
         key: _formKey,
         child: ListView(
