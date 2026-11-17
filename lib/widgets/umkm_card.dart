@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../config/app_config.dart';
 import '../models/umkm.dart';
+import '../theme/app_theme.dart';
 import 'app_network_image.dart';
 
 /// Kartu ringkas UMKM untuk carousel di beranda.
@@ -9,94 +9,83 @@ class UmkmCard extends StatelessWidget {
   final Umkm umkm;
   final int productCount;
   final VoidCallback? onTap;
+  final bool featured;
 
   const UmkmCard({
     super.key,
     required this.umkm,
     required this.productCount,
     this.onTap,
+    this.featured = false,
   });
 
-  static const Color _primary = AppConfig.primaryColor;
-  static const Color _ink = Color(0xFF1E293B);
-  static const Color _muted = Color(0xFF64748B);
+  static const Color _primary = AppColors.hijauTua;
+  static const Color _ink = AppColors.textDark;
+  static const Color _muted = AppColors.textGrey;
 
   @override
   Widget build(BuildContext context) {
+    return featured ? _buildFeaturedCard() : _buildCompactCard();
+  }
+
+  Widget _buildFeaturedCard() {
     return SizedBox(
-      width: 200,
+      width: 250,
+      height: 320,
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        elevation: 2,
+        shadowColor: const Color(0x1A123C24),
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE4E9EF)),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFD9E8DD)),
             ),
-            clipBehavior: Clip.antiAlias,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Banner + avatar
+                _buildAwning(),
                 SizedBox(
-                  height: 78,
+                  height: 126,
                   child: Stack(
-                    clipBehavior: Clip.none,
+                    fit: StackFit.expand,
                     children: [
-                      Positioned.fill(
-                        child: umkm.imageUrl.isNotEmpty
-                            ? AppNetworkImage(
-                                url: umkm.imageUrl,
-                                fit: BoxFit.cover,
-                                errorWidget: _bannerFallback(),
-                              )
-                            : _bannerFallback(),
-                      ),
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.05),
-                                Colors.black.withValues(alpha: 0.35),
-                              ],
-                            ),
-                          ),
-                        ),
+                      AppNetworkImage(
+                        url: umkm.imageUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: _bannerFallback(),
                       ),
                       if (umkm.isVerified)
                         Positioned(
-                          top: 8,
-                          right: 8,
+                          top: 10,
+                          left: 10,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 7,
-                              vertical: 3,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.95),
+                              color: Colors.white.withValues(alpha: 0.96),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.verified,
-                                  size: 11,
-                                  color: Color(0xFF16A34A),
+                                  Icons.verified_rounded,
+                                  size: 12,
+                                  color: _primary,
                                 ),
-                                SizedBox(width: 3),
+                                SizedBox(width: 4),
                                 Text(
-                                  'Warga',
+                                  'Terverifikasi',
                                   style: TextStyle(
                                     fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF16A34A),
+                                    fontWeight: FontWeight.w700,
+                                    color: _primary,
                                   ),
                                 ),
                               ],
@@ -106,104 +95,322 @@ class UmkmCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Transform.translate(
-                        offset: const Offset(0, -14),
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF175D2B), Color(0xFF22915D)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: Center(
-                            child: Text(
-                              umkm.initials,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          umkm.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: _ink,
                           ),
                         ),
-                      ),
-                      Transform.translate(
-                        offset: const Offset(0, -8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        if (umkm.description.trim().isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            umkm.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              height: 1.2,
+                              color: _muted,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 5),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 3,
                           children: [
+                            _infoChip(Icons.restaurant_menu_rounded, umkm.type),
+                            _infoChip(
+                              umkm.hasCourier
+                                  ? Icons.delivery_dining_rounded
+                                  : Icons.storefront_outlined,
+                              umkm.hasCourier
+                                  ? 'Antar tersedia'
+                                  : 'Ambil sendiri',
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        const Divider(height: 8, color: AppColors.garis),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 15,
+                              color: Color(0xFFFFB21A),
+                            ),
+                            const SizedBox(width: 3),
                             Text(
-                              umkm.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              umkm.rating.toStringAsFixed(1),
                               style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
                                 color: _ink,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              umkm.type,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                color: _muted,
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.hijauLembut,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Text(
+                                '$productCount menu',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: _primary,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  size: 13,
-                                  color: Color(0xFFF29B00),
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '${umkm.rating}',
+                          ],
+                        ),
+                        if (umkm.pickupLocation.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 13,
+                                color: _muted,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  umkm.pickupLocation,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: _ink,
+                                    fontSize: 10,
+                                    color: _muted,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEAF3EC),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '$productCount produk',
-                                    style: const TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: _primary,
-                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAwning() {
+    return SizedBox(
+      height: 20,
+      child: Column(
+        children: [
+          Expanded(
+            child: Container(
+              color: const Color(0xFF174B2A),
+              child: Row(
+                children: List.generate(
+                  10,
+                  (index) => Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: index.isEven
+                              ? const Color(0xFF5B9E68)
+                              : const Color(0xFF2E7040),
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(height: 3, color: const Color(0xFFC9A66B)),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String label) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF3EC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: _primary),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: _primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactCard() {
+    return SizedBox(
+      width: 190,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.garis),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 104,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AppNetworkImage(
+                        url: umkm.imageUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: _bannerFallback(),
+                      ),
+                      if (umkm.isVerified)
+                        Positioned(
+                          top: 9,
+                          right: 9,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.verified,
+                                  size: 11,
+                                  color: AppColors.hijauTua,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Warga',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.hijauTua,
                                   ),
                                 ),
                               ],
                             ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          umkm.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          umkm.type,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: _muted),
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 15,
+                              color: AppColors.hijauMuda,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              umkm.rating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _ink,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.hijauLembut,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '$productCount produk',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _primary,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -216,8 +423,12 @@ class UmkmCard extends StatelessWidget {
 
   Widget _bannerFallback() {
     return Container(
-      color: const Color(0xFFE9EDF0),
-      child: const Icon(Icons.storefront, size: 34, color: Colors.grey),
+      color: AppColors.latar,
+      child: const Icon(
+        Icons.storefront_outlined,
+        size: 34,
+        color: AppColors.textGrey,
+      ),
     );
   }
 }

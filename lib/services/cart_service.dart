@@ -26,10 +26,21 @@ class CartService extends ChangeNotifier {
 
   double get subtotal => _items.fold(0.0, (sum, item) => sum + item.subtotal);
 
+  int quantityForProduct(Product product) {
+    final cartLine = product.toCartLine();
+    final index = _items.indexWhere(
+      (item) =>
+          item.productId == cartLine.productId ||
+          (item.productName == product.name && item.umkmName == product.umkm),
+    );
+    return index < 0 ? 0 : _items[index].quantity;
+  }
+
   Future<void> loadForCustomer(String customerId) async {
     final normalizedId = customerId.trim();
     if (normalizedId.isEmpty || normalizedId == _customerId) return;
 
+    await _saveOperation;
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getString(_storageKey(normalizedId));
     _customerId = normalizedId;
@@ -50,13 +61,12 @@ class CartService extends ChangeNotifier {
 
   /// Menambahkan produk dari halaman Beranda atau Detail Produk
   void addProduct(Product product, {int quantity = 1}) {
-    final targetId = product.id.isNotEmpty
-        ? product.id
-        : 'prod_${product.name.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}';
+    if (quantity <= 0) return;
+    final cartLine = product.toCartLine(quantity: quantity);
 
     final index = _items.indexWhere(
       (l) =>
-          l.productId == targetId ||
+          l.productId == cartLine.productId ||
           (l.productName == product.name && l.umkmName == product.umkm),
     );
 
@@ -64,7 +74,7 @@ class CartService extends ChangeNotifier {
       final existing = _items[index];
       _items[index] = existing.copyWith(quantity: existing.quantity + quantity);
     } else {
-      _items.add(product.toCartLine(quantity: quantity));
+      _items.add(cartLine);
     }
     _changed();
   }
@@ -145,6 +155,37 @@ class CartService extends ChangeNotifier {
         _items[i] = line.copyWith(codAvailable: updatedCod);
         hasChanged = true;
       }
+
+      if (matchingProduct != null) {
+        final updatedLine = _items[i].copyWith(
+          productName: matchingProduct.name,
+          unit: matchingProduct.unit,
+          imageUrl: matchingProduct.imageUrl,
+          price: matchingProduct.price.toDouble(),
+          type: matchingProduct.parsedOrderType,
+          umkmName: matchingProduct.umkm,
+          umkmType: matchingProduct.umkmType,
+          courierFee: matchingProduct.courierFee,
+          clearCourierFee: matchingProduct.courierFee == null,
+          pickupLocation: matchingProduct.pickupLocation,
+          codAvailable: matchingProduct.codAvailable,
+          pickupAvailable: matchingProduct.pickupAvailable,
+        );
+        if (updatedLine.productName != _items[i].productName ||
+            updatedLine.unit != _items[i].unit ||
+            updatedLine.imageUrl != _items[i].imageUrl ||
+            updatedLine.price != _items[i].price ||
+            updatedLine.type != _items[i].type ||
+            updatedLine.umkmName != _items[i].umkmName ||
+            updatedLine.umkmType != _items[i].umkmType ||
+            updatedLine.courierFee != _items[i].courierFee ||
+            updatedLine.pickupLocation != _items[i].pickupLocation ||
+            updatedLine.codAvailable != _items[i].codAvailable ||
+            updatedLine.pickupAvailable != _items[i].pickupAvailable) {
+          _items[i] = updatedLine;
+          hasChanged = true;
+        }
+      }
     }
 
     if (hasChanged) {
@@ -156,11 +197,12 @@ class CartService extends ChangeNotifier {
     notifyListeners();
     final customerId = _customerId;
     if (customerId == null) return;
+    final encodedItems = jsonEncode(_items.map(_encodeItem).toList());
     _saveOperation = _saveOperation.then((_) async {
       final preferences = await SharedPreferences.getInstance();
       await preferences.setString(
         _storageKey(customerId),
-        jsonEncode(_items.map(_encodeItem).toList()),
+        encodedItems,
       );
     });
   }

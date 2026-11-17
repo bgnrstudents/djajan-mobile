@@ -1,3 +1,4 @@
+import 'package:djajan_mobile/screens/auth/auth_widgets.dart';
 import 'package:djajan_mobile/screens/auth/login_screen.dart';
 import 'package:djajan_mobile/screens/auth/register_screen.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,9 @@ void main() {
     expect(find.text('Kata sandi wajib diisi'), findsOneWidget);
   });
 
-  testWidgets('Validasi format nomor WhatsApp pada halaman masuk', (tester) async {
+  testWidgets('Validasi format nomor WhatsApp pada halaman masuk', (
+    tester,
+  ) async {
     _useTallScreen(tester);
     await tester.pumpWidget(_wrap(const LoginScreen()));
     await tester.pumpAndSettle();
@@ -73,7 +76,60 @@ void main() {
     expect(find.text('Penjual UMKM'), findsNothing);
   });
 
-  testWidgets('Halaman daftar menolak kata sandi yang tidak sama', (tester) async {
+  testWidgets('Halaman daftar tetap dapat digunakan di layar sempit', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_wrap(const RegisterScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buat Akun Baru'), findsOneWidget);
+    final headerSubtitle = tester.getRect(
+      find.text('Daftar dan mulai belanja dari UMKM sekitar.'),
+    );
+    final formCard = tester.getRect(find.byType(AuthCard));
+    expect(headerSubtitle.bottom, lessThan(formCard.top));
+    expect(find.text('Nama Lengkap'), findsOneWidget);
+
+    final submitButton = find.widgetWithText(ElevatedButton, 'Daftar Sekarang');
+    await tester.ensureVisible(submitButton);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Form daftar tetap dapat digulir saat keyboard terbuka', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 740);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(_wrap(const RegisterScreen()));
+    await tester.pumpAndSettle();
+
+    final firstField = find.byType(TextFormField).first;
+    await tester.ensureVisible(firstField);
+    await tester.tap(firstField);
+    await tester.pumpAndSettle();
+
+    final submitButton = find.widgetWithText(ElevatedButton, 'Daftar Sekarang');
+    await tester.ensureVisible(submitButton);
+    await tester.pumpAndSettle();
+
+    expect(tester.getRect(submitButton).bottom, lessThanOrEqualTo(440));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Halaman daftar menolak kata sandi yang tidak sama', (
+    tester,
+  ) async {
     _useTallScreen(tester);
     await tester.pumpWidget(_wrap(const RegisterScreen()));
     await tester.pumpAndSettle();
@@ -111,7 +167,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Kode Terkirim'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Kembali ke Halaman Masuk'),
-        findsOneWidget);
+    expect(
+      find.widgetWithText(ElevatedButton, 'Kembali ke Halaman Masuk'),
+      findsOneWidget,
+    );
   });
 }

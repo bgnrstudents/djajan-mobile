@@ -11,7 +11,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/umkm_app_bar.dart';
 import 'detail_pesanan_screen.dart';
-import '../../screens/customer/order/order_widgets.dart';
+import '../auth/customer/order/order_widgets.dart';
 import '../../widgets/umkm_bottom_navigation.dart';
 import 'tambah_produk_screen.dart';
 import 'pengaturan_screen.dart';

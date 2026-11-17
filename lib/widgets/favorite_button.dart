@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/favorite_service.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 /// Tombol hati (favorit) yang otomatis memperbarui diri saat status berubah.
 ///
@@ -76,8 +77,8 @@ class FavoriteButton extends StatelessWidget {
                 isFav ? Icons.favorite : Icons.favorite_border,
                 size: size,
                 color: isFav
-                    ? const Color(0xFFE11D48)
-                    : const Color(0xFF64748B),
+                    ? AppColors.hijauTua
+                    : AppColors.textGrey,
               ),
             ),
           ),

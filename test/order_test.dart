@@ -4,7 +4,7 @@ import 'package:djajan_mobile/models/order.dart';
 import 'package:djajan_mobile/models/product.dart';
 import 'package:djajan_mobile/models/umkm.dart';
 import 'package:djajan_mobile/models/umkm_seller_models.dart' as umkm_models;
-import 'package:djajan_mobile/screens/customer/order/order_widgets.dart';
+import 'package:djajan_mobile/screens/auth/customer/order/order_widgets.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/services/map_navigation_service.dart';
 import 'package:djajan_mobile/services/order_service.dart';

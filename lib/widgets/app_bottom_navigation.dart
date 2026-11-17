@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 
 import '../services/cart_service.dart';
+import '../theme/app_theme.dart';
 
-class AppBottomNavigation extends StatelessWidget {
+class AppBottomNavigation extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
 
@@ -12,141 +14,264 @@ class AppBottomNavigation extends StatelessWidget {
     required this.onDestinationSelected,
   });
 
-  static const Color primaryColor = Color(0xFF175D2B);
-  static const Color inactiveColor = Color(0xFF718096);
-  static const Color activeBackground = Color(0xFFEAF3EC);
+  static const Color primaryColor = AppColors.hijauTua;
+  static const Color inactiveColor = AppColors.textGrey;
+  static const Color activeBackground = AppColors.hijauLembut;
+
+  @override
+  State<AppBottomNavigation> createState() => _AppBottomNavigationState();
+}
+
+class _AppBottomNavigationState extends State<AppBottomNavigation>
+    with SingleTickerProviderStateMixin {
+  static const _items = [
+    {
+      'label': 'Beranda',
+      'icon': Icons.home_outlined,
+      'activeIcon': Icons.home_rounded,
+    },
+    {
+      'label': 'Pesanan',
+      'icon': Icons.receipt_long_outlined,
+      'activeIcon': Icons.receipt_long_rounded,
+    },
+    {
+      'label': 'Keranjang',
+      'icon': Icons.shopping_cart_outlined,
+      'activeIcon': Icons.shopping_cart_rounded,
+    },
+    {
+      'label': 'Profil',
+      'icon': Icons.person_outline_rounded,
+      'activeIcon': Icons.person_rounded,
+    },
+  ];
+
+  late final AnimationController _indicatorController;
+
+  @override
+  void initState() {
+    super.initState();
+    _indicatorController = AnimationController.unbounded(
+      vsync: this,
+      value: widget.currentIndex.toDouble(),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant AppBottomNavigation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIndex != oldWidget.currentIndex) {
+      _indicatorController.animateWith(
+        SpringSimulation(
+          const SpringDescription(mass: 1, stiffness: 360, damping: 30),
+          _indicatorController.value,
+          widget.currentIndex.toDouble(),
+          0,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _indicatorController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final cartService = CartService();
 
-    final items = const [
-      {
-        'label': 'Beranda',
-        'icon': Icons.home_outlined,
-        'activeIcon': Icons.home_rounded,
-      },
-      {
-        'label': 'Pesanan',
-        'icon': Icons.receipt_long_outlined,
-        'activeIcon': Icons.receipt_long_rounded,
-      },
-      {
-        'label': 'Keranjang',
-        'icon': Icons.shopping_cart_outlined,
-        'activeIcon': Icons.shopping_cart_rounded,
-      },
-      {
-        'label': 'Profil',
-        'icon': Icons.person_outline_rounded,
-        'activeIcon': Icons.person_rounded,
-      },
-    ];
-
     return AnimatedBuilder(
       animation: cartService,
       builder: (context, _) {
-        final int cartCount = cartService.totalQuantity;
-
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: SafeArea(
             top: false,
             child: Container(
-              height: 68,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              height: 62,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE8ECEF), width: 1),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.garis, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Row(
-                children: List.generate(items.length, (index) {
-                  final bool isSelected = currentIndex == index;
-                  final item = items[index];
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final itemWidth = constraints.maxWidth / _items.length;
 
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => onDestinationSelected(index),
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isSelected ? activeBackground : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                  return Stack(
+                    children: [
+                      AnimatedBuilder(
+                        animation: _indicatorController,
+                        builder: (context, child) => Positioned(
+                          left: _indicatorController.value * itemWidth + 2,
+                          top: 2,
+                          bottom: 2,
+                          width: itemWidth - 4,
+                          child: child!,
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Icon(
-                                  (isSelected ? item['activeIcon'] : item['icon']) as IconData,
-                                  size: 23,
-                                  color: isSelected ? primaryColor : inactiveColor,
-                                ),
-                                if (index == 2 && cartCount > 0)
-                                  Positioned(
-                                    top: -4,
-                                    right: -8,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(3),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFBA1A1A),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 16,
-                                        minHeight: 16,
-                                      ),
-                                      child: Text(
-                                        cartCount > 99 ? '99+' : '$cartCount',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                          height: 1,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              item['label'] as String,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected ? primaryColor : inactiveColor,
-                              ),
-                            ),
-                          ],
+                        child: DecoratedBox(
+                          key: const ValueKey('bottom-nav-indicator'),
+                          decoration: BoxDecoration(
+                            color: AppBottomNavigation.activeBackground,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                       ),
-                    ),
+                      Row(
+                        children: List.generate(_items.length, (index) {
+                          final selected = widget.currentIndex == index;
+                          final item = _items[index];
+
+                          return Expanded(
+                            child: GestureDetector(
+                              key: ValueKey('bottom-nav-item-$index'),
+                              onTap: () => widget.onDestinationSelected(index),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        AnimatedScale(
+                                          scale: selected ? 1.06 : 1,
+                                          duration: const Duration(
+                                            milliseconds: 220,
+                                          ),
+                                          curve: Curves.easeOutCubic,
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(
+                                              milliseconds: 180,
+                                            ),
+                                            switchInCurve: Curves.easeOutCubic,
+                                            switchOutCurve: Curves.easeInCubic,
+                                            transitionBuilder:
+                                                (child, animation) =>
+                                                    FadeTransition(
+                                                      opacity: animation,
+                                                      child: ScaleTransition(
+                                                        scale: Tween<double>(
+                                                          begin: 0.88,
+                                                          end: 1,
+                                                        ).animate(animation),
+                                                        child: child,
+                                                      ),
+                                                    ),
+                                            child: Icon(
+                                              (selected
+                                                      ? item['activeIcon']
+                                                      : item['icon'])
+                                                  as IconData,
+                                              key: ValueKey(
+                                                'nav-icon-$index-$selected',
+                                              ),
+                                              size: 20,
+                                              color: selected
+                                                  ? AppBottomNavigation
+                                                        .primaryColor
+                                                  : AppBottomNavigation
+                                                        .inactiveColor,
+                                            ),
+                                          ),
+                                        ),
+                                        if (index == 2 &&
+                                            cartService.totalQuantity > 0)
+                                          Positioned(
+                                            top: -4,
+                                            right: -9,
+                                            child: _CartBadge(
+                                              count: cartService.totalQuantity,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 1),
+                                    AnimatedDefaultTextStyle(
+                                      duration: const Duration(
+                                        milliseconds: 220,
+                                      ),
+                                      curve: Curves.easeOutCubic,
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        height: 1,
+                                        fontWeight: selected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: selected
+                                            ? AppBottomNavigation.primaryColor
+                                            : AppBottomNavigation.inactiveColor,
+                                      ),
+                                      child: Text(item['label'] as String),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   );
-                }),
+                },
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _CartBadge extends StatelessWidget {
+  final int count;
+
+  const _CartBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = count > 99 ? '99+' : '$count';
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOutBack,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) =>
+          ScaleTransition(scale: animation, child: child),
+      child: Container(
+        key: ValueKey(label),
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: AppColors.hijauTua,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 1.5),
+        ),
+        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            height: 1,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -3,6 +3,33 @@ import 'package:flutter/foundation.dart';
 import '../models/product.dart';
 import '../models/umkm.dart';
 import 'api_service.dart';
+import 'cart_service.dart';
+
+enum ProductSortOrder { newest, priceAscending, priceDescending }
+
+String productSortLabel(ProductSortOrder order) => switch (order) {
+  ProductSortOrder.newest => 'Terbaru',
+  ProductSortOrder.priceAscending => 'Harga terendah',
+  ProductSortOrder.priceDescending => 'Harga tertinggi',
+};
+
+List<Product> sortProducts(
+  Iterable<Product> products,
+  ProductSortOrder order,
+) {
+  final sorted = products.toList();
+  switch (order) {
+    case ProductSortOrder.newest:
+      break;
+    case ProductSortOrder.priceAscending:
+      sorted.sort((a, b) => a.price.compareTo(b.price));
+      break;
+    case ProductSortOrder.priceDescending:
+      sorted.sort((a, b) => b.price.compareTo(a.price));
+      break;
+  }
+  return sorted;
+}
 
 class CatalogService extends ChangeNotifier {
   List<Product> products = const [];
@@ -43,6 +70,7 @@ class CatalogService extends ChangeNotifier {
                 .map((item) => Umkm.fromJson(Map<String, dynamic>.from(item)))
                 .toList()
           : const [];
+      CartService().syncWithCatalog(products, umkms: umkms);
       categories = [
         'Semua',
         if (rawCategories is List)

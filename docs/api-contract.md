@@ -364,6 +364,13 @@ Res `data` = array pesanan (urut `po_baru → diterima → diproses → diantar 
 ### 4.12 `GET /api/pesanan_detail` (privat)
 Query: `id_pesanan`. Res `data` = satu objek pesanan (bentuk sama 4.11).
 
+### 4.12.1 `POST /api/pesanan/{id_pesanan}/produk/{id_produk}/ulasan` (privat, pelanggan)
+Req: `id_detail`, `rating` (integer 1–5), `komentar` (wajib, maksimal 1000 karakter).
+Ulasan hanya dapat dikirim pemilik pesanan yang berstatus `selesai` untuk item
+produk yang benar-benar tercatat pada pesanan tersebut. Satu ulasan disimpan per
+detail pesanan; pengiriman ulang memperbarui ulasan yang sama.
+Res `data` = pesanan terbaru dengan `items[].ulasan` berisi `rating` dan `komentar`.
+
 ### 4.13 `POST /api/pesanan_status` (privat)
 Req: `id_pesanan`, `status` ∈ `diterima|diproses|diantar|ditolak|selesai`.
 Status `diterima` **otomatis mengurangi stok** produk terkait. Pembayaran

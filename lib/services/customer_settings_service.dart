@@ -59,14 +59,14 @@ class CustomerSettingsService extends ChangeNotifier {
     bool primary = false,
   }) async {
     final data = await ApiService.post('pelanggan/alamat_simpan', {
-      if (id != null) 'id_alamat': id,
+      'id_alamat': ?id,
       'label': label,
       'nama_penerima': recipient,
       'no_telp': phone,
       'alamat': address,
       'catatan': note,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
+      'latitude': ?latitude,
+      'longitude': ?longitude,
       'utama': primary,
     });
     final saved = CustomerAddress.fromJson(data as Map<String, dynamic>);

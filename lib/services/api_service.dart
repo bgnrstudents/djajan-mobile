@@ -173,8 +173,14 @@ class ApiService {
     if (json['sukses'] == true) return json['data'];
 
     final data = json['data'];
+    final fallbackMessage = res.statusCode >= 500
+        ? 'Server mengalami kesalahan (HTTP ${res.statusCode}). '
+              'Periksa log Laravel di storage/logs/laravel.log.'
+        : (json['message']?.toString().isNotEmpty == true
+              ? json['message'].toString()
+              : 'Permintaan gagal (HTTP ${res.statusCode}).');
     throw ApiException(
-      (json['pesan'] ?? 'Terjadi kesalahan pada server.').toString(),
+      (json['pesan'] ?? fallbackMessage).toString(),
       field: data is Map ? data['field']?.toString() : null,
     );
   }

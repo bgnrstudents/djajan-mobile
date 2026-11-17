@@ -1,4 +1,3 @@
-import 'package:djajan_mobile/config/app_config.dart';
 import 'package:djajan_mobile/routes/app_routes.dart';
 import 'package:djajan_mobile/services/umkm_data_service.dart';
 import 'package:flutter/material.dart';
@@ -12,13 +11,14 @@ import 'services/catalog_service.dart';
 import 'services/order_service.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/customer/home/customer_home_screen.dart';
-import 'screens/customer/cart/cart.dart';
+import 'screens/auth/customer/home/customer_home_screen.dart';
+import 'screens/auth/customer/cart/cart.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/umkm/dashboard_umkm_screen.dart';
 import 'screens/umkm/pengaturan_screen.dart';
 import 'screens/umkm/tambah_produk_screen.dart';
 import 'screens/umkm/detail_pesanan_screen.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,12 +45,7 @@ class DjajanApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Djajan',
-        theme: ThemeData(
-          useMaterial3: true,
-          scaffoldBackgroundColor: AppConfig.backgroundColor,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppConfig.primaryColor),
-          appBarTheme: const AppBarTheme(centerTitle: true),
-        ),
+        theme: AppTheme.theme,
 
         initialRoute: AppRoutes.splash,
 

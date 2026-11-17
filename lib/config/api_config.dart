@@ -36,17 +36,17 @@ class ApiConfig {
   /// IP laptop Anda (cek `ipconfig` -> IPv4 Address).
   /// Isi hanya saat aplikasi dijalankan di HP asli.
   /// Contoh: '192.168.1.128'
-  static const String ipLaptop = '10.10.186.18';
+  static const String ipLaptop = '';
 
   /// Pilih target aplikasi:
   /// - false: laptop/browser atau emulator Android
   /// - true: HP asli yang terhubung ke WiFi yang sama
-  static const bool pakaiHpAsli = true;
+  static const bool pakaiHpAsli = false;
 
   /// URL publik untuk pengujian Midtrans dari HP melalui tunnel ngrok.
   /// Kosongkan kembali untuk memakai server lokal berdasarkan [pakaiHpAsli].
   static const String publicBaseUrl =
-      'https://cornflake-untrue-fragrance.ngrok-free.dev';
+      '';
 
   /// Web OAuth Client ID untuk Google Sign-In.
   ///

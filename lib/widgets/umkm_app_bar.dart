@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
-import '../screens/customer/order/order_widgets.dart';
+import '../screens/auth/customer/order/order_widgets.dart';
 
 const _appBarInk = Color(0xFF16201A);
 const _appBarMuted = Color(0xFF5F6B64);

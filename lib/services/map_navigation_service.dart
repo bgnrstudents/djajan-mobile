@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,10 +54,7 @@ class MapNavigationService {
     LatLng? origin,
     String? destinationLabel,
   }) async {
-    final uri = buildGoogleMapsDirUri(
-      destination: destination,
-      origin: origin,
-    );
+    final uri = buildGoogleMapsDirUri(destination: destination, origin: origin);
 
     try {
       final launched = await launchUrl(
@@ -77,9 +75,9 @@ class MapNavigationService {
       } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Tidak dapat membuka aplikasi peta navigasi.'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }
@@ -105,9 +103,9 @@ class MapNavigationService {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Tidak dapat membuka aplikasi peta.'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -127,8 +125,8 @@ class MapNavigationService {
     final sinDLat = math.sin(dLat / 2);
     final sinDLon = math.sin(dLon / 2);
 
-    final h = sinDLat * sinDLat +
-        math.sin(lat1) * math.sin(lat2) * sinDLon * sinDLon;
+    final h =
+        sinDLat * sinDLat + math.sin(lat1) * math.sin(lat2) * sinDLon * sinDLon;
     final c = 2 * math.asin(math.sqrt(h.clamp(0.0, 1.0)));
 
     return double.parse((earthRadiusKm * c).toStringAsFixed(2));
@@ -144,4 +142,3 @@ class MapNavigationService {
 
   static double _degToRad(double deg) => deg * (math.pi / 180.0);
 }
-

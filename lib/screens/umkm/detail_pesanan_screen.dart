@@ -13,7 +13,7 @@ import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/order_delivery_map_card.dart';
-import '../customer/order/order_widgets.dart';
+import '../auth/customer/order/order_widgets.dart';
 
 /// HALAMAN 5 — Detail Pesanan.
 /// Menampilkan isi tabel `pesanan` + `detail_pesanan`. Tombol Terima/Tolak
@@ -338,14 +338,14 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: pesanan.isPreOrder
-                                            ? const Color(0xFFFFF3E0)
-                                            : const Color(0xFFE8F5E9),
+                                            ? const Color(0xFFF5F9F6)
+                                            : const Color(0xFFEAF3EC),
                                         borderRadius:
                                             BorderRadius.circular(6),
                                         border: Border.all(
                                           color: pesanan.isPreOrder
-                                              ? const Color(0xFFFFB74D)
-                                              : const Color(0xFFA5D6A7),
+                                              ? const Color(0xFFDCE8DE)
+                                              : const Color(0xFFDCE8DE),
                                         ),
                                       ),
                                       child: Row(
@@ -357,8 +357,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                                 : Icons.bolt_rounded,
                                             size: 11,
                                             color: pesanan.isPreOrder
-                                                ? const Color(0xFFE65100)
-                                                : const Color(0xFF2E7D32),
+                                                ? const Color(0xFF5B9E68)
+                                                : const Color(0xFF175D2B),
                                           ),
                                           const SizedBox(width: 3),
                                           Text(
@@ -369,8 +369,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                               fontSize: 10,
                                               fontWeight: FontWeight.w800,
                                               color: pesanan.isPreOrder
-                                                  ? const Color(0xFFE65100)
-                                                  : const Color(0xFF2E7D32),
+                                                  ? const Color(0xFF5B9E68)
+                                                  : const Color(0xFF175D2B),
                                             ),
                                           ),
                                         ],

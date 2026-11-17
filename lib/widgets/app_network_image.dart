@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../config/api_config.dart';
+import '../utils/image_url_resolver.dart';
 
 /// Helper widget untuk memuat gambar network secara andal di seluruh aplikasi DJajan.
 ///
@@ -29,35 +29,8 @@ class AppNetworkImage extends StatelessWidget {
     this.errorWidget,
   });
 
-  /// Mengubah URL gambar dari backend agar selalu bisa diakses perangkat.
-  static String? resolveUrl(String? rawUrl) {
-    if (rawUrl == null || rawUrl.trim().isEmpty) return null;
-    final trimmed = rawUrl.trim();
-
-    // Jika URL mengarah ke localhost/127.0.0.1 dari laptop
-    final uri = Uri.tryParse(trimmed);
-    if (uri != null &&
-        (uri.host == 'localhost' ||
-            uri.host == '127.0.0.1' ||
-            uri.host == '10.0.2.2')) {
-      final base = Uri.parse(ApiConfig.baseUrl);
-      return uri
-          .replace(
-            scheme: base.scheme,
-            host: base.host,
-            port: base.hasPort ? base.port : (base.scheme == 'https' ? 443 : 80),
-          )
-          .toString();
-    }
-
-    // Jika URL berupa path relatif
-    if (trimmed.startsWith('/uploads/') || trimmed.startsWith('uploads/')) {
-      final path = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
-      return '${ApiConfig.baseUrl}/$path';
-    }
-
-    return trimmed;
-  }
+  /// Resolve uploaded files through Laravel's CORS-enabled image route.
+  static String? resolveUrl(String? rawUrl) => resolveImageUrl(rawUrl);
 
   @override
   Widget build(BuildContext context) {
@@ -73,13 +46,14 @@ class AppNetworkImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return placeholder ??
               Container(
                 width: width,
                 height: height,
-                color: const Color(0xFFF1F5F9),
+                color: const Color(0xFFF5F9F6),
                 child: Center(
                   child: SizedBox(
                     width: 20,
@@ -116,7 +90,7 @@ class AppNetworkImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: const Color(0xFFF1F5F9),
+      color: const Color(0xFFF5F9F6),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

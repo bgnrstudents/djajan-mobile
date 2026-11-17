@@ -50,13 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
         umkm.loadProfileFromLogin(session.data);
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
       } else {
-        await context.read<OrderService>().loadFromApi();
-        if (!mounted) return;
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context, true);
-        } else {
-          Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
-        }
+        await _continueCustomerLogin();
       }
     } on ApiException catch (error) {
       if (mounted) {
@@ -91,13 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context.read<UmkmDataService>().loadProfileFromLogin(session.data);
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
       } else {
-        await context.read<OrderService>().loadFromApi();
-        if (!mounted) return;
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context, true);
-        } else {
-          Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
-        }
+        await _continueCustomerLogin();
       }
     } on ApiException catch (error) {
       if (mounted) {
@@ -109,179 +97,384 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _continueCustomerLogin() async {
+    if (!mounted) return;
+    final orderLoadFuture = context.read<OrderService>().loadFromApi();
+    final messenger = ScaffoldMessenger.of(context);
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
+    }
+
+    ApiException? orderLoadError;
+    try {
+      await orderLoadFuture;
+    } on ApiException catch (error) {
+      orderLoadError = error;
+    } on FormatException {
+      orderLoadError = ApiException(
+        'Format data riwayat pesanan dari server tidak valid.',
+      );
+    } on TypeError {
+      orderLoadError = ApiException(
+        'Struktur data riwayat pesanan dari server tidak sesuai.',
+      );
+    }
+
+    if (orderLoadError != null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Login berhasil, tetapi riwayat pesanan belum dimuat. '
+            '${orderLoadError.pesan}',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AuthStyle.bg,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const AuthHero(
-              title: 'Selamat Datang',
-              subtitle: 'Masuk untuk belanja kebutuhan harian dari UMKM warga Kreyongan Atas',
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = MediaQuery.sizeOf(context).height < 700;
+          final heroHeight = compact ? 306.0 : 350.0;
+          final cardTop = heroHeight - (compact ? 54 : 68);
+          final horizontalPadding = constraints.maxWidth >= 600 ? 28.0 : 18.0;
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.paddingOf(context).bottom + 16,
             ),
-            Transform.translate(
-              offset: const Offset(0, -34),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                child: Column(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Stack(
                   children: [
-                    AuthCard(
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Masuk ke Akun',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: AuthStyle.textDark,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Gunakan nomor WhatsApp atau email yang terdaftar.',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: AuthStyle.textGrey,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
-                            AuthTextField(
-                              label: 'Nomor WhatsApp atau Email',
-                              hint: 'Contoh: 081234567890',
-                              icon: Icons.person_outline_rounded,
-                              controller: _phoneOrEmailController,
-                              enabled: !_loading,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              validator: AuthValidators.identitas,
-                              autofillHints: const [AutofillHints.username],
-                            ),
-                            const SizedBox(height: 16),
-
-                            AuthTextField(
-                              label: 'Kata Sandi',
-                              hint: 'Masukkan kata sandi',
-                              icon: Icons.lock_outline_rounded,
-                              controller: _passwordController,
-                              enabled: !_loading,
-                              obscure: _obscurePassword,
-                              textInputAction: TextInputAction.done,
-                              validator: AuthValidators.kataSandi,
-                              autofillHints: const [AutofillHints.password],
-                              onFieldSubmitted: (_) => _submit(),
-                              suffix: IconButton(
-                                tooltip: _obscurePassword
-                                    ? 'Tampilkan kata sandi'
-                                    : 'Sembunyikan kata sandi',
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                  size: 20,
-                                  color: AuthStyle.textGrey,
-                                ),
-                                onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-
-                            Row(
-                              children: [
-                                SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: Checkbox(
-                                    value: _rememberMe,
-                                    onChanged: _loading
-                                        ? null
-                                        : (value) => setState(
-                                            () => _rememberMe = value ?? false,
-                                          ),
-                                    activeColor: AuthStyle.primary,
-                                    side: const BorderSide(
-                                      color: AuthStyle.border,
-                                      width: 1.5,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ),
-                                const Expanded(
-                                  child: Text(
-                                    'Ingat saya',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                    SizedBox(
+                      height: heroHeight,
+                      width: double.infinity,
+                      child: _LoginHero(height: heroHeight),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        cardTop,
+                        horizontalPadding,
+                        20,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AuthCard(
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Masuk ke Akun',
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
                                       color: AuthStyle.textDark,
                                     ),
                                   ),
-                                ),
-                                TextButton(
-                                  onPressed: _loading
-                                      ? null
-                                      : _openForgotPassword,
-                                  style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: const Text(
-                                    'Lupa sandi?',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Gunakan nomor WhatsApp atau email yang terdaftar.',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: AuthStyle.primary,
+                                      fontSize: 12.5,
+                                      color: AuthStyle.textGrey,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
+                                  const SizedBox(height: 20),
 
-                            AuthPrimaryButton(
-                              label: 'Masuk',
-                              icon: Icons.login_rounded,
-                              loading: _loading,
-                              onPressed: _submit,
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: _loading ? null : _loginWithGoogle,
-                                icon: const Icon(Icons.login),
-                                label: const Text('Masuk dengan Google'),
+                                  AuthTextField(
+                                    label: 'Nomor WhatsApp atau Email',
+                                    hint: 'Contoh: 081234567890',
+                                    icon: Icons.person_outline_rounded,
+                                    controller: _phoneOrEmailController,
+                                    enabled: !_loading,
+                                    keyboardType: TextInputType.emailAddress,
+                                    textInputAction: TextInputAction.next,
+                                    validator: AuthValidators.identitas,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  AuthTextField(
+                                    label: 'Kata Sandi',
+                                    hint: 'Masukkan kata sandi',
+                                    icon: Icons.lock_outline_rounded,
+                                    controller: _passwordController,
+                                    enabled: !_loading,
+                                    obscure: _obscurePassword,
+                                    textInputAction: TextInputAction.done,
+                                    validator: AuthValidators.kataSandi,
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
+                                    onFieldSubmitted: (_) => _submit(),
+                                    suffix: IconButton(
+                                      tooltip: _obscurePassword
+                                          ? 'Tampilkan kata sandi'
+                                          : 'Sembunyikan kata sandi',
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                        size: 20,
+                                        color: AuthStyle.textGrey,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: Checkbox(
+                                          value: _rememberMe,
+                                          onChanged: _loading
+                                              ? null
+                                              : (value) => setState(
+                                                  () => _rememberMe =
+                                                      value ?? false,
+                                                ),
+                                          activeColor: AuthStyle.primary,
+                                          side: const BorderSide(
+                                            color: AuthStyle.border,
+                                            width: 1.5,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      ),
+                                      const Expanded(
+                                        child: Text(
+                                          'Ingat saya',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: AuthStyle.textDark,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: _loading
+                                            ? null
+                                            : _openForgotPassword,
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: const Text(
+                                          'Lupa sandi?',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: AuthStyle.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 18),
+
+                                  AuthPrimaryButton(
+                                    label: 'Masuk',
+                                    icon: Icons.login_rounded,
+                                    loading: _loading,
+                                    onPressed: _submit,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _loading
+                                          ? null
+                                          : _loginWithGoogle,
+                                      icon: const Icon(
+                                        Icons.g_mobiledata_rounded,
+                                        size: 23,
+                                      ),
+                                      label: const Text('Masuk dengan Google'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AuthStyle.primary,
+                                        side: const BorderSide(
+                                          color: AuthStyle.border,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 18),
+                          AuthLinkRow(
+                            question: 'Belum punya akun?',
+                            action: 'Daftar Sekarang',
+                            onTap: _loading ? () {} : _openRegister,
+                          ),
+                          const SizedBox(height: 26),
+                          const AuthFooter(),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    AuthLinkRow(
-                      question: 'Belum punya akun?',
-                      action: 'Daftar Sekarang',
-                      onTap: _loading ? () {} : _openRegister,
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LoginHero extends StatelessWidget {
+  const _LoginHero({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final canPop = Navigator.canPop(context);
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/javanese_village_background.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xCC0B4E32),
+                    Color(0xB8175D2B),
+                    Color(0xE60B4E32),
+                  ],
+                ),
+              ),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        height: 40,
+                        width: 40,
+                        child: canPop
+                            ? Material(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                shape: const CircleBorder(),
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => Navigator.pop(context),
+                                  child: const Icon(
+                                    Icons.arrow_back_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
                     ),
-                    const SizedBox(height: 26),
-                    const AuthFooter(),
+                    const Spacer(),
+                    Container(
+                      height: 62,
+                      width: 62,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.16),
+                            blurRadius: 18,
+                            offset: const Offset(0, 7),
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/logo_djajan_mark.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Usaha lokal,\ntumbuh bersama.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        height: 1.08,
+                        letterSpacing: -0.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Dukung langkah kecil dan temukan produk dari sekitar kita.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontSize: 12.5,
+                        height: 1.35,
+                      ),
+                    ),
+                    const Spacer(),
                   ],
                 ),
               ),

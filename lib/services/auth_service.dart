@@ -23,6 +23,7 @@ class AuthService extends ChangeNotifier {
   static const _roleKey = 'djajan_auth_role';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb ? ApiConfig.googleServerClientId : null,
     serverClientId: ApiConfig.googleServerClientId,
     scopes: ['email', 'profile'],
   );
@@ -139,7 +140,8 @@ class AuthService extends ChangeNotifier {
       if (ApiConfig.googleServerClientId.isEmpty) {
         throw ApiException(
           'Google Login belum dikonfigurasi. '
-          'Jalankan aplikasi dengan Web OAuth Client ID.',
+          'Set GOOGLE_SERVER_CLIENT_ID saat menjalankan Flutter dan '
+          'GOOGLE_CLIENT_ID di .env Laravel dengan OAuth Web Client ID yang sama.',
         );
       }
 
@@ -225,7 +227,9 @@ class AuthService extends ChangeNotifier {
     _session = AuthSession(role: role, data: data);
     await _saveSession(token, role);
     if (role == AuthRole.pelanggan) {
-      await CartService().loadForCustomer(data['id_pelanggan']?.toString() ?? '');
+      await CartService().loadForCustomer(
+        data['id_pelanggan']?.toString() ?? '',
+      );
     }
     return _session!;
   }
