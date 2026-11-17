@@ -11,16 +11,16 @@ class AuthStyle {
   static const Color primary = AppConfig.primaryColor; // #175D2B
   static const Color accent = AppConfig.secondaryColor; // #FFBE25
 
-  static const Color bg = Color(0xFFF3F5F7);
+  static const Color bg = Color(0xFFF5F9F6);
   static const Color card = Colors.white;
-  static const Color field = Color(0xFFF8FAFC);
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color hint = Color(0xFF94A3B8);
+  static const Color field = Color(0xFFF7FBF8);
+  static const Color border = Color(0xFFDCE8DE);
+  static const Color hint = Color(0xFF83A18C);
 
-  static const Color textDark = Color(0xFF14231C);
-  static const Color textGrey = Color(0xFF64748B);
-  static const Color danger = Color(0xFFDC2626);
-  static const Color success = Color(0xFF15803D);
+  static const Color textDark = Color(0xFF183322);
+  static const Color textGrey = Color(0xFF5D7263);
+  static const Color danger = Color(0xFF175D2B);
+  static const Color success = Color(0xFF175D2B);
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -61,19 +61,19 @@ class AuthHero extends StatelessWidget {
         children: [
           // Dekorasi lingkaran lembut supaya header tidak terlihat datar.
           const Positioned(
-            top: -46,
-            right: -34,
-            child: _Bubble(size: 150, opacity: 0.10),
+            top: -42,
+            right: -30,
+            child: _Bubble(size: 132, opacity: 0.07),
           ),
           const Positioned(
-            top: 54,
-            left: -56,
-            child: _Bubble(size: 128, opacity: 0.07),
+            top: 58,
+            left: -50,
+            child: _Bubble(size: 112, opacity: 0.05),
           ),
           const Positioned(
-            bottom: -34,
-            right: 46,
-            child: _Bubble(size: 96, opacity: 0.06),
+            bottom: -30,
+            right: 42,
+            child: _Bubble(size: 82, opacity: 0.04),
           ),
           SafeArea(
             bottom: false,
@@ -138,6 +138,8 @@ class AuthHero extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -261,7 +263,11 @@ class AuthTextField extends StatelessWidget {
           onFieldSubmitted: onFieldSubmitted,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           style: const TextStyle(fontSize: 15, color: AuthStyle.textDark),
-          decoration: authInputDecoration(icon: icon, hint: hint, suffix: suffix),
+          decoration: authInputDecoration(
+            icon: icon,
+            hint: hint,
+            suffix: suffix,
+          ),
         ),
       ],
     );
@@ -430,11 +436,15 @@ class AuthFooter extends StatelessWidget {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.verified_rounded, size: 16, color: AuthStyle.primary),
+                Icon(
+                  Icons.verified_rounded,
+                  size: 16,
+                  color: AuthStyle.primary,
+                ),
                 SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    'Didukung oleh BUMDes Guyub Rukun Kreyongan Atas',
+                    'Didukung oleh pelaku usaha lokal',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -543,6 +553,8 @@ class AuthValidators {
       return _email.hasMatch(v) ? null : 'Format email belum benar';
     }
     final digits = v.replaceAll(_separator, '');
-    return _phone.hasMatch(digits) ? null : 'Contoh format yang benar: 081234567890';
+    return _phone.hasMatch(digits)
+        ? null
+        : 'Contoh format yang benar: 081234567890';
   }
 }
