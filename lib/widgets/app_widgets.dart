@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../config/api_config.dart';
 import '../theme/app_theme.dart';
+import '../utils/image_url_resolver.dart';
 
 // ======================================================= NOTIFIKASI
 void pesanSukses(BuildContext context, String teks) {
@@ -104,48 +104,7 @@ class MiniBadge extends StatelessWidget {
 }
 
 // ================================================== GAMBAR DARI SERVER =
-/// Menyesuaikan URL gambar dari server agar selalu bisa diakses dari
-/// perangkat yang sedang memakai aplikasi.
-///
-/// Server mengirim URL absolut berdasarkan APP_URL (mis. `127.0.0.1:8000`).
-/// URL seperti itu tidak bisa dibuka dari emulator Android (`10.0.2.2`) atau
-/// HP asli (IP LAN), jadi host-nya diganti dengan [ApiConfig.baseUrl].
-///
-/// Selain itu, path `/uploads/{folder}/{file}` diarahkan ke route Laravel
-/// `/file_gambar/{folder}/{file}`. File di `/uploads/` disajikan langsung oleh
-/// web server TANPA header CORS, sehingga Flutter Web (Chrome) menolak
-/// memuatnya ("Gambar tidak bisa dimuat"). Route `/file_gambar` mengirim
-/// file yang sama lengkap dengan header CORS.
-String? sesuaikanUrlGambar(String? url) {
-  if (url == null || url.trim().isEmpty) return null;
-
-  final s = url.trim();
-
-  // Ambil path (+ query) dari URL absolut maupun relatif.
-  String path;
-  String query = '';
-  if (s.startsWith('http://') || s.startsWith('https://')) {
-    try {
-      final uri = Uri.parse(s);
-      path = uri.path;
-      query = uri.hasQuery ? '?${uri.query}' : '';
-    } catch (_) {
-      return s;
-    }
-  } else {
-    path = '/${s.replaceFirst(RegExp(r'^/+'), '')}';
-  }
-
-  // /uploads/produk/x.jpg  ->  /file_gambar/produk/x.jpg
-  final cocok = RegExp(r'^/uploads/(produk|profil)/([^/]+)$').firstMatch(path);
-  if (cocok != null) {
-    return '${ApiConfig.baseUrl}/file_gambar/${cocok.group(1)}/${cocok.group(2)}$query';
-  }
-
-  // Bukan file upload: pakai apa adanya (URL luar) atau tempel ke baseUrl.
-  if (s.startsWith('http://') || s.startsWith('https://')) return s;
-  return '${ApiConfig.baseUrl}$path$query';
-}
+String? sesuaikanUrlGambar(String? url) => resolveImageUrl(url);
 
 /// Menampilkan gambar produk/profil dari server, lengkap dengan indikator
 /// memuat dan tampilan cadangan bila gambar belum ada atau gagal dimuat.

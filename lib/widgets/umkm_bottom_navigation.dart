@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Floating pill navigation bar untuk halaman UMKM.
 /// 2 tab: Produk (index 0) dan Pesanan (index 1).
 /// Mendukung badge merah pada tab Pesanan untuk pesanan baru.
@@ -17,9 +19,9 @@ class UmkmBottomNavigation extends StatelessWidget {
     this.pesananBaru = 0,
   });
 
-  static const Color _primary = Color(0xFF175D2B);
-  static const Color _inactive = Color(0xFF8A939B);
-  static const Color _activeBg = Color(0xFFEAF3EC);
+  static const Color _primary = AppColors.hijauTua;
+  static const Color _inactive = AppColors.textGrey;
+  static const Color _activeBg = AppColors.hijauLembut;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +58,7 @@ class UmkmBottomNavigation extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: const Color(0xFFE8ECEF), width: 1),
+            border: Border.all(color: AppColors.garis, width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
@@ -137,7 +139,7 @@ class UmkmBottomNavigation extends StatelessWidget {
                                     child: Container(
                                       padding: const EdgeInsets.all(3.5),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFBA1A1A),
+                                        color: AppColors.hijauTua,
                                         shape: BoxShape.circle,
                                         border: Border.all(
                                           color: Colors.white,

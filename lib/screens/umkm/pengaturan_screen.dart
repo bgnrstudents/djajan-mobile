@@ -9,7 +9,7 @@ import '../../services/auth_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/osm_map_picker.dart';
-import '../customer/order/order_widgets.dart';
+import '../auth/customer/order/order_widgets.dart';
 
 /// Satu baris form zona ongkir yang sedang diedit di layar ini.
 class _ZonaBaris {
@@ -530,7 +530,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         hintText: hint,
         prefixIcon: Icon(icon, size: 20, color: OC.muted),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: OC.box,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -855,7 +855,9 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasLocation ? OC.primary.withValues(alpha: 0.3) : const Color(0xFFFDE8D0),
+          color: hasLocation
+              ? OC.primary.withValues(alpha: 0.3)
+              : OC.peachSoft,
         ),
         boxShadow: [
           BoxShadow(
@@ -875,13 +877,13 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: hasLocation ? OC.mint : const Color(0xFFFDE8D0),
+                  color: hasLocation ? OC.mint : OC.peachSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   hasLocation ? Icons.location_on : Icons.location_off_outlined,
                   size: 20,
-                  color: hasLocation ? OC.primary : const Color(0xFFE67E22),
+                  color: hasLocation ? OC.primary : OC.amber,
                 ),
               ),
               const SizedBox(width: 12),
@@ -896,7 +898,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: hasLocation ? OC.ink : const Color(0xFFE67E22),
+                        color: hasLocation ? OC.ink : OC.amber,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -917,7 +919,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                           : 'Layanan kurir desa mewajibkan titik koordinat untuk menghitung ongkir.',
                       style: TextStyle(
                         fontSize: 11,
-                        color: hasLocation ? OC.primary : const Color(0xFFE67E22),
+                        color: hasLocation ? OC.primary : OC.amber,
                         fontFamily: hasLocation ? 'monospace' : null,
                       ),
                     ),

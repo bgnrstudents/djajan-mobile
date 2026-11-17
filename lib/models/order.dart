@@ -11,14 +11,15 @@ enum OrderStatus {
   cancelled;
 
   /// Membuat OrderStatus dari StatusPesanan
-  static OrderStatus fromStatusPesanan(StatusPesanan status) => switch (status) {
-    StatusPesanan.poBaru => OrderStatus.waitingPayment,
-    StatusPesanan.diterima => OrderStatus.reviewing,
-    StatusPesanan.diproses => OrderStatus.processing,
-    StatusPesanan.diantar => OrderStatus.delivering,
-    StatusPesanan.selesai => OrderStatus.completed,
-    StatusPesanan.ditolak => OrderStatus.cancelled,
-  };
+  static OrderStatus fromStatusPesanan(StatusPesanan status) =>
+      switch (status) {
+        StatusPesanan.poBaru => OrderStatus.waitingPayment,
+        StatusPesanan.diterima => OrderStatus.reviewing,
+        StatusPesanan.diproses => OrderStatus.processing,
+        StatusPesanan.diantar => OrderStatus.delivering,
+        StatusPesanan.selesai => OrderStatus.completed,
+        StatusPesanan.ditolak => OrderStatus.cancelled,
+      };
 }
 
 enum OrderType { instant, preOrder }
@@ -56,14 +57,15 @@ extension OrderStatusX on OrderStatus {
   };
 
   /// Membuat OrderStatus dari StatusPesanan
-  static OrderStatus fromStatusPesanan(StatusPesanan status) => switch (status) {
-    StatusPesanan.poBaru => OrderStatus.waitingPayment,
-    StatusPesanan.diterima => OrderStatus.reviewing,
-    StatusPesanan.diproses => OrderStatus.processing,
-    StatusPesanan.diantar => OrderStatus.delivering,
-    StatusPesanan.selesai => OrderStatus.completed,
-    StatusPesanan.ditolak => OrderStatus.cancelled,
-  };
+  static OrderStatus fromStatusPesanan(StatusPesanan status) =>
+      switch (status) {
+        StatusPesanan.poBaru => OrderStatus.waitingPayment,
+        StatusPesanan.diterima => OrderStatus.reviewing,
+        StatusPesanan.diproses => OrderStatus.processing,
+        StatusPesanan.diantar => OrderStatus.delivering,
+        StatusPesanan.selesai => OrderStatus.completed,
+        StatusPesanan.ditolak => OrderStatus.cancelled,
+      };
 
   bool get isActive =>
       this != OrderStatus.completed && this != OrderStatus.cancelled;
@@ -71,8 +73,7 @@ extension OrderStatusX on OrderStatus {
   bool get canCancel =>
       this == OrderStatus.waitingPayment || this == OrderStatus.reviewing;
 
-  bool get canComplete =>
-      this == OrderStatus.delivering;
+  bool get canComplete => this == OrderStatus.delivering;
 
   bool get canEdit => canCancel;
 }
@@ -129,6 +130,7 @@ class CartLine {
     String? umkmName,
     String? umkmType,
     double? courierFee,
+    bool clearCourierFee = false,
     String? pickupLocation,
     bool? codAvailable,
     bool? pickupAvailable,
@@ -145,7 +147,7 @@ class CartLine {
       umkmId: umkmId ?? this.umkmId,
       umkmName: umkmName ?? this.umkmName,
       umkmType: umkmType ?? this.umkmType,
-      courierFee: courierFee ?? this.courierFee,
+      courierFee: clearCourierFee ? null : courierFee ?? this.courierFee,
       pickupLocation: pickupLocation ?? this.pickupLocation,
       codAvailable: codAvailable ?? this.codAvailable,
       pickupAvailable: pickupAvailable ?? this.pickupAvailable,
@@ -154,6 +156,7 @@ class CartLine {
 }
 
 class OrderItem {
+  final String detailId;
   final String productId;
   final String productName;
   final String variant;
@@ -161,8 +164,11 @@ class OrderItem {
   final String imageUrl;
   final int quantity;
   final double price;
+  final int? rating;
+  final String? reviewNote;
 
   const OrderItem({
+    this.detailId = '',
     required this.productId,
     required this.productName,
     required this.variant,
@@ -170,9 +176,26 @@ class OrderItem {
     required this.imageUrl,
     required this.quantity,
     required this.price,
+    this.rating,
+    this.reviewNote,
   });
 
   double get subtotal => quantity * price;
+
+  OrderItem copyWith({int? rating, String? reviewNote}) {
+    return OrderItem(
+      detailId: detailId,
+      productId: productId,
+      productName: productName,
+      variant: variant,
+      unit: unit,
+      imageUrl: imageUrl,
+      quantity: quantity,
+      price: price,
+      rating: rating ?? this.rating,
+      reviewNote: reviewNote ?? this.reviewNote,
+    );
+  }
 }
 
 class OrderVendor {
@@ -209,6 +232,26 @@ class OrderVendor {
     this.latitude,
     this.longitude,
   });
+
+  OrderVendor copyWith({List<OrderItem>? items}) {
+    return OrderVendor(
+      umkmId: umkmId,
+      umkmName: umkmName,
+      umkmType: umkmType,
+      phone: phone,
+      type: type,
+      items: items ?? this.items,
+      delivery: delivery,
+      deliveryFee: deliveryFee,
+      distanceKm: distanceKm,
+      pickupLocation: pickupLocation,
+      requiredAt: requiredAt,
+      purpose: purpose,
+      note: note,
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
 
   double get subtotal => items.fold(0.0, (s, i) => s + i.subtotal);
   int get totalQty => items.fold(0, (s, i) => s + i.quantity);
@@ -373,6 +416,7 @@ class Order {
     ) {
       final data = Map<String, dynamic>.from(item);
       return OrderItem(
+        detailId: (data['id_detail'] ?? '').toString(),
         productId: (data['id_produk'] ?? '').toString(),
         productName: (data['nama_produk'] ?? 'Produk').toString(),
         variant: '',
@@ -380,14 +424,23 @@ class Order {
         imageUrl: (data['gambar_url'] ?? '').toString(),
         quantity: _asInt(data['jumlah'], fallback: 1),
         price: _asDouble(data['harga_satuan']),
+        rating: data['ulasan'] is Map
+            ? _asInt(data['ulasan']['rating'])
+            : null,
+        reviewNote: data['ulasan'] is Map
+            ? _asString(data['ulasan']['komentar'])
+            : null,
       );
     }).toList();
     final vendor = OrderVendor(
       umkmId: (json['id_umkm'] ?? '').toString(),
       umkmName: (json['nama_umkm'] ?? 'UMKM').toString(),
       umkmType: (json['spesialis_umkm'] ?? '').toString(),
-      phone: (json['no_telp_umkm'] ?? json['no_telp_usaha'] ?? json['phone'] ?? '').toString(),
-      type: (json['is_preorder'] == true ||
+      phone:
+          (json['no_telp_umkm'] ?? json['no_telp_usaha'] ?? json['phone'] ?? '')
+              .toString(),
+      type:
+          (json['is_preorder'] == true ||
               (json['keperluan_acara'] != null &&
                   json['keperluan_acara'].toString().trim().isNotEmpty &&
                   json['keperluan_acara'].toString().trim() != '-'))
@@ -442,13 +495,19 @@ class Order {
         name: (json['nama_pembeli'] ?? '').toString(),
         phone: (json['no_telp'] ?? '').toString(),
         address: (json['alamat_tujuan'] ?? '').toString(),
-        addressNote: _asString(json['catatan_alamat'] ?? json['patokan_alamat']),
+        addressNote: _asString(
+          json['catatan_alamat'] ?? json['patokan_alamat'],
+        ),
         latitude: json['latitude_tujuan'] != null
             ? double.tryParse(json['latitude_tujuan'].toString())
-            : (json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null),
+            : (json['latitude'] != null
+                  ? double.tryParse(json['latitude'].toString())
+                  : null),
         longitude: json['longitude_tujuan'] != null
             ? double.tryParse(json['longitude_tujuan'].toString())
-            : (json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null),
+            : (json['longitude'] != null
+                  ? double.tryParse(json['longitude'].toString())
+                  : null),
       ),
       paymentMethod: (json['metode_pembayaran'] ?? '').toString() == 'cod'
           ? PaymentMethod.cod

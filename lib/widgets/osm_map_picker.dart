@@ -1,12 +1,13 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
-import '../screens/customer/order/order_widgets.dart';
+import '../services/customer_location_service.dart';
+import '../screens/auth/customer/order/order_widgets.dart';
 
 /// Hasil yang dikembalikan oleh [OsmMapPicker].
 class OsmPickerResult {
@@ -57,20 +58,23 @@ class OsmMapPicker extends StatefulWidget {
 }
 
 class _OsmMapPickerState extends State<OsmMapPicker> {
-  // Pusat Sentra UMKM Desa Kreyongan / Pasar Kreongan, Patrang, Jember
-  static const _defaultCenter = LatLng(-8.1556187, 113.7027475);
-  static const _defaultZoom = 15.0;
+  static const _defaultCenter = LatLng(-2.5, 118.0);
+  static const _defaultZoom = 4.5;
   static const _searchZoom = 16.0;
 
   late final MapController _mapController;
   late LatLng _pinCenter;
 
   bool _loading = false;
+  String? _locationError;
   String _alamatTeks = '';
   String _searchQuery = '';
+  String? _searchError;
   bool _searchLoading = false;
   List<Map<String, dynamic>> _searchResults = [];
   bool _showSearch = false;
+  Timer? _reverseGeocodeTimer;
+  int _reverseGeocodeRequest = 0;
 
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
@@ -87,17 +91,9 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     }
   }
 
-  void _jumpToKreyongan() {
-    _mapController.move(_defaultCenter, _searchZoom);
-    setState(() {
-      _pinCenter = _defaultCenter;
-      _alamatTeks = 'Desa Kreyongan Atas, Patrang, Jember, Jawa Timur';
-    });
-    _reverseGeocode(_defaultCenter);
-  }
-
   @override
   void dispose() {
+    _reverseGeocodeTimer?.cancel();
     _mapController.dispose();
     _searchCtrl.dispose();
     _searchFocus.dispose();
@@ -108,27 +104,24 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
   Future<void> _getDeviceLocation() async {
     setState(() => _loading = true);
     try {
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.deniedForever ||
-          perm == LocationPermission.denied) {
-        return;
-      }
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      final pos = await CustomerLocationService.getCurrentPosition();
       if (!mounted) return;
       final latLng = LatLng(pos.latitude, pos.longitude);
-      setState(() => _pinCenter = latLng);
+      setState(() {
+        _pinCenter = latLng;
+        _locationError = null;
+      });
       _mapController.move(latLng, _defaultZoom);
       await _reverseGeocode(latLng);
+    } on DeviceLocationException catch (error) {
+      if (mounted) setState(() => _locationError = error.message);
     } catch (_) {
-      // Gagal ambil GPS → tetap di posisi default / initialLatLng
+      if (mounted) {
+        setState(() {
+          _locationError =
+              'Lokasi tidak dapat diakses. Cari alamat atau pilih titik secara manual.';
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -136,21 +129,22 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
 
   // ------------------------------------------------- reverse geocoding
   Future<void> _reverseGeocode(LatLng pos) async {
+    final requestId = ++_reverseGeocodeRequest;
     try {
-      final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/reverse'
-        '?lat=${pos.latitude}&lon=${pos.longitude}&format=json&accept-language=id',
-      );
-      final res = await http.get(uri, headers: {
-        'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
-      }).timeout(const Duration(seconds: 8));
-      if (!mounted) return;
-      if (res.statusCode == 200) {
-        final data = json.decode(res.body) as Map<String, dynamic>;
-        setState(() => _alamatTeks = data['display_name']?.toString() ?? '');
-      }
+      final address = await CustomerLocationService.reverseGeocode(pos);
+      if (!mounted || requestId != _reverseGeocodeRequest) return;
+      setState(() {
+        _alamatTeks = address;
+        _locationError = null;
+      });
     } catch (_) {
-      if (mounted) setState(() => _alamatTeks = '');
+      if (mounted && requestId == _reverseGeocodeRequest) {
+        setState(() {
+          _alamatTeks = '';
+          _locationError =
+              'Alamat tidak ditemukan. Anda tetap bisa menggeser peta dan mengisi alamat secara manual.';
+        });
+      }
     }
   }
 
@@ -161,14 +155,16 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
       return;
     }
     setState(() => _searchLoading = true);
+    _searchError = null;
     try {
-      final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/search'
-        '?q=${Uri.encodeComponent(query)}&format=json&limit=6&accept-language=id'
-        '&viewbox=113.60,-8.10,113.80,-8.25&bounded=0',
-      );
+      final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
+        'q': query,
+        'format': 'jsonv2',
+        'limit': '6',
+        'accept-language': 'id',
+      });
       final res = await http.get(uri, headers: {
-        'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
+        'User-Agent': 'DjajanMobile/1.0',
       }).timeout(const Duration(seconds: 8));
       if (!mounted) return;
       if (res.statusCode == 200) {
@@ -177,9 +173,17 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
           _searchResults =
               list.map((e) => e as Map<String, dynamic>).toList();
         });
+      } else {
+        setState(() => _searchError = 'Pencarian alamat sedang bermasalah.');
       }
     } catch (_) {
-      if (mounted) setState(() => _searchResults = []);
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _searchError =
+              'Gagal mencari alamat. Periksa koneksi, atau pilih titik langsung di peta.';
+        });
+      }
     } finally {
       if (mounted) setState(() => _searchLoading = false);
     }
@@ -189,10 +193,13 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     final lat = double.tryParse(result['lat']?.toString() ?? '');
     final lon = double.tryParse(result['lon']?.toString() ?? '');
     if (lat == null || lon == null) return;
+    _reverseGeocodeRequest++;
+    _reverseGeocodeTimer?.cancel();
     final latLng = LatLng(lat, lon);
     setState(() {
       _pinCenter = latLng;
       _alamatTeks = result['display_name']?.toString() ?? '';
+      _locationError = null;
       _searchResults = [];
       _showSearch = false;
     });
@@ -205,11 +212,17 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     if (event is MapEventMoveEnd || event is MapEventScrollWheelZoom) {
       final center = _mapController.camera.center;
       if (_pinCenter != center) {
+        _reverseGeocodeRequest++;
+        _reverseGeocodeTimer?.cancel();
         setState(() {
           _pinCenter = center;
           _alamatTeks = '';
+          _locationError = null;
         });
-        _reverseGeocode(center);
+        _reverseGeocodeTimer = Timer(
+          const Duration(milliseconds: 900),
+          () => _reverseGeocode(center),
+        );
       }
     }
   }
@@ -219,18 +232,15 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
     if (alamat.isEmpty) {
       setState(() => _loading = true);
       try {
-        final uri = Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse'
-          '?lat=${_pinCenter.latitude}&lon=${_pinCenter.longitude}&format=json&accept-language=id',
-        );
-        final res = await http.get(uri, headers: {
-          'User-Agent': 'DJajanApp/1.0 (djajan.mobile@gmail.com)',
-        }).timeout(const Duration(seconds: 4));
-        if (res.statusCode == 200) {
-          final data = json.decode(res.body) as Map<String, dynamic>;
-          alamat = data['display_name']?.toString() ?? '';
+        alamat = await CustomerLocationService.reverseGeocode(_pinCenter);
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _locationError =
+                'Alamat tidak ditemukan. Lengkapi alamat secara manual setelah memilih titik.';
+          });
         }
-      } catch (_) {}
+      }
       if (mounted) setState(() => _loading = false);
     }
 
@@ -388,11 +398,6 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
             tooltip: _showSearch ? 'Tutup pencarian' : 'Cari alamat',
           ),
           IconButton(
-            icon: const Icon(Icons.storefront_outlined, color: OC.primary),
-            onPressed: _jumpToKreyongan,
-            tooltip: 'Titik Desa Kreyongan Atas',
-          ),
-          IconButton(
             icon: const Icon(Icons.my_location, color: OC.primary),
             onPressed: _loading ? null : _getDeviceLocation,
             tooltip: 'Gunakan lokasi saya',
@@ -448,6 +453,14 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
           ),
           if (_searchResults.isNotEmpty)
             const Divider(height: 1),
+          if (_searchError != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+              child: Text(
+                _searchError!,
+                style: const TextStyle(fontSize: 12, color: OC.muted),
+              ),
+            ),
           ..._searchResults.map(
             (r) => ListTile(
               dense: true,
@@ -506,6 +519,18 @@ class _OsmMapPickerState extends State<OsmMapPicker> {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (_locationError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        _locationError!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF9A6700),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(
                       '${_pinCenter.latitude.toStringAsFixed(6)}, '

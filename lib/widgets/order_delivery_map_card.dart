@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../screens/customer/order/order_widgets.dart';
+import '../screens/auth/customer/order/order_widgets.dart';
 import '../services/map_navigation_service.dart';
 
 /// Kartu visualisasi peta dan navigasi pengantaran kurir warga DJajan (OpenStreetMap & Google Maps).
@@ -116,7 +116,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                   decoration: BoxDecoration(
                     color: widget.isDelivering
                         ? OC.primary.withValues(alpha: 0.12)
-                        : const Color(0xFFF2F4F7),
+                        : OC.box,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -156,8 +156,8 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
                     color: widget.isDelivering
-                        ? const Color(0xFFE8F5E9)
-                        : const Color(0xFFFFF3E0),
+                        ? OC.mintSoft
+                        : OC.peachSoft,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -169,8 +169,8 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: widget.isDelivering
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFFEF6C00),
+                              ? OC.primary
+                              : OC.amber,
                         ),
                       ),
                       const SizedBox(width: 5),
@@ -180,8 +180,8 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: widget.isDelivering
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFFEF6C00),
+                              ? OC.primary
+                              : OC.amber,
                         ),
                       ),
                     ],
@@ -245,7 +245,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                           height: 42,
                           child: _buildMapPin(
                             icon: Icons.storefront_rounded,
-                            bgColor: const Color(0xFFF57C00),
+                            bgColor: OC.primary,
                             label: 'UMKM',
                           ),
                         ),
@@ -308,7 +308,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: OC.box,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: OC.line),
               ),
@@ -328,7 +328,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                         child: Text(
                           widget.recipientAddress.trim().isNotEmpty
                               ? widget.recipientAddress
-                              : 'Alamat tujuan Desa Kreyongan Atas',
+                              : 'Alamat tujuan belum diisi',
                           style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,

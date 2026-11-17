@@ -9,7 +9,7 @@ import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import 'detail_pesanan_screen.dart';
-import '../../screens/customer/order/order_widgets.dart';
+import '../auth/customer/order/order_widgets.dart';
 import '../../widgets/umkm_bottom_navigation.dart';
 import 'tambah_produk_screen.dart';
 import 'pengaturan_screen.dart';
@@ -1419,10 +1419,10 @@ class _TabPesananState extends State<_TabPesanan> {
                                         vertical: 3.5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFFF3E0),
+                                        color: const Color(0xFFF5F9F6),
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: const Color(0xFFFFB74D),
+                                          color: const Color(0xFFDCE8DE),
                                         ),
                                       ),
                                       child: const Row(
@@ -1431,7 +1431,7 @@ class _TabPesananState extends State<_TabPesanan> {
                                           Icon(
                                             Icons.cake_outlined,
                                             size: 11,
-                                            color: Color(0xFFE65100),
+                                            color: Color(0xFF5B9E68),
                                           ),
                                           SizedBox(width: 3),
                                           Text(
@@ -1439,7 +1439,7 @@ class _TabPesananState extends State<_TabPesanan> {
                                             style: TextStyle(
                                               fontSize: 10.5,
                                               fontWeight: FontWeight.w800,
-                                              color: Color(0xFFE65100),
+                                              color: Color(0xFF5B9E68),
                                             ),
                                           ),
                                         ],
@@ -1567,7 +1567,7 @@ class _TabPesananState extends State<_TabPesanan> {
                                               const Icon(
                                                 Icons.event_available_outlined,
                                                 size: 13,
-                                                color: Color(0xFFE65100),
+                                                color: Color(0xFF5B9E68),
                                               ),
                                               const SizedBox(width: 4),
                                               Expanded(
@@ -1576,7 +1576,7 @@ class _TabPesananState extends State<_TabPesanan> {
                                                   style: const TextStyle(
                                                     fontSize: 11.5,
                                                     fontWeight: FontWeight.w700,
-                                                    color: Color(0xFFE65100),
+                                                    color: Color(0xFF5B9E68),
                                                   ),
                                                   overflow:
                                                       TextOverflow.ellipsis,

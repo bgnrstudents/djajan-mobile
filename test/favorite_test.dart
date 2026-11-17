@@ -1,6 +1,6 @@
 import 'package:djajan_mobile/services/catalog_service.dart';
 import 'package:provider/provider.dart';
-import 'package:djajan_mobile/screens/customer/favorite/favorite_screen.dart';
+import 'package:djajan_mobile/screens/auth/customer/favorite/favorite_screen.dart';
 import 'package:djajan_mobile/services/favorite_service.dart';
 import 'package:djajan_mobile/widgets/favorite_button.dart';
 import 'package:flutter/material.dart';

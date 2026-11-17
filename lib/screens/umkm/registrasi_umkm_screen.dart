@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_widgets.dart';
-import '../customer/order/order_widgets.dart';
+import '../auth/customer/order/order_widgets.dart';
 
 /// HALAMAN REGISTRASI UMKM BARU
 /// Design sama seperti LoginScreen, dengan validasi profesional

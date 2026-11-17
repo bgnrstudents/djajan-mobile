@@ -10,7 +10,7 @@ import '../../services/category_service.dart';
 import '../../models/category.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
-import '../customer/order/order_widgets.dart';
+import '../auth/customer/order/order_widgets.dart';
 
 /// HALAMAN 3 — Tambah / Edit Produk.
 /// Data disimpan ke tabel `produk`, sedangkan foto diunggah ke folder
@@ -420,11 +420,11 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -496,11 +496,11 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -527,11 +527,11 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -573,11 +573,11 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       hintText: 'Ceritakan bahan & keunggulan produk...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDADCE6)),
+                        borderSide: const BorderSide(color: OC.line),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -623,9 +623,9 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: _mode == ModePenjualan.ready
-                            ? const Color(0xFFE8F5E9)
+                            ? OC.mintSoft
                             : _mode == ModePenjualan.preOrder
-                                ? const Color(0xFFFFF7ED)
+                                ? OC.box
                                 : OC.mint,
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -641,7 +641,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                             color: _mode == ModePenjualan.ready
                                 ? const Color(0xFF15803D)
                                 : _mode == ModePenjualan.preOrder
-                                    ? const Color(0xFFEA580C)
+                                    ? OC.primary
                                     : OC.primary,
                           ),
                           const SizedBox(width: 8),
@@ -657,7 +657,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                                 color: _mode == ModePenjualan.ready
                                     ? const Color(0xFF15803D)
                                     : _mode == ModePenjualan.preOrder
-                                        ? const Color(0xFFEA580C)
+                                        ? OC.primary
                                         : OC.primary,
                                 height: 1.4,
                               ),
@@ -674,7 +674,7 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                       decoration: BoxDecoration(
                         color: OC.box,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: OC.line),
                       ),
                       child: Row(
                         children: [
