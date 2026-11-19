@@ -60,20 +60,14 @@ class ProductCard extends StatelessWidget {
                   vertical: featured ? 4 : 5,
                 ),
                 decoration: BoxDecoration(
-                  color: featured
-                      ? isPreOrder
-                            ? const Color(0xFFFFE6A6)
-                            : const Color(0xFFEAF7EB)
-                      : isPreOrder
-                      ? AppColors.latar
-                      : AppColors.hijauLembut,
+                  color: isPreOrder
+                      ? const Color(0xFFFFF7ED)
+                      : const Color(0xFFF0FDF4),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: featured
-                        ? isPreOrder
-                              ? const Color(0xFFE8B33D)
-                              : const Color(0xFF9BD49F)
-                        : AppColors.garis,
+                    color: isPreOrder
+                        ? const Color(0xFFFFEDD5)
+                        : const Color(0xFFDCFCE7),
                   ),
                 ),
                 child: Row(
@@ -82,13 +76,9 @@ class ProductCard extends StatelessWidget {
                     Icon(
                       isPreOrder ? Icons.schedule_rounded : Icons.bolt_rounded,
                       size: featured ? 11 : 12,
-                      color: featured
-                          ? isPreOrder
-                                ? const Color(0xFF8A5A00)
-                                : AppColors.hijauTua
-                          : isPreOrder
-                          ? AppColors.hijauMuda
-                          : AppColors.hijauTua,
+                      color: isPreOrder
+                          ? const Color(0xFFEA580C)
+                          : const Color(0xFF16A34A),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -96,13 +86,9 @@ class ProductCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: featured ? 9.5 : 10.5,
                         fontWeight: FontWeight.w700,
-                        color: featured
-                            ? isPreOrder
-                                  ? const Color(0xFF754B00)
-                                  : AppColors.hijauTua
-                            : isPreOrder
-                            ? AppColors.hijauMuda
-                            : AppColors.hijauTua,
+                        color: isPreOrder
+                            ? const Color(0xFFEA580C)
+                            : const Color(0xFF15803D),
                       ),
                     ),
                   ],
@@ -247,7 +233,7 @@ class ProductCard extends StatelessWidget {
                           transitionBuilder: (child, animation) =>
                               SizeTransition(
                                 sizeFactor: animation,
-                                axisAlignment: -1,
+                                alignment: Alignment.topCenter,
                                 child: FadeTransition(
                                   opacity: animation,
                                   child: child,
