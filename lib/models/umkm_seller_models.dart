@@ -467,10 +467,14 @@ class RingkasanDashboard {
   final int pesananBaru;
   final int pesananDiterima;
   final int omzetDiterima;
+  final int omzetKotorDiterima;
+  final int komisiSemuaWaktu;
   final String periodeMulai;
   final String periodeAkhir;
   final int totalPesananPeriode;
   final int omzetPeriode;
+  final int omzetKotorPeriode;
+  final int komisiPeriode;
   final List<ProdukTerlaris> produkTerlaris;
 
   const RingkasanDashboard({
@@ -480,10 +484,14 @@ class RingkasanDashboard {
     this.pesananBaru = 0,
     this.pesananDiterima = 0,
     this.omzetDiterima = 0,
+    this.omzetKotorDiterima = 0,
+    this.komisiSemuaWaktu = 0,
     this.periodeMulai = '',
     this.periodeAkhir = '',
     this.totalPesananPeriode = 0,
     this.omzetPeriode = 0,
+    this.omzetKotorPeriode = 0,
+    this.komisiPeriode = 0,
     this.produkTerlaris = const [],
   });
 
@@ -495,10 +503,14 @@ class RingkasanDashboard {
         pesananBaru: _int(j['pesanan_baru']),
         pesananDiterima: _int(j['pesanan_diterima']),
         omzetDiterima: _int(j['omzet_diterima']),
+        omzetKotorDiterima: _int(j['omzet_kotor_diterima'] ?? j['omzet_diterima']),
+        komisiSemuaWaktu: _int(j['komisi_semua_waktu']),
         periodeMulai: j['periode_mulai']?.toString() ?? '',
         periodeAkhir: j['periode_akhir']?.toString() ?? '',
         totalPesananPeriode: _int(j['total_pesanan_periode']),
         omzetPeriode: _int(j['omzet_periode']),
+        omzetKotorPeriode: _int(j['omzet_kotor_periode'] ?? j['omzet_periode']),
+        komisiPeriode: _int(j['komisi_periode']),
         produkTerlaris: ((j['produk_terlaris'] as List?) ?? [])
             .map((e) => ProdukTerlaris.fromJson(e as Map<String, dynamic>))
             .toList(),
