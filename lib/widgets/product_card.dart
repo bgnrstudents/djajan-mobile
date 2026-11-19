@@ -4,7 +4,7 @@ import '../services/cart_service.dart';
 import '../models/product.dart';
 import 'app_network_image.dart';
 import 'favorite_button.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_theme.dart'; // includes AppColors + formatRupiah
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -37,7 +37,7 @@ class ProductCard extends StatelessWidget {
         final compactFeatured =
             featured && MediaQuery.sizeOf(context).width < 380;
         final price = Text(
-          'Rp${product.price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match[1]}.')}',
+          formatRupiah(product.price),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
