@@ -87,21 +87,21 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
       animation: cartService,
       builder: (context, _) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: SafeArea(
             top: false,
             child: Container(
-              height: 62,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: AppColors.garis, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: 0.07),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -140,7 +140,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                               behavior: HitTestBehavior.opaque,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 2,
+                                  vertical: 4,
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -180,7 +180,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                                               key: ValueKey(
                                                 'nav-icon-$index-$selected',
                                               ),
-                                              size: 20,
+                                              size: 23,
                                               color: selected
                                                   ? AppBottomNavigation
                                                         .primaryColor
@@ -193,22 +193,22 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                                             cartService.totalQuantity > 0)
                                           Positioned(
                                             top: -4,
-                                            right: -9,
+                                            right: -8,
                                             child: _CartBadge(
                                               count: cartService.totalQuantity,
                                             ),
                                           ),
                                       ],
                                     ),
-                                    const SizedBox(height: 1),
+                                    const SizedBox(height: 3),
                                     AnimatedDefaultTextStyle(
                                       duration: const Duration(
                                         milliseconds: 220,
                                       ),
                                       curve: Curves.easeOutCubic,
                                       style: TextStyle(
-                                        fontSize: 10.5,
-                                        height: 1,
+                                        fontSize: 11,
+                                        height: 1.1,
                                         fontWeight: selected
                                             ? FontWeight.w700
                                             : FontWeight.w500,
