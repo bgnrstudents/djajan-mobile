@@ -215,7 +215,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   double get _subtotal => _vendors.fold(0.0, (s, v) => s + v.subtotal);
   double get _shipping => _vendors.fold(0.0, (s, v) => s + v.fee);
-  double get _total => _subtotal + _shipping;
+  double get _serviceFee => _vendors.fold(
+      0.0,
+      (s, v) => s + (v.subtotal >= 10000 ? (v.subtotal * 0.03).round() : 0),
+    );
+  double get _total => _subtotal + _shipping + _serviceFee;
   int get _qty => widget.cartLines.fold(0, (s, l) => s + l.quantity);
 
   bool get _hasPreOrder => _vendors.any((v) => v.isPreOrder);
@@ -1136,10 +1140,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             label: 'Ongkir pengantaran',
             value: _shipping == 0 ? 'Gratis' : rupiah(_shipping),
           ),
-          const MoneyRow(
-            label: 'Biaya layanan',
-            value: 'Gratis',
-            color: OC.primary,
+          MoneyRow(
+            label: 'Biaya layanan (3%)',
+            value: _serviceFee == 0 ? 'Gratis (Subsidi Mikro)' : rupiah(_serviceFee),
+            color: _serviceFee == 0 ? OC.primary : OC.ink,
           ),
         ],
       ),

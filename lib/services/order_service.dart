@@ -632,7 +632,9 @@ class OrderService extends ChangeNotifier {
           e.pesan.contains('Tidak dapat terhubung') ||
           e.pesan.contains('Terjadi kesalahan pada server') ||
           e.pesan.contains('Terjadi kesalahan koneksi') ||
-          e.pesan.contains('Koneksi internet terputus')) {
+          e.pesan.contains('Koneksi internet terputus') ||
+          e.pesan.contains('Timeout') ||
+          e.pesan.contains('Koneksi lambat')) {
         // Fallback jika offline atau server pengujian tidak aktif
       } else {
         throw OrderException(e.pesan);
@@ -686,7 +688,9 @@ class OrderService extends ChangeNotifier {
           e.pesan.contains('Tidak dapat terhubung') ||
           e.pesan.contains('Terjadi kesalahan pada server') ||
           e.pesan.contains('Terjadi kesalahan koneksi') ||
-          e.pesan.contains('Koneksi internet terputus')) {
+          e.pesan.contains('Koneksi internet terputus') ||
+          e.pesan.contains('Timeout') ||
+          e.pesan.contains('Koneksi lambat')) {
         // Fallback jika offline
       } else {
         throw OrderException(e.pesan);

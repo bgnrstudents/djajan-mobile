@@ -382,8 +382,8 @@ class Pesanan {
 
   int get totalPorsi => items.fold(0, (s, i) => s + i.jumlah);
 
-  /// Total yang diterima mitra = subtotal item + ongkir + biaya layanan.
-  int get totalDiterimaMitra => subtotal + biayaPengantaran + biayaLayanan;
+  /// Total yang diterima mitra = subtotal item + ongkir (biaya layanan dialokasikan ke kas platform).
+  int get totalDiterimaMitra => subtotal + biayaPengantaran;
 
   /// Pesanan merupakan Pre-Order / Acara jika bertipe PO dari server,
   /// memiliki item PO, atau memiliki keperluan acara / batas konfirmasi PO.

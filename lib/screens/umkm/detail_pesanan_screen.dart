@@ -692,9 +692,13 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                             formatRupiah(pesanan.biayaPengantaran),
                           ),
                           _barisRincian(
-                            'Biaya Layanan Koperasi',
-                            formatRupiah(pesanan.biayaLayanan),
-                            badge: 'Subsidi',
+                            'Biaya Layanan Platform (3%)',
+                            pesanan.biayaLayanan > 0
+                                ? formatRupiah(pesanan.biayaLayanan)
+                                : 'Gratis',
+                            badge: pesanan.biayaLayanan > 0
+                                ? 'Kas Djajan'
+                                : 'Subsidi Mikro',
                           ),
                           const SizedBox(height: 12),
                           Container(
