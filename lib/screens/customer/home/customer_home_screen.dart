@@ -236,11 +236,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 30,
-          height: 30,
-          decoration: const BoxDecoration(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
             color: AppColors.hijauLembut,
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, size: 17, color: AppColors.hijauTua),
         ),
@@ -312,11 +312,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
                 color: AppColors.hijauLembut,
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
                 Icons.location_on_rounded,
@@ -416,10 +416,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     Container(
                       width: 42,
                       height: 42,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.putih,
-                        shape: BoxShape.circle,
-                        border: Border.fromBorderSide(
+                        borderRadius: BorderRadius.circular(14),
+                        border: const Border.fromBorderSide(
                           BorderSide(color: AppColors.garis),
                         ),
                       ),

@@ -310,9 +310,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             Container(
               width: 96,
               height: 96,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEAF3EC),
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF3EC),
+                borderRadius: BorderRadius.circular(28),
               ),
               child: Icon(icon, size: 44, color: primaryGreen),
             ),
