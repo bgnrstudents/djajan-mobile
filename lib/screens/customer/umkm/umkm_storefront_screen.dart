@@ -105,7 +105,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Lihat',
-          textColor: const Color(0xFF175D2B),
+          textColor: Colors.white,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const CartScreen()),
           ),
@@ -289,7 +289,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Color(0xFF175D2B),
+                          color: primaryGreen,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -488,7 +488,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   Widget _headerFallback() {
     return Container(
-      color: const Color(0xFF175D2B),
+      color: const Color(0xFF047857),
       child: const Icon(Icons.storefront, size: 90, color: Colors.white24),
     );
   }
@@ -947,14 +947,14 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.star, size: 14, color: Color(0xFF5B9E68)),
+                      const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
                       const SizedBox(width: 4),
                       Text(
                         '${_avgRating.toStringAsFixed(1)} ($_totalReviews)',
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF175D2B),
+                          color: Color(0xFF047857),
                         ),
                       ),
                     ],
@@ -975,7 +975,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F9F6),
+                color: const Color(0xFFF3F7F3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Column(
@@ -1075,7 +1075,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F9F6),
+                          color: const Color(0xFFF3F7F3),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

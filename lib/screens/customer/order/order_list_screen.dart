@@ -10,6 +10,7 @@ import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
+import '../../../widgets/umkm_app_bar.dart';
 
 /// Tab "Pesanan" pada navigasi bawah: daftar pesanan + filter.
 class OrderListScreen extends StatefulWidget {
@@ -103,30 +104,35 @@ class _OrderListScreenState extends State<OrderListScreen> {
           animation: _service,
           builder: (context, _) {
             final list = _filtered();
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+            return Stack(
               children: [
-                const DjajanPageHeader(
-                  title: 'Pesanan Saya',
-                  subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
-                  padding: EdgeInsets.zero,
-                ),
-                if (_loading && _service.orders.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: CircularProgressIndicator(color: OC.primary),
+                const HeaderBotanicalBackdrop(height: 220),
+                ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+                  children: [
+                    const DjajanPageHeader(
+                      title: 'Pesanan Saya',
+                      subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
+                      padding: EdgeInsets.zero,
                     ),
-                  )
-                else if (_loadError != null)
-                  _loadFailure()
-                else ...[
-                  const SizedBox(height: 12),
-                  _filters(),
-                  const SizedBox(height: 12),
-                  if (list.isEmpty) _empty() else ...list.map(_orderCard),
-                ],
+                    if (_loading && _service.orders.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: CircularProgressIndicator(color: OC.primary),
+                        ),
+                      )
+                    else if (_loadError != null)
+                      _loadFailure()
+                    else ...[
+                      const SizedBox(height: 12),
+                      _filters(),
+                      const SizedBox(height: 12),
+                      if (list.isEmpty) _empty() else ...list.map(_orderCard),
+                    ],
+                  ],
+                ),
               ],
             );
           },
@@ -368,10 +374,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
         ? 'Menunggu Refund'
         : (o.isRefundSuccess ? 'Refund Selesai' : o.status.label);
     final Color badgeBg = o.isRefundPending
-        ? const Color(0xFFF5F9F6)
+        ? const Color(0xFFF3F7F3)
         : (o.isRefundSuccess ? OC.mintSoft : c.bg);
     final Color badgeFg = o.isRefundPending
-        ? const Color(0xFF5B9E68)
+        ? const Color(0xFF10B981)
         : (o.isRefundSuccess ? OC.primary : c.fg);
     final firstItem = o.vendors.first.items.first;
     final more = o.vendors.fold(0, (s, v) => s + v.items.length) - 1;

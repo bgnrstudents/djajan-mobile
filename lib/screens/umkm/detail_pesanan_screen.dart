@@ -338,8 +338,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: pesanan.isPreOrder
-                                            ? const Color(0xFFF5F9F6)
-                                            : const Color(0xFFEAF3EC),
+                                            ? const Color(0xFFFFFBEB)
+                                            : const Color(0xFFE8F5E9),
                                         borderRadius:
                                             BorderRadius.circular(6),
                                         border: Border.all(
@@ -357,8 +357,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                                 : Icons.bolt_rounded,
                                             size: 11,
                                             color: pesanan.isPreOrder
-                                                ? const Color(0xFF5B9E68)
-                                                : const Color(0xFF175D2B),
+                                                ? const Color(0xFFD97706)
+                                                : const Color(0xFF047857),
                                           ),
                                           const SizedBox(width: 3),
                                           Text(
@@ -369,8 +369,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                               fontSize: 10,
                                               fontWeight: FontWeight.w800,
                                               color: pesanan.isPreOrder
-                                                  ? const Color(0xFF5B9E68)
-                                                  : const Color(0xFF175D2B),
+                                                  ? const Color(0xFFD97706)
+                                                  : const Color(0xFF047857),
                                             ),
                                           ),
                                         ],

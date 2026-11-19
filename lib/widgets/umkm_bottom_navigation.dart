@@ -17,7 +17,7 @@ class UmkmBottomNavigation extends StatelessWidget {
     this.pesananBaru = 0,
   });
 
-  static const Color primaryColor = Color(0xFF175D2B);
+  static const Color primaryColor = Color(0xFF047857);
   static const Color inactiveColor = Color(0xFF718096);
   static const Color activeBackground = Color(0xFFEAF3EC);
 

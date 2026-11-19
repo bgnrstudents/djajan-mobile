@@ -24,9 +24,9 @@ class FavoriteScreen extends StatefulWidget {
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
   static const Color primaryGreen = AppConfig.primaryColor;
-  static const Color textDark = Color(0xFF1E293B);
-  static const Color textMuted = Color(0xFF64748B);
-  static const Color background = Color(0xFFF5F9F6);
+  static const Color textDark = Color(0xFF16201A);
+  static const Color textMuted = Color(0xFF5F6B64);
+  static const Color background = Color(0xFFF3F7F3);
 
   final FavoriteService _favorites = FavoriteService();
   final CartService _cartService = CartService();
@@ -41,7 +41,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Lihat',
-          textColor: const Color(0xFF175D2B),
+          textColor: Colors.white,
           onPressed: () =>
               Navigator.of(context)
                   .push(MaterialPageRoute(builder: (_) => const CartScreen())),
@@ -64,6 +64,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         backgroundColor: background,
         appBar: DjajanAppBar(
           title: 'Favorit Saya',
+          backgroundColor: Colors.transparent,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(52),
             child: AnimatedBuilder(
@@ -72,7 +73,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE9EEF2),
+                  color: const Color(0xFFE2EBE2),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: TabBar(
@@ -83,7 +84,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
                   labelColor: primaryGreen,
-                  unselectedLabelColor: const Color(0xFF59636E),
+                  unselectedLabelColor: textMuted,
                   labelStyle: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -98,11 +99,16 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             ),
           ),
         ),
-        body: AnimatedBuilder(
-          animation: _favorites,
-          builder: (context, _) => TabBarView(
-            children: [_buildProductsTab(context), _buildUmkmTab(context)],
-          ),
+        body: Stack(
+          children: [
+            const HeaderBotanicalBackdrop(height: 220),
+            AnimatedBuilder(
+              animation: _favorites,
+              builder: (context, _) => TabBarView(
+                children: [_buildProductsTab(context), _buildUmkmTab(context)],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -204,7 +210,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     height: 48,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF175D2B), Color(0xFF22915D)],
+                        colors: [Color(0xFF047857), Color(0xFF10B981)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

@@ -384,17 +384,20 @@ class _ProfilScreenState extends State<ProfilScreen> {
       animation: Listenable.merge([FavoriteService(), _settings]),
       builder: (context, _) => ColoredBox(
         color: OC.bg,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_settings.loading)
-                const LinearProgressIndicator(
-                  minHeight: 2,
-                  color: Color(0xFF175D2B),
-                  backgroundColor: Color(0xFFEAF3EC),
-                ),
+        child: Stack(
+          children: [
+            const HeaderBotanicalBackdrop(height: 220),
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_settings.loading)
+                    const LinearProgressIndicator(
+                      minHeight: 2,
+                      color: AppColors.hijauTua,
+                      backgroundColor: AppColors.hijauLembut,
+                    ),
               if (_settings.errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -442,9 +445,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  ),
+);
+}
 
   Widget _buildGuestProfile(BuildContext context) {
     return SingleChildScrollView(
@@ -1447,9 +1452,9 @@ class _InfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const primaryColor = AppConfig.primaryColor;
-    const inkColor = Color(0xFF1E293B);
-    const mutedColor = Color(0xFF64748B);
-    const bgColor = Color(0xFFF5F9F6);
+    const inkColor = Color(0xFF16201A);
+    const mutedColor = Color(0xFF5F6B64);
+    const bgColor = Color(0xFFF3F7F3);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -1531,11 +1536,11 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
   late final List<TextEditingController> _controllers;
 
   static const primaryColor = AppConfig.primaryColor;
-  static const inkColor = Color(0xFF1E293B);
-  static const mutedColor = Color(0xFF64748B);
-  static const faintColor = Color(0xFF94A3B8);
+  static const inkColor = Color(0xFF16201A);
+  static const mutedColor = Color(0xFF5F6B64);
+  static const faintColor = Color(0xFF7C9583);
   static const lineColor = AppColors.garis;
-  static const bgColor = Color(0xFFF5F9F6);
+  static const bgColor = Color(0xFFF3F7F3);
 
   @override
   void initState() {

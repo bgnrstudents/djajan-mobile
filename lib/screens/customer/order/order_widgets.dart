@@ -12,31 +12,31 @@ import '../../../widgets/app_network_image.dart';
 /// keranjang/checkout/pesanan terasa satu aplikasi dengan halaman lain.
 /// (Sebelumnya halaman ini memakai palet lavender-biru yang lepas dari brand.)
 class OC {
-  static const Color primary = AppConfig.primaryColor; // #175D2B
-  static const Color primarySoft = Color(0xFFEAF3EC);
-  static const Color accent = AppConfig.secondaryColor; // #FFBE25
+  static const Color primary = AppConfig.primaryColor; // #047857 Emerald Green
+  static const Color primarySoft = Color(0xFFE8F5E9);
+  static const Color accent = Color(0xFFF59E0B);
 
-  static const Color bg = Color(0xFFF5F9F6);
+  static const Color bg = Color(0xFFF3F7F3); // Fresh Mint
   static const Color card = Colors.white;
 
-  static const Color ink = Color(0xFF183322);
-  static const Color muted = Color(0xFF5D7263);
+  static const Color ink = Color(0xFF16201A);
+  static const Color muted = Color(0xFF5F6B64);
   static const Color faint = Color(0xFF7C9583);
-  static const Color line = Color(0xFFDCE8DE);
+  static const Color line = Color(0xFFE2EBE2);
 
   static const Color box = Color(0xFFF7FBF8);
   static const Color banner = Color(0xFFEDF5EF);
 
   static const Color mint = Color(0xFFDCEBDF);
   static const Color mintSoft = Color(0xFFEDF5EF);
-  static const Color mintText = Color(0xFF175D2B);
+  static const Color mintText = Color(0xFF047857);
 
-  static const Color peach = Color(0xFFEAF3EC);
-  static const Color peachSoft = Color(0xFFF5F9F6);
-  static const Color amber = Color(0xFF5D7263);
+  static const Color peach = Color(0xFFFFF7ED);
+  static const Color peachSoft = Color(0xFFFFFBEB);
+  static const Color amber = Color(0xFFD97706);
 
-  static const Color danger = Color(0xFF175D2B);
-  static const Color dangerSoft = Color(0xFFEAF3EC);
+  static const Color danger = Color(0xFFDC2626);
+  static const Color dangerSoft = Color(0xFFFEF2F2);
 }
 
 /// Skala tipografi bersama untuk seluruh halaman pesanan.

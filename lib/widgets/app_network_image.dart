@@ -53,7 +53,7 @@ class AppNetworkImage extends StatelessWidget {
               Container(
                 width: width,
                 height: height,
-                color: const Color(0xFFF5F9F6),
+                color: const Color(0xFFF3F7F3),
                 child: Center(
                   child: SizedBox(
                     width: 20,
@@ -64,7 +64,7 @@ class AppNetworkImage extends StatelessWidget {
                           ? loadingProgress.cumulativeBytesLoaded /
                               loadingProgress.expectedTotalBytes!
                           : null,
-                      color: const Color(0xFF175D2B),
+                      color: const Color(0xFF047857),
                     ),
                   ),
                 ),
@@ -90,7 +90,7 @@ class AppNetworkImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: const Color(0xFFF5F9F6),
+      color: const Color(0xFFF3F7F3),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -352,9 +352,9 @@ class _TabBeranda extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [
-                  Color(0xFF103D20),
-                  Color(0xFF175D2B),
-                  Color(0xFF287842),
+                  Color(0xFF064E3B),
+                  Color(0xFF047857),
+                  Color(0xFF059669),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,

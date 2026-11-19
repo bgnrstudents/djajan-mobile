@@ -205,7 +205,7 @@ class _SplashScreenState extends State<SplashScreen>
                               width: 7,
                               height: 7,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF175D2B),
+                                color: Color(0xFF047857),
                                 shape: BoxShape.circle,
                               ),
                             ),

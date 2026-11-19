@@ -38,9 +38,9 @@ class CatalogListScreen extends StatefulWidget {
 
 class _CatalogListScreenState extends State<CatalogListScreen> {
   static const Color primaryGreen = AppConfig.primaryColor;
-  static const Color textDark = Color(0xFF1E293B);
-  static const Color textMuted = Color(0xFF64748B);
-  static const Color background = Color(0xFFF5F9F6);
+  static const Color textDark = Color(0xFF16201A);
+  static const Color textMuted = Color(0xFF5F6B64);
+  static const Color background = Color(0xFFF3F7F3);
 
   final CartService _cartService = CartService();
   final TextEditingController _searchController = TextEditingController();
@@ -117,7 +117,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Lihat',
-          textColor: const Color(0xFF175D2B),
+          textColor: Colors.white,
           onPressed: () =>
               Navigator.of(context)
                   .push(MaterialPageRoute(builder: (_) => const CartScreen())),
@@ -135,14 +135,20 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
     final hasError = catalog?.errorMessage != null;
     return Scaffold(
       backgroundColor: background,
-      appBar: const DjajanAppBar(title: 'Cari Produk & UMKM'),
-      body: isLoading && !hasProducts
-          ? const Center(child: CircularProgressIndicator())
-          : hasError && !hasProducts
-          ? _buildError(catalog!)
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-              children: [
+      appBar: const DjajanAppBar(
+        title: 'Cari Produk & UMKM',
+        backgroundColor: Colors.transparent,
+      ),
+      body: Stack(
+        children: [
+          const HeaderBotanicalBackdrop(height: 220),
+          isLoading && !hasProducts
+              ? const Center(child: CircularProgressIndicator())
+              : hasError && !hasProducts
+              ? _buildError(catalog!)
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                  children: [
                 _buildSearchField(),
                 const SizedBox(height: 14),
                 _buildCategoryChips(),
@@ -182,6 +188,8 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
                 _buildProductGrid(),
               ],
             ),
+        ],
+      ),
     );
   }
 

@@ -762,8 +762,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           headline = 'Pesanan Dibatalkan & Menunggu Refund';
           body =
               'Pesanan telah dibatalkan. Pengembalian dana ${rupiah(o.total)} sedang diproses oleh pihak Admin/UMKM DJajan.';
-          toneBg = const Color(0xFFEAF3EC);
-          toneFg = const Color(0xFF175D2B);
+          toneBg = const Color(0xFFE8F5E9);
+          toneFg = const Color(0xFF047857);
           icon = Icons.hourglass_bottom_rounded;
         } else {
           chip = 'Pesanan Dibatalkan';
@@ -988,12 +988,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF3EC),
+                  color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.receipt_long_rounded,
-                  color: Color(0xFF175D2B),
+                  color: Color(0xFF047857),
                   size: 20,
                 ),
               ),
@@ -1016,7 +1016,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF175D2B),
+                        color: Color(0xFF047857),
                       ),
                     ),
                   ],
@@ -1996,8 +1996,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: hasReviewed
-                    ? const Color(0xFF175D2B)
-                    : const Color(0xFF5B9E68),
+                    ? const Color(0xFF047857)
+                    : const Color(0xFF10B981),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 
 /// Shared Djajan palette: white and green, with green tints for surfaces.
 class AppColors {
-  static const Color hijauTua = Color(0xFF175D2B);
-  static const Color hijauMuda = Color(0xFF5B9E68);
-  static const Color hijauLembut = Color(0xFFEAF3EC);
-  static const Color latar = Color(0xFFF5F9F6);
+  static const Color hijauTua = Color(0xFF047857);
+  static const Color hijauMuda = Color(0xFF10B981);
+  static const Color hijauLembut = Color(0xFFE8F5E9);
+  static const Color latar = Color(0xFFF3F7F3);
   static const Color putih = Color(0xFFFFFFFF);
-  static const Color garis = Color(0xFFDCE8DE);
-  static const Color textDark = Color(0xFF183322);
-  static const Color textGrey = Color(0xFF5D7263);
+  static const Color garis = Color(0xFFE2EBE2);
+  static const Color textDark = Color(0xFF16201A);
+  static const Color textGrey = Color(0xFF5F6B64);
 
-  // Semantic aliases kept for existing screens, now expressed in the brand palette.
-  static const Color kuning = hijauTua;
+  // Semantic aliases for consistency with brand and alert semantics
+  static const Color kuning = Color(0xFFF59E0B);
   static const Color krem = latar;
   static const Color bgLavender = latar;
   static const Color cardWhite = putih;
-  static const Color danger = hijauTua;
-  static const Color dangerBg = hijauLembut;
-  static const Color chipOrange = hijauLembut;
-  static const Color chipOrangeText = hijauTua;
+  static const Color danger = Color(0xFFDC2626);
+  static const Color dangerBg = Color(0xFFFEF2F2);
+  static const Color chipOrange = Color(0xFFFEF3C7);
+  static const Color chipOrangeText = Color(0xFFD97706);
   static const Color chipGreenBg = hijauLembut;
 }
 
@@ -31,7 +31,7 @@ class AppTheme {
       primary: AppColors.hijauTua,
       secondary: AppColors.hijauMuda,
       surface: AppColors.putih,
-      error: AppColors.hijauTua,
+      error: AppColors.danger,
     );
     final baseTextTheme = Typography.material2021().black.apply(
       fontFamily: fontFamily,

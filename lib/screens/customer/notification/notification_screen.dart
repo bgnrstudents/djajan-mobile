@@ -12,9 +12,9 @@ class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
 
   static const Color primaryGreen = AppConfig.primaryColor;
-  static const Color textDark = Color(0xFF183322);
-  static const Color textMuted = Color(0xFF5D7263);
-  static const Color background = Color(0xFFF5F9F6);
+  static const Color textDark = Color(0xFF16201A);
+  static const Color textMuted = Color(0xFF5F6B64);
+  static const Color background = Color(0xFFF3F7F3);
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +24,7 @@ class NotificationScreen extends StatelessWidget {
       backgroundColor: background,
       appBar: DjajanAppBar(
         title: 'Notifikasi',
+        backgroundColor: Colors.transparent,
         actions: [
           AnimatedBuilder(
             animation: service,
@@ -41,21 +42,26 @@ class NotificationScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: AnimatedBuilder(
-        animation: service,
-        builder: (context, _) {
-          final items = service.notifications;
-          if (items.isEmpty) return const _EmptyNotifications();
+      body: Stack(
+        children: [
+          const HeaderBotanicalBackdrop(height: 220),
+          AnimatedBuilder(
+            animation: service,
+            builder: (context, _) {
+              final items = service.notifications;
+              if (items.isEmpty) return const _EmptyNotifications();
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              _summaryCard(service.unreadCount, items.length),
-              const SizedBox(height: 8),
-              ..._buildGrouped(context, service, items),
-            ],
-          );
-        },
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _summaryCard(service.unreadCount, items.length),
+                  const SizedBox(height: 8),
+                  ..._buildGrouped(context, service, items),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -65,7 +71,7 @@ class NotificationScreen extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF176236), Color(0xFF0F4D2B)],
+          colors: [Color(0xFF047857), Color(0xFF065F46)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -209,7 +215,7 @@ class _NotificationTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: const Color(0xFF175D2B),
+          color: const Color(0xFFDC2626),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline, color: Colors.white),
@@ -227,7 +233,7 @@ class _NotificationTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: item.isRead
-                    ? const Color(0xFFDCE8DE)
+                    ? const Color(0xFFE2EBE2)
                     : const Color(0xFFB7D3BC),
               ),
             ),
@@ -270,7 +276,7 @@ class _NotificationTile extends StatelessWidget {
                               height: 8,
                               margin: const EdgeInsets.only(left: 6),
                               decoration: const BoxDecoration(
-                                color: Color(0xFF175D2B),
+                                color: Color(0xFF047857),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -310,26 +316,26 @@ class _NotificationTile extends StatelessWidget {
       case AppNotificationType.order:
         return const _TypeStyle(
           icon: Icons.receipt_long_outlined,
-          foreground: Color(0xFF175D2B),
-          background: Color(0xFFEAF3EC),
+          foreground: Color(0xFF047857),
+          background: Color(0xFFE8F5E9),
         );
       case AppNotificationType.payment:
         return const _TypeStyle(
           icon: Icons.account_balance_wallet_outlined,
-          foreground: Color(0xFF175D2B),
-          background: Color(0xFFEAF3EC),
+          foreground: Color(0xFF047857),
+          background: Color(0xFFE8F5E9),
         );
       case AppNotificationType.promo:
         return const _TypeStyle(
           icon: Icons.local_offer_outlined,
-          foreground: Color(0xFF175D2B),
-          background: Color(0xFFEAF3EC),
+          foreground: Color(0xFFD97706),
+          background: Color(0xFFFEF3C7),
         );
       case AppNotificationType.info:
         return const _TypeStyle(
           icon: Icons.campaign_outlined,
-          foreground: Color(0xFF175D2B),
-          background: Color(0xFFEAF3EC),
+          foreground: Color(0xFF047857),
+          background: Color(0xFFE8F5E9),
         );
     }
   }

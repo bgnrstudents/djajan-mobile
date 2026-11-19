@@ -8,24 +8,24 @@ import '../../config/app_config.dart';
 class AuthStyle {
   AuthStyle._();
 
-  static const Color primary = AppConfig.primaryColor; // #175D2B
-  static const Color accent = AppConfig.secondaryColor; // #FFBE25
+  static const Color primary = AppConfig.primaryColor; // #047857
+  static const Color accent = AppConfig.secondaryColor;
 
-  static const Color bg = Color(0xFFF5F9F6);
+  static const Color bg = Color(0xFFF3F7F3);
   static const Color card = Colors.white;
   static const Color field = Color(0xFFF7FBF8);
-  static const Color border = Color(0xFFDCE8DE);
+  static const Color border = Color(0xFFE2EBE2);
   static const Color hint = Color(0xFF83A18C);
 
-  static const Color textDark = Color(0xFF183322);
-  static const Color textGrey = Color(0xFF5D7263);
-  static const Color danger = Color(0xFF175D2B);
-  static const Color success = Color(0xFF175D2B);
+  static const Color textDark = Color(0xFF16201A);
+  static const Color textGrey = Color(0xFF5F6B64);
+  static const Color danger = Color(0xFFDC2626);
+  static const Color success = Color(0xFF047857);
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0E4020), Color(0xFF175D2B), Color(0xFF2E8B57)],
+    colors: [Color(0xFF064E3B), Color(0xFF047857), Color(0xFF059669)],
     stops: [0.0, 0.55, 1.0],
   );
 }

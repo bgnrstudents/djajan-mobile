@@ -25,6 +25,7 @@ import '../order/address_picker_sheet.dart';
 import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/umkm_app_bar.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -153,6 +154,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           fit: StackFit.expand,
           children: [
             const Positioned.fill(child: ColoredBox(color: AppColors.latar)),
+            const HeaderBotanicalBackdrop(height: 250),
             SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.only(

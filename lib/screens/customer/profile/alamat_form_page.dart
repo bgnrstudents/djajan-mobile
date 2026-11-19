@@ -226,7 +226,7 @@ class _AlamatFormPageState extends State<AlamatFormPage> {
     final hasLocation = _latitude != null && _longitude != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F9F6),
+      backgroundColor: const Color(0xFFF3F7F3),
       appBar: DjajanAppBar(title: isEdit ? 'Edit Alamat' : 'Tambah Alamat'),
       body: Form(
         key: _formKey,

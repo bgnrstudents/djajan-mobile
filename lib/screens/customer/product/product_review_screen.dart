@@ -27,8 +27,8 @@ class _ProductReviewScreenState extends State<ProductReviewScreen> {
   bool _isSubmitting = false;
   String? _error;
 
-  static const Color _green = Color(0xFF175D2B);
-  static const Color _greenSoft = Color(0xFFEAF3EC);
+  static const Color _green = Color(0xFF047857);
+  static const Color _greenSoft = Color(0xFFE8F5E9);
   static const Color _ink = Color(0xFF17251B);
   static const Color _muted = Color(0xFF758178);
 
@@ -416,12 +416,12 @@ class ReviewSuccessScreen extends StatelessWidget {
     required this.rating,
   });
 
-  static const Color _green = Color(0xFF175D2B);
+  static const Color _green = Color(0xFF047857);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
+      backgroundColor: const Color(0xFFF3F7F3),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),

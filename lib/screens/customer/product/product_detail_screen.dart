@@ -56,7 +56,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         backgroundColor: primaryGreen,
         action: SnackBarAction(
           label: 'Lihat',
-          textColor: const Color(0xFF175D2B),
+          textColor: Colors.white,
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const CartScreen()),
@@ -223,7 +223,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Color(0xFF175D2B),
+                          color: primaryGreen,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -330,7 +330,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           decoration: BoxDecoration(
-            color: isPO ? const Color(0xFFF5F9F6) : const Color(0xFFEAF3EC),
+            color: isPO ? const Color(0xFFFFFBEB) : const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -339,7 +339,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Icon(
                 isPO ? Icons.schedule_rounded : Icons.bolt_rounded,
                 size: 15,
-                color: isPO ? const Color(0xFF5B9E68) : primaryGreen,
+                color: isPO ? const Color(0xFFD97706) : primaryGreen,
               ),
               const SizedBox(width: 4),
               Text(
@@ -348,8 +348,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   fontSize: 10.5,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.55,
-                  color:
-                      isPO ? const Color(0xFF5B9E68) : primaryGreen,
+                  color: isPO ? const Color(0xFFD97706) : primaryGreen,
                 ),
               ),
             ],
@@ -362,7 +361,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildRatingRow() {
     return Row(
       children: [
-        const Icon(Icons.star_rounded, size: 18, color: Color(0xFF5B9E68)),
+        const Icon(Icons.star_rounded, size: 18, color: Color(0xFFF59E0B)),
         const SizedBox(width: 4),
         Text(
           p.rating.toStringAsFixed(1),
@@ -391,9 +390,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildOrderTypeNotice(bool isPO) {
-    final color = isPO ? const Color(0xFF5B9E68) : primaryGreen;
+    final color = isPO ? const Color(0xFFD97706) : primaryGreen;
     final backgroundColor =
-        isPO ? const Color(0xFFF5F9F6) : const Color(0xFFEAF3EC);
+        isPO ? const Color(0xFFFFFBEB) : const Color(0xFFE8F5E9);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
