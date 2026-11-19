@@ -68,13 +68,71 @@ class _CartScreenState extends State<CartScreen> {
         _addressHasCoords = a.latitude != null && a.longitude != null;
       }
     });
+    if (_addressHasCoords) {
+      _calculateOngkirAllUmkm();
+    }
+  }
+
+  /// Hitung ongkir untuk semua UMKM yang aktif punya layanan kurir
+  Future<void> _calculateOngkirAllUmkm() async {
+    if (!_addressHasCoords) return;
+    final grouped = _cartService.itemsByUmkm;
+    for (final entry in grouped.entries) {
+      final umkmId = entry.key;
+      final lines = entry.value;
+      if (lines.isEmpty) continue;
+      // Hanya hitung jika UMKM ini ada layanan kurir
+      if (lines.first.courierFee != null) {
+        await _calculateOngkirForUmkm(umkmId, lines.first);
+      }
+    }
+  }
+
+  /// Hitung ongkir untuk satu UMKM tertentu dari API ongkir_hitung
+  Future<void> _calculateOngkirForUmkm(String umkmId, CartLine firstLine) async {
+    final umkmIdInt = int.tryParse(umkmId);
+    if (umkmIdInt == null || !_addressHasCoords) return;
+    if (_ongkirLoading[umkmId] == true) return; // Sudah loading
+
+    if (mounted) setState(() => _ongkirLoading[umkmId] = true);
+    try {
+      final result = await _orderService.calculateDeliveryFee(
+        umkmId: umkmIdInt,
+        delivery: DeliveryMethod.courier,
+        addressId: _recipient.addressId,
+        latitude: _recipient.latitude,
+        longitude: _recipient.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        _ongkirLoading[umkmId] = false;
+        if (result.isOutOfRange) {
+          // Di luar jangkauan — set ke -1 sebagai tanda error
+          _courierFees[umkmId] = -1;
+          _ongkirMessage[umkmId] = 'Di luar jangkauan kurir';
+        } else {
+          _courierFees[umkmId] = result.deliveryFee.round();
+          _ongkirMessage[umkmId] = result.message;
+          _ongkirDistance[umkmId] = result.distanceKm;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _ongkirLoading[umkmId] = false);
+    }
   }
 
   // Delivery options per UMKM (0: Kurir, 1: Pickup)
   final Map<String, int> _deliveryOptions = {};
 
+  // Hasil hitung ongkir dinamis per UMKM (dari API ongkir_hitung)
+  final Map<String, int> _courierFees = {};
+  final Map<String, bool> _ongkirLoading = {};
+  final Map<String, String?> _ongkirMessage = {};
+  final Map<String, double?> _ongkirDistance = {};
+
   // Pre-Order options per UMKM
-  final Map<String, DateTime> _poRequiredDates = {};
+  final Map<String, DateTime?> _poRequiredDates = {};
   final Map<String, TextEditingController> _poPurposeControllers = {};
   final Map<String, TextEditingController> _poNoteControllers = {};
 
@@ -131,24 +189,19 @@ class _CartScreenState extends State<CartScreen> {
   TextEditingController _getPurposeController(String umkmId) {
     return _poPurposeControllers.putIfAbsent(
       umkmId,
-      () => TextEditingController(text: 'Rapat Desa RT 02'),
+      () => TextEditingController(),
     );
   }
 
   TextEditingController _getNoteController(String umkmId) {
     return _poNoteControllers.putIfAbsent(
       umkmId,
-      () => TextEditingController(
-        text: 'Sambal dipisah, kemangi dipacking rapi untuk bapak-bapak lurah',
-      ),
+      () => TextEditingController(),
     );
   }
 
-  DateTime _getPoDate(String umkmId) {
-    return _poRequiredDates.putIfAbsent(umkmId, () {
-      final base = DateTime.now().add(const Duration(days: 3));
-      return DateTime(base.year, base.month, base.day, 11, 0);
-    });
+  DateTime? _getPoDate(String umkmId) {
+    return _poRequiredDates[umkmId];
   }
 
   Future<void> _pickDateTime(String umkmId) async {
@@ -158,7 +211,9 @@ class _CartScreenState extends State<CartScreen> {
       now.month,
       now.day,
     ).add(const Duration(days: 1));
-    final current = _getPoDate(umkmId);
+    final current =
+        _poRequiredDates[umkmId] ??
+        DateTime(first.year, first.month, first.day, 11, 0);
 
     final pickedDate = await showDatePicker(
       context: context,
@@ -207,7 +262,16 @@ class _CartScreenState extends State<CartScreen> {
         );
         _addressHasCoords = picked.latitude != null && picked.longitude != null;
         _addressError = null;
+        // Reset ongkir lama karena alamat berubah
+        _courierFees.clear();
+        _ongkirLoading.clear();
+        _ongkirMessage.clear();
+        _ongkirDistance.clear();
       });
+      // Recalculate ongkir dengan alamat baru jika punya GPS
+      if (_addressHasCoords) {
+        _calculateOngkirAllUmkm();
+      }
     }
   }
 
@@ -354,6 +418,14 @@ class _CartScreenState extends State<CartScreen> {
       final isPO = entry.value.any((item) => item.type == OrderType.preOrder);
       if (isPO) {
         final date = _getPoDate(entry.key);
+        if (date == null) {
+          showToast(
+            context,
+            'Pilih waktu dibutuhkan untuk pesanan Pre-Order dari ${entry.value.first.umkmName}.',
+            error: true,
+          );
+          return;
+        }
         if (date.isBefore(DateTime.now())) {
           showToast(
             context,
@@ -596,7 +668,32 @@ class _CartScreenState extends State<CartScreen> {
               _deliveryOptions[umkmId] ??
               (lines.first.courierFee != null ? 0 : 1);
           if (deliveryChoice == 0 && lines.first.courierFee != null) {
-            totalOngkir += lines.first.courierFee!.round();
+            // Gunakan ongkir hasil kalkulasi dinamis jika sudah tersedia
+            final calculatedFee = _courierFees[umkmId];
+            if (calculatedFee != null && calculatedFee >= 0) {
+              totalOngkir += calculatedFee;
+            }
+            // Jika belum ada (masih loading / belum dihitung), tidak ditambahkan dulu
+          }
+        }
+
+        // Trigger kalkulasi ongkir jika belum dilakukan dan alamat sudah ada GPS
+        if (_addressHasCoords) {
+          for (final entry in grouped.entries) {
+            final umkmId = entry.key;
+            final lines = entry.value;
+            if (lines.isEmpty) continue;
+            final deliveryChoice =
+                _deliveryOptions[umkmId] ??
+                (lines.first.courierFee != null ? 0 : 1);
+            if (deliveryChoice == 0 &&
+                lines.first.courierFee != null &&
+                !_courierFees.containsKey(umkmId) &&
+                _ongkirLoading[umkmId] != true) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _calculateOngkirForUmkm(umkmId, lines.first);
+              });
+            }
           }
         }
 
@@ -1015,9 +1112,25 @@ class _CartScreenState extends State<CartScreen> {
 
     final int deliveryChoice =
         _deliveryOptions[umkmId] ?? (first.courierFee != null ? 0 : 1);
-    final int courierFee = (deliveryChoice == 0 && first.courierFee != null)
-        ? first.courierFee!.round()
-        : 0;
+
+    // Gunakan ongkir dari hasil kalkulasi API; jika belum ada, tampilkan 0 sementara
+    final bool ongkirLoading = _ongkirLoading[umkmId] == true;
+    final int? calculatedOngkir = _courierFees[umkmId];
+    final bool ongkirOutOfRange = calculatedOngkir == -1;
+    final String? ongkirDistance = _ongkirDistance[umkmId] != null
+        ? '~${_ongkirDistance[umkmId]!.toStringAsFixed(1)} km'
+        : null;
+
+    final int courierFee;
+    if (deliveryChoice == 0 && first.courierFee != null) {
+      if (calculatedOngkir != null && calculatedOngkir >= 0) {
+        courierFee = calculatedOngkir;
+      } else {
+        courierFee = 0; // Belum dihitung / loading
+      }
+    } else {
+      courierFee = 0;
+    }
 
     final int itemsSubtotal = selectedLines.fold(
       0,
@@ -1132,7 +1245,7 @@ class _CartScreenState extends State<CartScreen> {
 
           // Delivery Options
           const Text(
-            'Opsi Pengantaran UMKM',
+            'Opsi Pengantaran',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12.5,
@@ -1141,7 +1254,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Option 1: Diantar Kurir Warga
+          // Option 1: Diantar Kurir
           if (first.courierFee != null) ...[
             _choiceTile(
               selected: deliveryChoice == 0,
@@ -1149,10 +1262,34 @@ class _CartScreenState extends State<CartScreen> {
                 setState(() {
                   _deliveryOptions[umkmId] = 0;
                 });
+                // Trigger kalkulasi jika belum ada dan alamat sudah GPS
+                if (_addressHasCoords &&
+                    !_courierFees.containsKey(umkmId) &&
+                    _ongkirLoading[umkmId] != true) {
+                  _calculateOngkirForUmkm(umkmId, first);
+                }
               },
-              title: 'Diantar Kurir Warga / UMKM',
-              subtitle: 'Langsung diantar ke balai / rumah',
-              trailing: '+${_formatRupiah(first.courierFee!.round())}',
+              title: 'Diantar Kurir',
+              subtitle: ongkirLoading
+                  ? (ongkirDistance != null
+                        ? 'Jarak $ongkirDistance • Menghitung tarif...'
+                        : 'Menghitung tarif ongkir...')
+                  : ongkirOutOfRange
+                  ? 'Di luar jangkauan kurir UMKM ini'
+                  : ongkirDistance != null
+                  ? 'Jarak $ongkirDistance • Langsung diantar ke rumah'
+                  : 'Langsung diantar ke rumah',
+              trailing: ongkirLoading
+                  ? '...'
+                  : ongkirOutOfRange
+                  ? 'Tidak tersedia'
+                  : (calculatedOngkir != null && calculatedOngkir == 0)
+                  ? 'Gratis'
+                  : calculatedOngkir != null
+                  ? '+${_formatRupiah(calculatedOngkir)}'
+                  : _addressHasCoords
+                  ? 'Menghitung...'
+                  : 'Butuh GPS',
             ),
             const SizedBox(height: 8),
           ],
@@ -1165,9 +1302,9 @@ class _CartScreenState extends State<CartScreen> {
                 _deliveryOptions[umkmId] = 1;
               });
             },
-            title: 'Ambil Sendiri di Toko / Dapur (Pickup)',
+            title: 'Ambil Sendiri (Pickup)',
             subtitle: 'Lokasi: ${first.pickupLocation}',
-            trailing: 'Gratis (Rp 0)',
+            trailing: 'Gratis',
           ),
 
           const Divider(height: 22, color: OC.line),
@@ -1462,11 +1599,17 @@ class _CartScreenState extends State<CartScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: OC.peach),
+                border: Border.all(
+                  color: date == null ? OC.danger.withAlpha(120) : OC.peach,
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 15, color: OC.primary),
+                  Icon(
+                    Icons.calendar_today,
+                    size: 15,
+                    color: date == null ? OC.danger : OC.primary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -1477,11 +1620,13 @@ class _CartScreenState extends State<CartScreen> {
                           style: TextStyle(fontSize: 10.5, color: OC.muted),
                         ),
                         Text(
-                          fmtDateComma(date),
-                          style: const TextStyle(
+                          date != null
+                              ? fmtDateComma(date)
+                              : 'Ketuk untuk pilih tanggal & waktu acara',
+                          style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
-                            color: OC.ink,
+                            color: date != null ? OC.ink : OC.danger,
                           ),
                         ),
                       ],
@@ -1768,7 +1913,6 @@ class _CartScreenState extends State<CartScreen> {
             'Total Ongkir Kurir UMKM',
             totalOngkir == 0 ? 'Gratis (Rp 0)' : _formatRupiah(totalOngkir),
           ),
-          _summaryRow('Biaya Layanan Aplikasi', 'Gratis (Rp 0)'),
           const Divider(height: 20, color: OC.line),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

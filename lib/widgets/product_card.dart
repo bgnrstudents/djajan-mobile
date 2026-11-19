@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../services/cart_service.dart';
 import '../models/product.dart';
@@ -302,80 +302,81 @@ class ProductCard extends StatelessWidget {
                                     ),
                                   ],
                                 )
-                              : Column(
+                              : Row(
                                   key: ValueKey(
                                     'product-quantity-$cartProductId',
                                   ),
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    if (featured) ...[
-                                      const Text(
-                                        'HARGA',
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.6,
-                                          color: AppColors.textGrey,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          if (featured) ...const [
+                                            Text(
+                                              'HARGA',
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.45,
+                                                color: AppColors.textGrey,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                          ],
+                                          price,
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      height: featured ? 30 : 32,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.latar,
+                                        borderRadius: BorderRadius.circular(9),
+                                        border: Border.all(
+                                          color: AppColors.garis,
                                         ),
                                       ),
-                                      const SizedBox(height: 3),
-                                    ],
-                                    price,
-                                    const SizedBox(height: 6),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Container(
-                                        height: featured ? 30 : 32,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.latar,
-                                          borderRadius: BorderRadius.circular(
-                                            9,
-                                          ),
-                                          border: Border.all(
-                                            color: AppColors.garis,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            _quantityButton(
-                                              key: ValueKey(
-                                                'product-card-decrease-$cartProductId',
-                                              ),
-                                              icon: Icons.remove,
-                                              featured: featured,
-                                              onTap: () =>
-                                                  cartService.updateQuantity(
-                                                    cartProductId,
-                                                    quantity - 1,
-                                                  ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _quantityButton(
+                                            key: ValueKey(
+                                              'product-card-decrease-$cartProductId',
                                             ),
-                                            SizedBox(
-                                              key: ValueKey(
-                                                'product-card-quantity-$cartProductId',
-                                              ),
-                                              width: 24,
-                                              child: Text(
-                                                '$quantity',
-                                                textAlign: TextAlign.center,
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: AppColors.hijauTua,
+                                            icon: Icons.remove,
+                                            featured: featured,
+                                            onTap: () =>
+                                                cartService.updateQuantity(
+                                                  cartProductId,
+                                                  quantity - 1,
                                                 ),
+                                          ),
+                                          SizedBox(
+                                            key: ValueKey(
+                                              'product-card-quantity-$cartProductId',
+                                            ),
+                                            width: 24,
+                                            child: Text(
+                                              '$quantity',
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.hijauTua,
                                               ),
                                             ),
-                                            _quantityButton(
-                                              key: ValueKey(
-                                                'product-card-increase-$cartProductId',
-                                              ),
-                                              icon: Icons.add,
-                                              featured: featured,
-                                              onTap: onAddToCart,
+                                          ),
+                                          _quantityButton(
+                                            key: ValueKey(
+                                              'product-card-increase-$cartProductId',
                                             ),
-                                          ],
-                                        ),
+                                            icon: Icons.add,
+                                            featured: featured,
+                                            onTap: onAddToCart,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
