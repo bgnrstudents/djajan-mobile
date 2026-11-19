@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../config/app_config.dart';
-import '../../../../models/order.dart';
-import '../../../../widgets/app_network_image.dart';
+import '../../../config/app_config.dart';
+import '../../../models/order.dart';
+import '../../../widgets/app_network_image.dart';
 
 /// Palet tunggal untuk seluruh halaman pesanan.
 ///

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../screens/auth/customer/order/order_widgets.dart';
+import '../screens/customer/order/order_widgets.dart';
 import '../services/map_navigation_service.dart';
 
 /// Kartu visualisasi peta dan navigasi pengantaran kurir warga DJajan (OpenStreetMap & Google Maps).

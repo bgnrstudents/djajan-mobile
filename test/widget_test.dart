@@ -1,5 +1,5 @@
-import 'package:djajan_mobile/screens/auth/customer/cart/cart.dart';
-import 'package:djajan_mobile/screens/auth/customer/home/customer_home_screen.dart';
+import 'package:djajan_mobile/screens/customer/cart/cart.dart';
+import 'package:djajan_mobile/screens/customer/home/customer_home_screen.dart';
 import 'package:djajan_mobile/services/auth_service.dart';
 import 'package:djajan_mobile/widgets/app_bottom_navigation.dart';
 import 'package:flutter/material.dart';

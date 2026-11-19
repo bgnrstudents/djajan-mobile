@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../config/app_config.dart';
-import '../../../../data/sample_catalog.dart';
-import '../../../../models/product.dart';
-import '../../../../models/umkm.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/catalog_service.dart';
-import '../../../../widgets/favorite_button.dart';
-import '../../../../widgets/app_network_image.dart';
-import '../../../../widgets/product_card.dart';
+import '../../../config/app_config.dart';
+import '../../../data/sample_catalog.dart';
+import '../../../models/product.dart';
+import '../../../models/umkm.dart';
+import '../../../services/api_service.dart';
+import '../../../services/catalog_service.dart';
+import '../../../widgets/favorite_button.dart';
+import '../../../widgets/app_network_image.dart';
+import '../../../widgets/product_card.dart';
 import '../cart/cart.dart';
-import '../../../../services/cart_service.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../services/cart_service.dart';
+import '../../../theme/app_theme.dart';
 import '../order/order_widgets.dart';
 import '../product/product_detail_screen.dart';
 

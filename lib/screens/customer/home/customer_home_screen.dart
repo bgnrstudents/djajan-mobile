@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../routes/app_routes.dart';
-import '../../../../services/auth_service.dart';
-import '../../../../data/sample_catalog.dart';
-import '../../../../services/catalog_service.dart';
-import '../../../../models/product.dart';
-import '../../../../models/umkm.dart';
-import '../../../../models/customer_settings_models.dart';
-import '../../../../widgets/app_bottom_navigation.dart';
-import '../../../../widgets/floating_cart_button.dart';
-import '../../../../widgets/product_card.dart';
-import '../../../../widgets/umkm_card.dart';
+import '../../../routes/app_routes.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/sample_catalog.dart';
+import '../../../services/catalog_service.dart';
+import '../../../models/product.dart';
+import '../../../models/umkm.dart';
+import '../../../models/customer_settings_models.dart';
+import '../../../widgets/app_bottom_navigation.dart';
+import '../../../widgets/floating_cart_button.dart';
+import '../../../widgets/product_card.dart';
+import '../../../widgets/umkm_card.dart';
 import '../catalog/catalog_list_screen.dart';
 import '../cart/cart.dart';
 import '../notification/notification_screen.dart';
-import '../../../../services/notification_service.dart';
+import '../../../services/notification_service.dart';
 import '../order/order_list_screen.dart';
 import '../order/order_widgets.dart';
 import '../profile/profil.dart';
-import '../../../../services/cart_service.dart';
-import '../../../../services/customer_settings_service.dart';
+import '../../../services/cart_service.dart';
+import '../../../services/customer_settings_service.dart';
 import '../order/address_picker_sheet.dart';
 import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../theme/app_theme.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});

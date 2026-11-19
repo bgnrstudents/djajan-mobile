@@ -10,7 +10,7 @@ import '../../services/umkm_data_service.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/osm_map_picker.dart';
 import '../../widgets/umkm_app_bar.dart';
-import '../auth/customer/order/order_widgets.dart';
+import '../customer/order/order_widgets.dart';
 
 /// Satu baris form zona ongkir yang sedang diedit di layar ini.
 class _ZonaBaris {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../models/order.dart';
-import '../../../../services/order_service.dart';
-import '../../../../widgets/app_network_image.dart';
+import '../../../models/order.dart';
+import '../../../services/order_service.dart';
+import '../../../widgets/app_network_image.dart';
 
 class ProductReviewScreen extends StatefulWidget {
   final Order order;

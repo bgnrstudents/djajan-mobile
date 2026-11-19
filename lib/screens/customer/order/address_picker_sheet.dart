@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../models/customer_settings_models.dart';
-import '../../../../services/customer_settings_service.dart';
+import '../../../models/customer_settings_models.dart';
+import '../../../services/customer_settings_service.dart';
 import '../profile/alamat_form_page.dart';
 import 'order_widgets.dart';
 

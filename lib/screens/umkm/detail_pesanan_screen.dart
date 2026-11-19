@@ -13,7 +13,7 @@ import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/order_delivery_map_card.dart';
-import '../auth/customer/order/order_widgets.dart';
+import '../customer/order/order_widgets.dart';
 
 /// HALAMAN 5 — Detail Pesanan.
 /// Menampilkan isi tabel `pesanan` + `detail_pesanan`. Tombol Terima/Tolak

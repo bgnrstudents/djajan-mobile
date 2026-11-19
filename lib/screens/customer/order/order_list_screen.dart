@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../models/order.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/auth_service.dart';
-import '../../../../services/order_service.dart';
-import '../../login_screen.dart';
+import '../../../models/order.dart';
+import '../../../services/api_service.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/order_service.dart';
+import '../../auth/login_screen.dart';
 import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';

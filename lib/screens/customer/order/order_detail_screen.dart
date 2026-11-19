@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../models/order.dart';
-import '../../../../services/catalog_service.dart';
-import '../../../../services/order_service.dart';
-import '../../../../services/receipt_pdf_service.dart';
-import '../../../../widgets/order_delivery_map_card.dart';
+import '../../../models/order.dart';
+import '../../../services/catalog_service.dart';
+import '../../../services/order_service.dart';
+import '../../../services/receipt_pdf_service.dart';
+import '../../../widgets/order_delivery_map_card.dart';
 import '../product/product_review_screen.dart';
 import 'order_payment_screen.dart';
 import 'midtrans_payment_screen.dart';

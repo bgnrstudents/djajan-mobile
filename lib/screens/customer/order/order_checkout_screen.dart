@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'midtrans_payment_screen.dart';
-import '../../../../models/order.dart';
+import '../../../models/order.dart';
 import 'order_payment_screen.dart';
-import '../../../../services/order_service.dart';
-import '../../../../services/customer_settings_service.dart';
+import '../../../services/order_service.dart';
+import '../../../services/customer_settings_service.dart';
 import 'address_picker_sheet.dart';
 import 'order_widgets.dart';
 

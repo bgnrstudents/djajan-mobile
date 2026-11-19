@@ -11,7 +11,7 @@ import '../../models/category.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/umkm_app_bar.dart';
-import '../auth/customer/order/order_widgets.dart';
+import '../customer/order/order_widgets.dart';
 
 /// HALAMAN 3 — Tambah / Edit Produk.
 /// Data disimpan ke tabel `produk`, sedangkan foto diunggah ke folder

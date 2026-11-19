@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../config/app_config.dart';
-import '../../../../models/product.dart';
-import '../../../../models/umkm.dart';
-import '../../../../widgets/favorite_button.dart';
-import '../../../../widgets/umkm_app_bar.dart';
-import '../../../../widgets/product_card.dart';
+import '../../../config/app_config.dart';
+import '../../../models/product.dart';
+import '../../../models/umkm.dart';
+import '../../../widgets/favorite_button.dart';
+import '../../../widgets/umkm_app_bar.dart';
+import '../../../widgets/product_card.dart';
 import '../cart/cart.dart';
-import '../../../../services/cart_service.dart';
+import '../../../services/cart_service.dart';
 import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
-import '../../../../services/favorite_service.dart';
-import '../../../../services/catalog_service.dart';
+import '../../../services/favorite_service.dart';
+import '../../../services/catalog_service.dart';
 
 /// Halaman daftar favorit pengguna: produk dan UMKM yang disimpan.
 class FavoriteScreen extends StatefulWidget {

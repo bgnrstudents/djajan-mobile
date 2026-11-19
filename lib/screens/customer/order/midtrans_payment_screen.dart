@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../../../../services/api_service.dart';
-import '../../../../services/order_service.dart';
+import '../../../services/api_service.dart';
+import '../../../services/order_service.dart';
 import 'order_widgets.dart';
 
 class MidtransPaymentScreen extends StatefulWidget {

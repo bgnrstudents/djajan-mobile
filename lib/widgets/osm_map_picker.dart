@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../services/customer_location_service.dart';
-import '../screens/auth/customer/order/order_widgets.dart';
+import '../screens/customer/order/order_widgets.dart';
 
 /// Hasil yang dikembalikan oleh [OsmMapPicker].
 class OsmPickerResult {

@@ -3,9 +3,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../models/order.dart';
-import '../../../../services/catalog_service.dart';
-import '../../../../services/order_service.dart';
+import '../../../models/order.dart';
+import '../../../services/catalog_service.dart';
+import '../../../services/order_service.dart';
 import 'order_detail_screen.dart';
 import 'order_widgets.dart';
 

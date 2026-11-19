@@ -1,8 +1,8 @@
 import 'package:djajan_mobile/data/sample_catalog.dart';
 import 'package:djajan_mobile/models/product.dart';
-import 'package:djajan_mobile/screens/auth/customer/catalog/catalog_list_screen.dart';
-import 'package:djajan_mobile/screens/auth/customer/home/customer_home_screen.dart';
-import 'package:djajan_mobile/screens/auth/customer/umkm/umkm_storefront_screen.dart';
+import 'package:djajan_mobile/screens/customer/catalog/catalog_list_screen.dart';
+import 'package:djajan_mobile/screens/customer/home/customer_home_screen.dart';
+import 'package:djajan_mobile/screens/customer/umkm/umkm_storefront_screen.dart';
 import 'package:djajan_mobile/services/auth_service.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/services/catalog_service.dart';
