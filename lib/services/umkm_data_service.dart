@@ -316,15 +316,20 @@ class UmkmDataService extends ChangeNotifier {
     required double radiusGratisKm,
     required double jarakMaksimalKm,
     required List<ZonaOngkir> zonaOngkir,
+    int? biayaPengantaran,
   }) async {
-    final data = await ApiService.post('ongkir_simpan', {
+    final payload = <String, dynamic>{
       'id_umkm': _profile!.idUmkm,
       'latitude': latitude,
       'longitude': longitude,
       'radius_gratis_km': radiusGratisKm,
       'jarak_maksimal_km': jarakMaksimalKm,
       'zona': jsonEncode(zonaOngkir.map((z) => z.toJson()).toList()),
-    });
+    };
+    if (biayaPengantaran != null) {
+      payload['biaya_pengantaran'] = biayaPengantaran;
+    }
+    final data = await ApiService.post('ongkir_simpan', payload);
     _profile = UmkmProfile.fromJson(data as Map<String, dynamic>);
     notifyListeners();
     return 'Pengaturan ongkir berhasil disimpan ke database.';
@@ -448,7 +453,7 @@ class UmkmDataService extends ChangeNotifier {
       
       if (statusEnum != pesanan.status) {
         // Log warning dan perbaiki status jika perlu
-        print('Warning: Status pesanan $statusDb diperbaiki ke $statusEnum');
+        debugPrint('Warning: Status pesanan $statusDb diperbaiki ke $statusEnum');
         // Update status di database jika status tidak valid
         // Dalam implementasi nyata, Anda mungkin perlu update API
       }

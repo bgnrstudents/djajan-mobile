@@ -54,6 +54,11 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   late bool _pickupAktifTersimpan;
   late bool _kurirAktifTersimpan;
 
+  late String _skemaOngkir; // 'flat', 'standar', 'gratis', 'zona'
+  late String _skemaOngkirTersimpan;
+  late TextEditingController _biayaFlatCtrl;
+  late TextEditingController _jarakMaksimalCtrl;
+
   late TextEditingController _radiusCtrl;
   final List<_ZonaBaris> _zonaBaris = [];
 
@@ -69,7 +74,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       _codAktif != _codAktifTersimpan ||
       _skemaPO != _skemaPOTersimpan ||
       _pickupAktif != _pickupAktifTersimpan ||
-      _kurirAktif != _kurirAktifTersimpan;
+      _kurirAktif != _kurirAktifTersimpan ||
+      _skemaOngkir != _skemaOngkirTersimpan;
 
   String _labelSkemaPO(String skema) {
     if (skema.startsWith('DP 30%')) return 'DP 30%';
@@ -171,6 +177,266 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     }
   }
 
+  String get _labelSkemaOngkir {
+    switch (_skemaOngkir) {
+      case 'flat':
+        final tarif = int.tryParse(_biayaFlatCtrl.text) ?? 5000;
+        final maxKm =
+            _jarakMaksimalCtrl.text.isEmpty ? '10' : _jarakMaksimalCtrl.text;
+        return 'Flat Rp ${tarif.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} (Maks $maxKm km)';
+      case 'gratis':
+        final maxKm =
+            _jarakMaksimalCtrl.text.isEmpty ? '10' : _jarakMaksimalCtrl.text;
+        return 'Gratis Ongkir (Maks $maxKm km)';
+      case 'zona':
+        return 'Zona Kustom (${_zonaBaris.length} zona)';
+      case 'standar':
+      default:
+        return 'Standar Desa (Rp 3.000/km)';
+    }
+  }
+
+  String get _deskripsiSkemaOngkir {
+    switch (_skemaOngkir) {
+      case 'flat':
+        return 'Satu tarif tetap ke seluruh pembeli dalam radius pengantaran';
+      case 'gratis':
+        return 'Bebas biaya ongkir untuk semua pembeli di sekitar tokomu';
+      case 'zona':
+        return 'Tarif bertingkat disesuaikan jarak kilometer';
+      case 'standar':
+      default:
+        return '1 km pertama Rp 3.000, tiap km berikutnya +Rp 1.500';
+    }
+  }
+
+  Widget _tileSkemaOption({
+    required bool selected,
+    required VoidCallback onTap,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: selected ? OC.primary : const Color(0xFFF0F5F0),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: selected ? Colors.white : OC.primary,
+        ),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: selected ? OC.primary : OC.ink,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(color: OC.muted, fontSize: 11.5, height: 1.3),
+      ),
+      trailing: Icon(
+        selected
+            ? Icons.radio_button_checked_rounded
+            : Icons.radio_button_unchecked_rounded,
+        color: selected ? OC.primary : OC.faint,
+      ),
+    );
+  }
+
+  Future<void> _pilihSkemaOngkir() async {
+    String skemaSementara = _skemaOngkir;
+    final biayaCtrl = TextEditingController(text: _biayaFlatCtrl.text);
+    final jarakCtrl = TextEditingController(text: _jarakMaksimalCtrl.text);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Skema Tarif Pengantaran',
+                                  style: TextStyle(
+                                    color: OC.ink,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Tentukan skema ongkir kurir untuk tokomu',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: OC.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            icon: const Icon(Icons.close_rounded),
+                            color: OC.muted,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: OC.line),
+                    const SizedBox(height: 8),
+
+                    // Opsi 1: Tarif Flat Toko Sendiri
+                    _tileSkemaOption(
+                      selected: skemaSementara == 'flat',
+                      onTap: () => setModalState(() => skemaSementara = 'flat'),
+                      icon: Icons.two_wheeler_rounded,
+                      title: 'Tarif Flat Toko Sendiri (Rekomendasi)',
+                      subtitle:
+                          'Satu tarif tetap ke seluruh pembeli dalam radius pengantaran.',
+                    ),
+                    if (skemaSementara == 'flat')
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: TextField(
+                                controller: biayaCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: 'Biaya Ongkir (Rp)',
+                                  prefixText: 'Rp ',
+                                  hintText: '5000',
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              flex: 2,
+                              child: TextField(
+                                controller: jarakCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: 'Maks Jarak',
+                                  suffixText: 'km',
+                                  hintText: '5',
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Opsi 2: Standar Desa Kreyongan
+                    _tileSkemaOption(
+                      selected: skemaSementara == 'standar',
+                      onTap: () =>
+                          setModalState(() => skemaSementara = 'standar'),
+                      icon: Icons.location_city_rounded,
+                      title: 'Ikuti Standar Desa Kreyongan',
+                      subtitle:
+                          '1 km pertama Rp 3.000, berikutnya +Rp 1.500/km (Radius maks 10 km).',
+                    ),
+
+                    // Opsi 3: Gratis Ongkir Toko
+                    _tileSkemaOption(
+                      selected: skemaSementara == 'gratis',
+                      onTap: () =>
+                          setModalState(() => skemaSementara = 'gratis'),
+                      icon: Icons.card_giftcard_rounded,
+                      title: 'Gratis Ongkir Toko (Promosi)',
+                      subtitle: 'Bebas biaya ongkir (Rp 0) untuk semua pembeli.',
+                    ),
+
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _skemaOngkir = skemaSementara;
+                              _biayaFlatCtrl.text = biayaCtrl.text;
+                              _jarakMaksimalCtrl.text = jarakCtrl.text;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: OC.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Terapkan Skema',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   final List<String> _skemaOptions = const [
     'DP 30% (Sisa dibayar saat pesanan diantar)',
     'DP 50% (Sisa dibayar saat pesanan diantar)',
@@ -195,6 +461,26 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     _pickupAktifTersimpan = _pickupAktif;
     _kurirAktifTersimpan = _kurirAktif;
 
+    if (p.zonaOngkir.isNotEmpty) {
+      _skemaOngkir = 'zona';
+    } else if (p.radiusGratisKm > 0 &&
+        (p.biayaPengantaran == 0 ||
+            p.radiusGratisKm >= (p.jarakMaksimalKm ?? 10.0))) {
+      _skemaOngkir = 'gratis';
+    } else if (p.biayaPengantaran > 0) {
+      _skemaOngkir = 'flat';
+    } else {
+      _skemaOngkir = 'standar';
+    }
+    _skemaOngkirTersimpan = _skemaOngkir;
+
+    _biayaFlatCtrl = TextEditingController(
+      text: p.biayaPengantaran > 0 ? p.biayaPengantaran.toString() : '5000',
+    );
+    _jarakMaksimalCtrl = TextEditingController(
+      text: _fmtKm(p.jarakMaksimalKm ?? 10.0),
+    );
+
     _radiusCtrl = TextEditingController(text: _fmtKm(p.radiusGratisKm));
     for (final z in p.zonaOngkir) {
       _zonaBaris.add(
@@ -206,6 +492,8 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   @override
   void dispose() {
     _radiusCtrl.dispose();
+    _biayaFlatCtrl.dispose();
+    _jarakMaksimalCtrl.dispose();
     for (final z in _zonaBaris) {
       z.dispose();
     }
@@ -703,53 +991,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   Future<void> _simpanPengaturan() async {
     FocusScope.of(context).unfocus();
 
-    final radiusGratis = double.tryParse(_radiusCtrl.text.replaceAll(',', '.'));
-    if (radiusGratis == null || radiusGratis < 0) {
-      if (mounted) {
-        pesanGagal(
-          context,
-          'Radius gratis ongkir harus berupa angka dan tidak boleh negatif.',
-        );
-      }
-      return;
-    }
-
-    final List<ZonaOngkir> zonaBaru = [];
-    double batas = radiusGratis;
-    for (var i = 0; i < _zonaBaris.length; i++) {
-      final sampai = double.tryParse(
-        _zonaBaris[i].sampaiCtrl.text.replaceAll(',', '.'),
-      );
-      final tarif = int.tryParse(_zonaBaris[i].tarifCtrl.text);
-      if (sampai == null || tarif == null) {
-        if (mounted) {
-          pesanGagal(
-            context,
-            'Isi jarak & tarif zona ke-${i + 1} dengan angka yang benar.',
-          );
-        }
-        return;
-      }
-      if (sampai <= batas) {
-        if (mounted) {
-          pesanGagal(
-            context,
-            'Jarak akhir zona ke-${i + 1} harus lebih besar dari ${_fmtKm(batas)} KM.',
-          );
-        }
-        return;
-      }
-      if (tarif < 0) {
-        if (mounted) {
-          pesanGagal(context, 'Tarif zona ke-${i + 1} tidak boleh negatif.');
-        }
-        return;
-      }
-      zonaBaru.add(ZonaOngkir(jarakMin: batas, jarakMax: sampai, biaya: tarif));
-      batas = sampai;
-    }
-
-    final jarakMaksimal = batas;
     final service = context.read<UmkmDataService>();
     if (_kurirAktif &&
         (service.profile.latitude == null ||
@@ -763,6 +1004,92 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       return;
     }
 
+    int biayaPengantaran = 0;
+    double radiusGratis = 0;
+    double jarakMaksimal = 10.0;
+    final List<ZonaOngkir> zonaBaru = [];
+
+    if (_skemaOngkir == 'flat') {
+      final flat = int.tryParse(_biayaFlatCtrl.text);
+      if (flat == null || flat < 0) {
+        if (mounted) pesanGagal(context, 'Biaya ongkir flat tidak valid.');
+        return;
+      }
+      final maks =
+          double.tryParse(_jarakMaksimalCtrl.text.replaceAll(',', '.'));
+      if (maks == null || maks <= 0) {
+        if (mounted) {
+          pesanGagal(context, 'Maksimal jarak pengantaran tidak valid.');
+        }
+        return;
+      }
+      biayaPengantaran = flat;
+      jarakMaksimal = maks;
+      radiusGratis = 0;
+    } else if (_skemaOngkir == 'gratis') {
+      final maks =
+          double.tryParse(_jarakMaksimalCtrl.text.replaceAll(',', '.'));
+      if (maks == null || maks <= 0) {
+        if (mounted) pesanGagal(context, 'Maksimal jarak gratis tidak valid.');
+        return;
+      }
+      biayaPengantaran = 0;
+      radiusGratis = maks;
+      jarakMaksimal = maks;
+    } else if (_skemaOngkir == 'standar') {
+      biayaPengantaran = 0;
+      radiusGratis = 0;
+      jarakMaksimal = 10.0;
+    } else if (_skemaOngkir == 'zona') {
+      final rg = double.tryParse(_radiusCtrl.text.replaceAll(',', '.'));
+      if (rg == null || rg < 0) {
+        if (mounted) {
+          pesanGagal(
+            context,
+            'Radius gratis ongkir harus berupa angka dan tidak boleh negatif.',
+          );
+        }
+        return;
+      }
+      radiusGratis = rg;
+      double batas = radiusGratis;
+      for (var i = 0; i < _zonaBaris.length; i++) {
+        final sampai = double.tryParse(
+          _zonaBaris[i].sampaiCtrl.text.replaceAll(',', '.'),
+        );
+        final tarif = int.tryParse(_zonaBaris[i].tarifCtrl.text);
+        if (sampai == null || tarif == null) {
+          if (mounted) {
+            pesanGagal(
+              context,
+              'Isi jarak & tarif zona ke-${i + 1} dengan angka yang benar.',
+            );
+          }
+          return;
+        }
+        if (sampai <= batas) {
+          if (mounted) {
+            pesanGagal(
+              context,
+              'Jarak akhir zona ke-${i + 1} harus lebih besar dari ${_fmtKm(batas)} KM.',
+            );
+          }
+          return;
+        }
+        if (tarif < 0) {
+          if (mounted) {
+            pesanGagal(context, 'Tarif zona ke-${i + 1} tidak boleh negatif.');
+          }
+          return;
+        }
+        zonaBaru.add(
+          ZonaOngkir(jarakMin: batas, jarakMax: sampai, biaya: tarif),
+        );
+        batas = sampai;
+      }
+      jarakMaksimal = batas;
+    }
+
     setState(() => _menyimpan = true);
     try {
       final pesan = await service.simpanPengaturan(
@@ -771,7 +1098,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         skemaPO: _skemaPO,
         pickupAktif: _pickupAktif,
         kurirWargaAktif: _kurirAktif,
-        biayaPengantaran: service.profile.biayaPengantaran,
+        biayaPengantaran: biayaPengantaran,
       );
 
       await service.simpanOngkir(
@@ -780,6 +1107,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         radiusGratisKm: radiusGratis,
         jarakMaksimalKm: jarakMaksimal,
         zonaOngkir: zonaBaru,
+        biayaPengantaran: biayaPengantaran,
       );
 
       if (!mounted) return;
@@ -788,6 +1116,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       _skemaPOTersimpan = _skemaPO;
       _pickupAktifTersimpan = _pickupAktif;
       _kurirAktifTersimpan = _kurirAktif;
+      _skemaOngkirTersimpan = _skemaOngkir;
       pesanSukses(context, pesan);
       if (!widget.isTab) {
         Navigator.of(context).pop();
@@ -1675,69 +2004,45 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               ),
               if (_kurirAktif) ...[
                 const Divider(height: 1, color: Color(0xFFF1F3F1)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.radar_rounded,
-                          size: 20,
-                          color: OC.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Jangkauan Pengantaran',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13.5,
-                                color: OC.ink,
-                              ),
+                _actionRow(
+                  icon: Icons.alt_route_rounded,
+                  title: 'Tarif & Jangkauan Pengantaran',
+                  subtitle: _deskripsiSkemaOngkir,
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 140),
+                          child: Text(
+                            _labelSkemaOngkir,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: OC.primary,
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Radius maksimal pengantaran kurir',
-                              style: TextStyle(
-                                color: OC.muted,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F5F0),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2EBE2)),
-                        ),
-                        child: const Text(
-                          '1 km',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: OC.ink,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 3),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 15,
+                          color: OC.primary,
+                        ),
+                      ],
+                    ),
                   ),
+                  onTap: _pilihSkemaOngkir,
                 ),
               ],
             ],
