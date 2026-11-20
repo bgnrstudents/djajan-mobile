@@ -510,6 +510,20 @@ class _TabBeranda extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
+          // 1.5 RINCIAN ARUS KAS (MODEL A: AUTO-POTONG SALDO DIGITAL)
+          _KartuArusKas(
+            kasTunai: periodeBulanan ? r.omzetCodPeriode : r.omzetCodSemuaWaktu,
+            saldoDigitalSiapCair: r.saldoDigitalSiapCair,
+            omzetDigital: periodeBulanan
+                ? r.omzetDigitalPeriode
+                : r.omzetDigitalSemuaWaktu,
+            komisiPlatform:
+                periodeBulanan ? r.komisiPeriode : r.komisiSemuaWaktu,
+            sisaKewajibanCod: r.sisaKewajibanCod,
+            periodeBulanan: periodeBulanan,
+          ),
+          const SizedBox(height: 16),
+
           // 2. RINGKASAN USAHA
           const Padding(
             padding: EdgeInsets.only(bottom: 10),
@@ -1816,6 +1830,245 @@ IconData _ikonKategoriProduk(String kategori) {
     return Icons.shopping_basket_outlined;
   }
   return Icons.category_outlined;
+}
+
+class _KartuArusKas extends StatelessWidget {
+  final int kasTunai;
+  final int saldoDigitalSiapCair;
+  final int omzetDigital;
+  final int komisiPlatform;
+  final int sisaKewajibanCod;
+  final bool periodeBulanan;
+
+  const _KartuArusKas({
+    required this.kasTunai,
+    required this.saldoDigitalSiapCair,
+    required this.omzetDigital,
+    required this.komisiPlatform,
+    required this.sisaKewajibanCod,
+    required this.periodeBulanan,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: OC.line),
+        boxShadow: [
+          BoxShadow(
+            color: OC.ink.withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: OC.mintSoft,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 18,
+                  color: OC.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Distribusi Kas & Saldo UMKM',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: OC.ink,
+                      ),
+                    ),
+                    Text(
+                      'Sistem Auto-Potong Komisi Platform (3%)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: OC.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: OC.mint,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Model A',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: OC.mintText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              // 1. Kas Tunai COD
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.payments_outlined, size: 14, color: Color(0xFFD97706)),
+                          SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              'Kas Tunai (COD)',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        rupiah(kasTunai),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF78350F),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Fisik di laci UMKM',
+                        style: TextStyle(fontSize: 10, color: Color(0xFFB45309)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // 2. Saldo Digital Siap Cair
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: OC.mintSoft,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFC7E8CA)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.qr_code_2_rounded, size: 14, color: OC.primary),
+                          SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              'Saldo Siap Cair',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: OC.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        rupiah(saldoDigitalSiapCair),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: OC.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Net saldo di platform',
+                        style: TextStyle(fontSize: 10, color: OC.muted),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Info auto-potong / komisi status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: sisaKewajibanCod > 0 ? OC.dangerSoft : const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: sisaKewajibanCod > 0
+                    ? OC.danger.withValues(alpha: 0.3)
+                    : const Color(0xFFBBF7D0),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  sisaKewajibanCod > 0 ? Icons.info_outline : Icons.check_circle_outline_rounded,
+                  size: 14,
+                  color: sisaKewajibanCod > 0 ? OC.danger : const Color(0xFF16A34A),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    sisaKewajibanCod > 0
+                        ? 'Titipan komisi COD ${rupiah(sisaKewajibanCod)} akan otomatis terpotong saat pesanan online masuk.'
+                        : 'Komisi kas platform (3%) ${rupiah(komisiPlatform)} sudah terpotong otomatis dari saldo digital.',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: sisaKewajibanCod > 0 ? OC.danger : const Color(0xFF15803D),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _KartuRingkasanBeranda extends StatelessWidget {

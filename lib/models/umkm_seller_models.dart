@@ -475,6 +475,16 @@ class RingkasanDashboard {
   final int omzetPeriode;
   final int omzetKotorPeriode;
   final int komisiPeriode;
+  final int omzetCodPeriode;
+  final int komisiCodPeriode;
+  final int omzetDigitalPeriode;
+  final int komisiDigitalPeriode;
+  final int omzetCodSemuaWaktu;
+  final int komisiCodSemuaWaktu;
+  final int omzetDigitalSemuaWaktu;
+  final int komisiDigitalSemuaWaktu;
+  final int saldoDigitalSiapCair;
+  final int sisaKewajibanCod;
   final List<ProdukTerlaris> produkTerlaris;
 
   const RingkasanDashboard({
@@ -492,6 +502,16 @@ class RingkasanDashboard {
     this.omzetPeriode = 0,
     this.omzetKotorPeriode = 0,
     this.komisiPeriode = 0,
+    this.omzetCodPeriode = 0,
+    this.komisiCodPeriode = 0,
+    this.omzetDigitalPeriode = 0,
+    this.komisiDigitalPeriode = 0,
+    this.omzetCodSemuaWaktu = 0,
+    this.komisiCodSemuaWaktu = 0,
+    this.omzetDigitalSemuaWaktu = 0,
+    this.komisiDigitalSemuaWaktu = 0,
+    this.saldoDigitalSiapCair = 0,
+    this.sisaKewajibanCod = 0,
     this.produkTerlaris = const [],
   });
 
@@ -511,6 +531,16 @@ class RingkasanDashboard {
         omzetPeriode: _int(j['omzet_periode']),
         omzetKotorPeriode: _int(j['omzet_kotor_periode'] ?? j['omzet_periode']),
         komisiPeriode: _int(j['komisi_periode']),
+        omzetCodPeriode: _int(j['omzet_cod_periode']),
+        komisiCodPeriode: _int(j['komisi_cod_periode']),
+        omzetDigitalPeriode: _int(j['omzet_digital_periode']),
+        komisiDigitalPeriode: _int(j['komisi_digital_periode']),
+        omzetCodSemuaWaktu: _int(j['omzet_cod_semua_waktu']),
+        komisiCodSemuaWaktu: _int(j['komisi_cod_semua_waktu']),
+        omzetDigitalSemuaWaktu: _int(j['omzet_digital_semua_waktu']),
+        komisiDigitalSemuaWaktu: _int(j['komisi_digital_semua_waktu']),
+        saldoDigitalSiapCair: _int(j['saldo_digital_siap_cair']),
+        sisaKewajibanCod: _int(j['sisa_kewajiban_cod']),
         produkTerlaris: ((j['produk_terlaris'] as List?) ?? [])
             .map((e) => ProdukTerlaris.fromJson(e as Map<String, dynamic>))
             .toList(),
