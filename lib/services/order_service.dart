@@ -382,7 +382,7 @@ class OrderService extends ChangeNotifier {
 
     // Log jika payment expired saat creation
     if (!isCod && now.isAfter(order.paymentDeadline!)) {
-      print('Warning: Order ${order.id} created with expired payment deadline');
+      debugPrint('Warning: Order ${order.id} created with expired payment deadline');
     }
 
     _orders.add(order);
