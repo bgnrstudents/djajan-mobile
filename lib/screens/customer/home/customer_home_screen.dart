@@ -104,7 +104,23 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Widget build(BuildContext context) {
     _catalog = Provider.of<CatalogService?>(context);
     return Scaffold(
-      body: SafeArea(child: _buildCurrentPage()),
+      body: SafeArea(
+        child: IndexedStack(
+          index: currentIndex,
+          children: [
+            _buildHomePage(),
+            const OrderListScreen(),
+            CartScreen(
+              onExploreProducts: () {
+                setState(() {
+                  currentIndex = 0;
+                });
+              },
+            ),
+            const ProfilScreen(),
+          ],
+        ),
+      ),
       bottomNavigationBar: AppBottomNavigation(
         currentIndex: currentIndex,
         onDestinationSelected: (index) {
@@ -114,31 +130,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         },
       ),
     );
-  }
-
-  Widget _buildCurrentPage() {
-    switch (currentIndex) {
-      case 0:
-        return _buildHomePage();
-
-      case 1:
-        return const OrderListScreen();
-
-      case 2:
-        return CartScreen(
-          onExploreProducts: () {
-            setState(() {
-              currentIndex = 0;
-            });
-          },
-        );
-
-      case 3:
-        return const ProfilScreen();
-
-      default:
-        return _buildHomePage();
-    }
   }
 
   Widget _buildHomePage() {

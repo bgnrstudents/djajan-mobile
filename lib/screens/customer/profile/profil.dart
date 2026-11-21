@@ -201,7 +201,14 @@ class _ProfilScreenState extends State<ProfilScreen> {
         phoneNumber: data['no_telp']?.toString() ?? '',
         email: data['email']?.toString() ?? '',
       );
-      _loadingBusiness = true;
+      if (data['umkm'] is Map) {
+        final b = data['umkm'] as Map;
+        _businessName = b['nama_usaha']?.toString();
+        _businessAddress = b['alamat']?.toString();
+        _businessSpecialty = b['spesialis']?.toString();
+        _businessStatus = b['status_verifikasi']?.toString();
+      }
+      _loadingBusiness = _businessName == null;
       _settings.load();
       _loadBusinessApplication();
     }
@@ -380,6 +387,24 @@ class _ProfilScreenState extends State<ProfilScreen> {
       return _buildGuestProfile(context);
     }
 
+    final data = auth.session?.data;
+    if (data != null) {
+      final name = data['nama']?.toString() ?? '';
+      final phone = data['no_telp']?.toString() ?? '';
+      final email = data['email']?.toString() ?? '';
+      if (_user.name.isEmpty || _user.name != name || _user.phoneNumber != phone) {
+        _user = ProfileUser(name: name, phoneNumber: phone, email: email);
+      }
+      if (_businessName == null && data['umkm'] is Map) {
+        final b = data['umkm'] as Map;
+        _businessName = b['nama_usaha']?.toString();
+        _businessAddress = b['alamat']?.toString();
+        _businessSpecialty = b['spesialis']?.toString();
+        _businessStatus = b['status_verifikasi']?.toString();
+        _loadingBusiness = false;
+      }
+    }
+
     return AnimatedBuilder(
       animation: Listenable.merge([FavoriteService(), _settings]),
       builder: (context, _) => ColoredBox(
@@ -387,69 +412,73 @@ class _ProfilScreenState extends State<ProfilScreen> {
         child: Stack(
           children: [
             const HeaderBotanicalBackdrop(height: 220),
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_settings.loading)
-                    const LinearProgressIndicator(
-                      minHeight: 2,
-                      color: AppColors.hijauTua,
-                      backgroundColor: AppColors.hijauLembut,
+            RefreshIndicator(
+              onRefresh: () async {
+                await Future.wait([
+                  _settings.load(),
+                  _loadBusinessApplication(),
+                ]);
+              },
+              color: AppColors.hijauTua,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_settings.errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          _settings.errorMessage!,
+                          style: const TextStyle(color: AppColors.hijauTua),
+                        ),
+                      ),
+                    DjajanPageHeader(
+                      title: 'Profil Saya',
+                      subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
+                      rightAction: IconButton(
+                        tooltip: 'Pusat bantuan',
+                        onPressed: () => showProfileHelp(context),
+                        icon: const Icon(
+                          Icons.help_outline_rounded,
+                          color: OC.muted,
+                          size: 23,
+                        ),
+                      ),
+                      padding: EdgeInsets.zero,
                     ),
-              if (_settings.errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    _settings.errorMessage!,
-                    style: const TextStyle(color: AppColors.hijauTua),
-                  ),
+                    const SizedBox(height: 18),
+                    _ProfileHeader(
+                      user: _user,
+                      businessName: _businessName,
+                      businessStatus: _businessStatus,
+                      onEdit: _editProfile,
+                    ),
+                    const SizedBox(height: 16),
+                    _PromoBanner(
+                      businessName: _businessName,
+                      businessStatus: _businessStatus,
+                      loading: _loadingBusiness,
+                      onTap: _businessStatus == 'dihapus'
+                          ? null
+                          : _businessStatus == 'terverifikasi'
+                          ? _switchToUmkm
+                          : _openBusinessRegistration,
+                    ),
+                    const SizedBox(height: 22),
+                    _ProfileMenu(items: _menuItems),
+                    const SizedBox(height: 20),
+                    const _SafetyNotice(),
+                  ],
                 ),
-              DjajanPageHeader(
-                title: 'Profil Saya',
-                subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
-                rightAction: IconButton(
-                  tooltip: 'Pusat bantuan',
-                  onPressed: () => showProfileHelp(context),
-                  icon: const Icon(
-                    Icons.help_outline_rounded,
-                    color: OC.muted,
-                    size: 23,
-                  ),
-                ),
-                padding: EdgeInsets.zero,
               ),
-              const SizedBox(height: 18),
-              _ProfileHeader(
-                user: _user,
-                businessName: _businessName,
-                businessStatus: _businessStatus,
-                onEdit: _editProfile,
-              ),
-              const SizedBox(height: 16),
-              _PromoBanner(
-                businessName: _businessName,
-                businessStatus: _businessStatus,
-                loading: _loadingBusiness,
-                onTap: _businessStatus == 'dihapus'
-                    ? null
-                    : _businessStatus == 'terverifikasi'
-                    ? _switchToUmkm
-                    : _openBusinessRegistration,
-              ),
-              const SizedBox(height: 22),
-              _ProfileMenu(items: _menuItems),
-              const SizedBox(height: 20),
-              const _SafetyNotice(),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
-    ),
-  ),
-);
-}
+      ),
+    );
+  }
 
   Widget _buildGuestProfile(BuildContext context) {
     return SingleChildScrollView(
