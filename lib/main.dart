@@ -46,6 +46,7 @@ class DjajanApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Djajan',
         theme: AppTheme.theme,
+        themeMode: ThemeMode.light,
 
         initialRoute: AppRoutes.splash,
 

@@ -363,6 +363,14 @@ class OrderService extends ChangeNotifier {
       backendOrderStatus: null,
     );
 
+    final calculatedServiceFee = vendors.fold<double>(
+      0.0,
+      (sum, v) =>
+          sum + (v.subtotal >= 10000 ? (v.subtotal * 0.03).roundToDouble() : 0.0),
+    );
+    final serviceFee =
+        (backendData['biaya_layanan'] as num?)?.toDouble() ?? calculatedServiceFee;
+
     final order = Order(
       id: backendOrderId,
       checkoutId: backendOrderId,
@@ -371,7 +379,7 @@ class OrderService extends ChangeNotifier {
       vendors: vendors,
       recipient: recipient,
       paymentMethod: paymentMethod,
-      serviceFee: 0,
+      serviceFee: serviceFee,
       discount: 0,
       status: initialStatus,
       account: accountFor(vendors.first.umkmId),
