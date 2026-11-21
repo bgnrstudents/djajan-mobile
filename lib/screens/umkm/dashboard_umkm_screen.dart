@@ -510,6 +510,69 @@ class _TabBeranda extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
+          // BANNER PERINGATAN KEWAJIBAN COD (MODEL A)
+          if (r.peringatanKewajibanCod) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF59E0B)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFB45309),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Peringatan Kewajiban Komisi COD',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          r.pesanPeringatanCod ??
+                              'Toko Anda memiliki akumulasi komisi COD sebesar ${rupiah(r.sisaKewajibanCod)} yang belum terpotong karena saldo digital kosong.',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            height: 1.4,
+                            color: Color(0xFF78350F),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // 1.5 RINCIAN ARUS KAS (MODEL A: AUTO-POTONG SALDO DIGITAL)
           _KartuArusKas(
             kasTunai: periodeBulanan ? r.omzetCodPeriode : r.omzetCodSemuaWaktu,

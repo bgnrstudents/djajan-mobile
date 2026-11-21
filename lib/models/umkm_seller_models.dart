@@ -485,6 +485,8 @@ class RingkasanDashboard {
   final int komisiDigitalSemuaWaktu;
   final int saldoDigitalSiapCair;
   final int sisaKewajibanCod;
+  final bool peringatanKewajibanCod;
+  final String? pesanPeringatanCod;
   final List<ProdukTerlaris> produkTerlaris;
 
   const RingkasanDashboard({
@@ -512,6 +514,8 @@ class RingkasanDashboard {
     this.komisiDigitalSemuaWaktu = 0,
     this.saldoDigitalSiapCair = 0,
     this.sisaKewajibanCod = 0,
+    this.peringatanKewajibanCod = false,
+    this.pesanPeringatanCod,
     this.produkTerlaris = const [],
   });
 
@@ -541,6 +545,8 @@ class RingkasanDashboard {
         komisiDigitalSemuaWaktu: _int(j['komisi_digital_semua_waktu']),
         saldoDigitalSiapCair: _int(j['saldo_digital_siap_cair']),
         sisaKewajibanCod: _int(j['sisa_kewajiban_cod']),
+        peringatanKewajibanCod: j['peringatan_kewajiban_cod'] == true,
+        pesanPeringatanCod: j['pesan_peringatan_cod']?.toString(),
         produkTerlaris: ((j['produk_terlaris'] as List?) ?? [])
             .map((e) => ProdukTerlaris.fromJson(e as Map<String, dynamic>))
             .toList(),
