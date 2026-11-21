@@ -140,10 +140,11 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                               behavior: HitTestBehavior.opaque,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
+                                  vertical: 2,
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Stack(
                                       clipBehavior: Clip.none,

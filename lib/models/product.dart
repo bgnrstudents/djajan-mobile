@@ -18,6 +18,7 @@ class Product {
   final String pickupLocation;
   final bool codAvailable;
   final bool pickupAvailable;
+  final int? stock;
 
   const Product({
     this.id = '',
@@ -37,9 +38,11 @@ class Product {
     this.pickupLocation = 'Desa Kreyongan Atas',
     this.codAvailable = true,
     this.pickupAvailable = true,
+    this.stock,
   });
 
   bool get isPreOrder => orderType.toLowerCase().contains('pre');
+  bool get isOutOfStock => !isPreOrder && stock != null && stock! <= 0;
 
   OrderType get parsedOrderType =>
       isPreOrder ? OrderType.preOrder : OrderType.instant;
@@ -94,6 +97,9 @@ class Product {
           json['pickup_location'] as String? ?? 'Desa Kreyongan Atas',
       codAvailable: json['cod_available'] as bool? ?? true,
       pickupAvailable: json['pickup_available'] as bool? ?? true,
+      stock: (json['stok'] ?? json['stock']) is num
+          ? (json['stok'] ?? json['stock']).toInt()
+          : null,
     );
   }
 
@@ -116,6 +122,7 @@ class Product {
       'pickup_location': pickupLocation,
       'cod_available': codAvailable,
       'pickup_available': pickupAvailable,
+      'stok': stock,
     };
   }
 }

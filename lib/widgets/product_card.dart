@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../services/cart_service.dart';
 import '../models/product.dart';
@@ -104,6 +104,32 @@ class ProductCard extends StatelessWidget {
                   size: featured ? 15 : 16,
                 ),
               ),
+            if (product.isOutOfStock)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'STOK HABIS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         );
 
@@ -193,194 +219,194 @@ class ProductCard extends StatelessWidget {
 
                         SizedBox(height: featured ? 3 : 4),
 
-                        Text(
-                          product.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: featured ? 13.5 : 14,
-                            height: featured ? 1.15 : 1.2,
-                            fontWeight: featured
-                                ? FontWeight.w600
-                                : FontWeight.w700,
-                            color: featured ? AppColors.textDark : null,
-                          ),
-                        ),
-                        if (featured &&
-                            product.description.trim().isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            product.description,
+                        SizedBox(
+                          height: featured ? 32 : 34,
+                          child: Text(
+                            product.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              height: 1.2,
-                              color: AppColors.textGrey,
+                            style: TextStyle(
+                              fontSize: featured ? 13.5 : 14,
+                              height: featured ? 1.15 : 1.2,
+                              fontWeight: featured
+                                  ? FontWeight.w600
+                                  : FontWeight.w700,
+                              color: featured ? AppColors.textDark : null,
                             ),
                           ),
-                        ],
+                        ),
                         SizedBox(height: featured ? 5 : 8),
                         if (featured) ...[
                           const Divider(height: 1, color: AppColors.garis),
                           const SizedBox(height: 5),
                         ],
 
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, animation) =>
-                              SizeTransition(
-                                sizeFactor: animation,
-                                alignment: Alignment.topCenter,
-                                child: FadeTransition(
+                        SizedBox(
+                          height: 38,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            switchInCurve: Curves.easeInOut,
+                            switchOutCurve: Curves.easeInOut,
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
                                   opacity: animation,
                                   child: child,
                                 ),
-                              ),
-                          child: quantity == 0
-                              ? Row(
-                                  key: ValueKey('product-add-$cartProductId'),
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          if (featured) ...[
-                                            const Text(
-                                              'HARGA',
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: 0.45,
-                                                color: AppColors.textGrey,
+                            child: quantity == 0
+                                ? Row(
+                                    key: ValueKey('product-add-$cartProductId'),
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (featured) ...[
+                                              const Text(
+                                                'HARGA',
+                                                style: TextStyle(
+                                                  fontSize: 8.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.45,
+                                                  color: AppColors.textGrey,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(height: 2),
+                                              const SizedBox(height: 1),
+                                            ],
+                                            price,
                                           ],
-                                          price,
-                                        ],
+                                        ),
                                       ),
+                                      InkWell(
+                                        key: ValueKey(
+                                          'product-card-add-$cartProductId',
+                                        ),
+                                        onTap: product.isOutOfStock
+                                            ? null
+                                            : onAddToCart,
+                                        borderRadius: BorderRadius.circular(
+                                          featured ? 20 : 18,
+                                        ),
+                                        child: Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: BoxDecoration(
+                                            color: product.isOutOfStock
+                                                ? Colors.grey.shade400
+                                                : (featured
+                                                    ? AppColors.hijauTua
+                                                    : Theme.of(context)
+                                                          .colorScheme
+                                                          .primary),
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.08,
+                                                ),
+                                                blurRadius: 5,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Icon(
+                                            product.isOutOfStock
+                                                ? Icons.block
+                                                : Icons.add,
+                                            size: featured ? 18 : 20,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    key: ValueKey(
+                                      'product-quantity-$cartProductId',
                                     ),
-                                    InkWell(
-                                      key: ValueKey(
-                                        'product-card-add-$cartProductId',
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (featured) ...const [
+                                              Text(
+                                                'HARGA',
+                                                style: TextStyle(
+                                                  fontSize: 8.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.45,
+                                                  color: AppColors.textGrey,
+                                                ),
+                                              ),
+                                              SizedBox(height: 1),
+                                            ],
+                                            price,
+                                          ],
+                                        ),
                                       ),
-                                      onTap: onAddToCart,
-                                      borderRadius: BorderRadius.circular(
-                                        featured ? 20 : 18,
-                                      ),
-                                      child: Container(
-                                        width: 32,
+                                      Container(
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: featured
-                                              ? AppColors.hijauTua
-                                              : Theme.of(context)
-                                                    .colorScheme
-                                                    .primary,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.08,
+                                          color: AppColors.latar,
+                                          borderRadius: BorderRadius.circular(9),
+                                          border: Border.all(
+                                            color: AppColors.garis,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _quantityButton(
+                                              key: ValueKey(
+                                                'product-card-decrease-$cartProductId',
                                               ),
-                                              blurRadius: 5,
-                                              offset: const Offset(0, 2),
+                                              icon: Icons.remove,
+                                              featured: featured,
+                                              onTap: () =>
+                                                  cartService.updateQuantity(
+                                                    cartProductId,
+                                                    quantity - 1,
+                                                  ),
                                             ),
-                                          ],
-                                        ),
-                                        child: Icon(
-                                          Icons.add,
-                                          size: featured ? 18 : 20,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Row(
-                                  key: ValueKey(
-                                    'product-quantity-$cartProductId',
-                                  ),
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          if (featured) ...const [
-                                            Text(
-                                              'HARGA',
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: 0.45,
-                                                color: AppColors.textGrey,
+                                            SizedBox(
+                                              key: ValueKey(
+                                                'product-card-quantity-$cartProductId',
                                               ),
-                                            ),
-                                            SizedBox(height: 2),
-                                          ],
-                                          price,
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      height: featured ? 30 : 32,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.latar,
-                                        borderRadius: BorderRadius.circular(9),
-                                        border: Border.all(
-                                          color: AppColors.garis,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _quantityButton(
-                                            key: ValueKey(
-                                              'product-card-decrease-$cartProductId',
-                                            ),
-                                            icon: Icons.remove,
-                                            featured: featured,
-                                            onTap: () =>
-                                                cartService.updateQuantity(
-                                                  cartProductId,
-                                                  quantity - 1,
+                                              width: 24,
+                                              child: Text(
+                                                '$quantity',
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.hijauTua,
                                                 ),
-                                          ),
-                                          SizedBox(
-                                            key: ValueKey(
-                                              'product-card-quantity-$cartProductId',
-                                            ),
-                                            width: 24,
-                                            child: Text(
-                                              '$quantity',
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.hijauTua,
                                               ),
                                             ),
-                                          ),
-                                          _quantityButton(
-                                            key: ValueKey(
-                                              'product-card-increase-$cartProductId',
+                                            _quantityButton(
+                                              key: ValueKey(
+                                                'product-card-increase-$cartProductId',
+                                              ),
+                                              icon: Icons.add,
+                                              featured: featured,
+                                              onTap: product.isOutOfStock
+                                                  ? () {}
+                                                  : onAddToCart,
                                             ),
-                                            icon: Icons.add,
-                                            featured: featured,
-                                            onTap: onAddToCart,
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+                          ),
                         ),
                       ],
                     ),
@@ -406,7 +432,7 @@ class ProductCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: SizedBox(
         width: featured ? 28 : 30,
-        height: featured ? 28 : 30,
+        height: 32,
         child: Icon(icon, size: 16, color: AppColors.hijauTua),
       ),
     );
