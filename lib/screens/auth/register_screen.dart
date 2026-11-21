@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'auth_widgets.dart';
-
 import 'package:provider/provider.dart';
 
-import '../../services/auth_service.dart';
+import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import 'auth_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -51,9 +50,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         passwordConfirmation: _confirmPasswordController.text,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Akun berhasil dibuat.')));
-      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pendaftaran berhasil! Selamat datang di DJajan.'),
+        ),
+      );
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.customerHome,
+        (_) => false,
+      );
     } on ApiException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context)
