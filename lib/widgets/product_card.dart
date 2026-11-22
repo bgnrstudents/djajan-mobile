@@ -182,7 +182,7 @@ class ProductCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: featured ? 10.5 : 10.5,
+                                    fontSize: 10.5,
                                     color: featured || onUmkmTap != null
                                         ? AppColors.hijauTua
                                         : AppColors.textGrey,
@@ -197,11 +197,9 @@ class ProductCard extends StatelessWidget {
                             ),
 
                             Icon(
-                              Icons.star,
+                              Icons.star_rounded,
                               size: featured ? 13 : 14,
-                              color: featured
-                                  ? const Color(0xFFFFB21A)
-                                  : AppColors.hijauMuda,
+                              color: AppColors.kuning,
                             ),
 
                             const SizedBox(width: 2),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../config/app_config.dart';
 import '../../../data/sample_catalog.dart';
+import '../../../theme/app_theme.dart';
 import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../services/catalog_service.dart';
@@ -37,10 +37,10 @@ class CatalogListScreen extends StatefulWidget {
 }
 
 class _CatalogListScreenState extends State<CatalogListScreen> {
-  static const Color primaryGreen = AppConfig.primaryColor;
-  static const Color textDark = Color(0xFF16201A);
-  static const Color textMuted = Color(0xFF5F6B64);
-  static const Color background = Color(0xFFF3F7F3);
+  static const Color primaryGreen = AppColors.hijauTua;
+  static const Color textDark = AppColors.textDark;
+  static const Color textMuted = AppColors.textGrey;
+  static const Color background = AppColors.latar;
 
   final CartService _cartService = CartService();
   final TextEditingController _searchController = TextEditingController();
@@ -252,8 +252,8 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: 'Cari makanan, jajanan, atau UMKM...',
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13.5),
-        prefixIcon: const Icon(Icons.search, size: 22),
+        hintStyle: const TextStyle(color: AppColors.textGrey, fontSize: 13.5),
+        prefixIcon: const Icon(Icons.search_rounded, size: 22),
         suffixIcon: _searchController.text.isEmpty
             ? null
             : IconButton(
@@ -264,17 +264,17 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
                 },
               ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.putih,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE4E9EF)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.garis),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE4E9EF)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.garis),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryGreen, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 13),
@@ -298,13 +298,13 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
           return GestureDetector(
             onTap: () => setState(() => _category = name),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 13),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected ? primaryGreen : Colors.white,
-                borderRadius: BorderRadius.circular(22),
+                color: selected ? primaryGreen : AppColors.putih,
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: selected ? primaryGreen : const Color(0xFFDDE3E8),
+                  color: selected ? primaryGreen : AppColors.garis,
                 ),
               ),
               child: Text(
@@ -312,7 +312,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : const Color(0xFF20252B),
+                  color: selected ? Colors.white : AppColors.textDark,
                 ),
               ),
             ),
@@ -327,7 +327,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE9EEF2),
+        color: AppColors.hijauLembut,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -351,7 +351,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
                       fontWeight: selected
                           ? FontWeight.bold
                           : FontWeight.normal,
-                      color: const Color(0xFF59636E),
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ),
@@ -439,7 +439,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Column(
           children: [
-            const Icon(Icons.search_off_rounded, size: 48, color: Colors.grey),
+            const Icon(Icons.search_off_rounded, size: 48, color: AppColors.textGrey),
             const SizedBox(height: 12),
             const Text(
               'Tidak ada produk',
@@ -448,7 +448,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
             const SizedBox(height: 6),
             const Text(
               'Coba ubah kata pencarian atau filter.',
-              style: TextStyle(fontSize: 13, color: textMuted),
+              style: TextStyle(fontSize: 13, color: AppColors.textGrey),
             ),
             const SizedBox(height: 12),
             TextButton(

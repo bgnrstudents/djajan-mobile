@@ -803,8 +803,8 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.garis,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.hijauLembut,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: types.map((type) {
@@ -816,17 +816,8 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
-                  color: isSelected ? primaryGreen : Colors.transparent,
-                  borderRadius: BorderRadius.circular(11),
-                  boxShadow: isSelected
-                      ? const [
-                          BoxShadow(
-                            color: Color(0x1A175D2B),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ]
-                      : null,
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
                   child: Text(
@@ -837,7 +828,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                       fontSize: 12,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Colors.white : textMuted,
+                      color: textMuted,
                     ),
                   ),
                 ),
@@ -1062,7 +1053,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                                   ? Icons.star_rounded
                                   : Icons.star_outline_rounded,
                               size: 16,
-                              color: const Color(0xFF5B9E68),
+                              color: AppColors.kuning,
                             ),
                           ),
                         ),

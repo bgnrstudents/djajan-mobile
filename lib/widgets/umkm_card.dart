@@ -147,7 +147,7 @@ class UmkmCard extends StatelessWidget {
                             const Icon(
                               Icons.star_rounded,
                               size: 15,
-                              color: Color(0xFFFFB21A),
+                              color: AppColors.kuning,
                             ),
                             const SizedBox(width: 3),
                             Text(
@@ -328,13 +328,13 @@ class UmkmCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.verified,
+                                  Icons.verified_rounded,
                                   size: 11,
                                   color: AppColors.hijauTua,
                                 ),
                                 SizedBox(width: 4),
                                 Text(
-                                  'Warga',
+                                  'Terverifikasi',
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
@@ -377,7 +377,7 @@ class UmkmCard extends StatelessWidget {
                             const Icon(
                               Icons.star_rounded,
                               size: 15,
-                              color: AppColors.hijauMuda,
+                              color: AppColors.kuning,
                             ),
                             const SizedBox(width: 3),
                             Text(
