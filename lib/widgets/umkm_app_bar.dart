@@ -419,7 +419,7 @@ class UmkmSquircleIcon extends StatelessWidget {
         child: Icon(
           icon,
           size: 22,
-          color: color ?? const Color(0xFF047857),
+          color: color ?? const Color(0xFF175D2B),
         ),
       ),
     );

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Shared Djajan palette: white and green, with green tints for surfaces.
 class AppColors {
-  static const Color hijauTua = Color(0xFF047857);
-  static const Color hijauMuda = Color(0xFF10B981);
-  static const Color hijauLembut = Color(0xFFE8F5E9);
+  static const Color hijauTua = Color(0xFF175D2B);
+  static const Color hijauMuda = Color(0xFF5B9E68);
+  static const Color hijauLembut = Color(0xFFEAF3EC);
   static const Color latar = Color(0xFFF3F7F3);
   static const Color putih = Color(0xFFFFFFFF);
   static const Color garis = Color(0xFFE2EBE2);
@@ -191,7 +191,7 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.hijauTua, width: 1.5),
         ),
         errorBorder: outline.copyWith(
-          borderSide: const BorderSide(color: AppColors.hijauTua, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(

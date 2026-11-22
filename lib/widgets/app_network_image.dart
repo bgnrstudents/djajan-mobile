@@ -64,7 +64,7 @@ class AppNetworkImage extends StatelessWidget {
                           ? loadingProgress.cumulativeBytesLoaded /
                               loadingProgress.expectedTotalBytes!
                           : null,
-                      color: const Color(0xFF047857),
+                      color: const Color(0xFF175D2B),
                     ),
                   ),
                 ),
