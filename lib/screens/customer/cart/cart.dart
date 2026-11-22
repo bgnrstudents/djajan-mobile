@@ -12,6 +12,7 @@ import '../../../services/cart_service.dart';
 import '../../../services/customer_settings_service.dart';
 import '../order/address_picker_sheet.dart';
 import '../../../widgets/app_network_image.dart';
+import '../../../widgets/umkm_app_bar.dart';
 
 class CartScreen extends StatefulWidget {
   final bool showAppBar;
@@ -704,33 +705,46 @@ class _CartScreenState extends State<CartScreen> {
 
         return Scaffold(
           backgroundColor: OC.bg,
-          body: Column(
+          body: Stack(
             children: [
-              // Header dengan back button jika diperlukan
-              if (needsBackButton)
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: OC.ink),
-                      onPressed: widget.onBack ?? () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: DjajanPageHeader(
-                        title: 'Keranjang Belanja',
-                        subtitle: 'Cek kembali item jajan & katering pilihanmu',
-                        padding: EdgeInsets.zero,
+              const HeaderBotanicalBackdrop(height: 220),
+              Column(
+                children: [
+                  // Header dengan back button jika diperlukan
+                  if (needsBackButton)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 14, 6),
+                      child: Row(
+                        children: [
+                          DjajanBackButton(
+                            onPressed:
+                                widget.onBack ?? () => Navigator.pop(context),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: UmkmHeaderRow(
+                              padding: EdgeInsets.zero,
+                              iconBadge: UmkmSquircleIcon(
+                                icon: Icons.shopping_cart_rounded,
+                              ),
+                              title: 'Keranjang Belanja',
+                              subtitle:
+                                  'Cek kembali item jajan & katering pilihanmu',
+                            ),
+                          ),
+                        ],
                       ),
+                    )
+                  else
+                    const UmkmHeaderRow(
+                      padding: EdgeInsets.fromLTRB(14, 14, 14, 8),
+                      iconBadge: UmkmSquircleIcon(
+                        icon: Icons.shopping_cart_rounded,
+                      ),
+                      title: 'Keranjang Belanja',
+                      subtitle: 'Cek kembali item jajan & katering pilihanmu',
                     ),
-                    const SizedBox(width: 16),
-                  ],
-                )
-              else
-                const DjajanPageHeader(
-                  title: 'Keranjang Belanja',
-                  subtitle: 'Cek kembali item jajan & katering pilihanmu',
-                  padding: EdgeInsets.fromLTRB(14, 14, 14, 8),
-                ),
-              // Content
+                  // Content
               Expanded(
                 child: isEmpty
                     ? _buildEmptyCart()
@@ -785,7 +799,9 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ],
           ),
-        );
+        ],
+      ),
+    );
       },
     );
   }

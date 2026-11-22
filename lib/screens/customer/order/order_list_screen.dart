@@ -111,10 +111,13 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
                   children: [
-                    const DjajanPageHeader(
+                    const UmkmHeaderRow(
+                      padding: EdgeInsets.only(bottom: 4),
+                      iconBadge: UmkmSquircleIcon(
+                        icon: Icons.receipt_long_rounded,
+                      ),
                       title: 'Pesanan Saya',
                       subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
-                      padding: EdgeInsets.zero,
                     ),
                     if (_loading && _service.orders.isEmpty)
                       const Padding(
@@ -197,10 +200,13 @@ class _OrderListScreenState extends State<OrderListScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       children: [
-        const DjajanPageHeader(
+        const UmkmHeaderRow(
+          padding: EdgeInsets.only(bottom: 4),
+          iconBadge: UmkmSquircleIcon(
+            icon: Icons.receipt_long_rounded,
+          ),
           title: 'Pesanan Saya',
           subtitle: 'Pantau pesanan jajan & katering dari UMKM desa',
-          padding: EdgeInsets.zero,
         ),
         const SizedBox(height: 48),
         Container(

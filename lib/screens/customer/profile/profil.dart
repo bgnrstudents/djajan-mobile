@@ -59,6 +59,9 @@ class ProfileMenuItem {
   final String title;
   final String subtitle;
   final Color iconColor;
+  final Color? iconBg;
+  final Color? iconBorderColor;
+  final Color? textColor;
   final Widget? trailing;
   final VoidCallback? onTap;
 
@@ -67,6 +70,9 @@ class ProfileMenuItem {
     required this.title,
     required this.subtitle,
     required this.iconColor,
+    this.iconBg,
+    this.iconBorderColor,
+    this.textColor,
     this.trailing,
     this.onTap,
   });
@@ -74,8 +80,6 @@ class ProfileMenuItem {
 
 void showProfileHelp(BuildContext context) {
   const primaryColor = AppConfig.primaryColor;
-  const inkColor = Color(0xFF1E293B);
-  const mutedColor = Color(0xFF64748B);
 
   showDialog<void>(
     context: context,
@@ -85,18 +89,19 @@ void showProfileHelp(BuildContext context) {
         width: 64,
         height: 64,
         decoration: BoxDecoration(
-          color: const Color(0xFFEAF3EC),
+          color: AppColors.hijauLembut,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFD8EBD8)),
         ),
         child: const Icon(
-          Icons.headset_mic_outlined,
+          Icons.headset_mic_rounded,
           color: primaryColor,
           size: 32,
         ),
       ),
       title: const Text(
         'Pusat Bantuan',
-        style: TextStyle(fontWeight: FontWeight.bold, color: inkColor),
+        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -104,7 +109,7 @@ void showProfileHelp(BuildContext context) {
           const Text(
             'Butuh bantuan dengan pesanan atau akun? Hubungi Admin Djajan via WhatsApp.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: mutedColor, height: 1.4),
+            style: TextStyle(fontSize: 14, color: AppColors.textGrey, height: 1.4),
           ),
           const SizedBox(height: 20),
           Container(
@@ -112,20 +117,21 @@ void showProfileHelp(BuildContext context) {
             decoration: BoxDecoration(
               color: AppColors.latar,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.garis),
             ),
             child: const Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.phone, size: 16, color: primaryColor),
+                    Icon(Icons.phone_rounded, size: 16, color: primaryColor),
                     SizedBox(width: 8),
                     SelectableText(
                       '0812-3456-7890',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: inkColor,
+                        color: AppColors.textDark,
                       ),
                     ),
                   ],
@@ -133,7 +139,7 @@ void showProfileHelp(BuildContext context) {
                 SizedBox(height: 4),
                 Text(
                   'Layanan: Setiap hari, 08.00 - 20.00 WIB',
-                  style: TextStyle(fontSize: 12, color: mutedColor),
+                  style: TextStyle(fontSize: 12, color: AppColors.textGrey),
                 ),
               ],
             ),
@@ -292,26 +298,28 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
   List<ProfileMenuItem> get _menuItems => [
     ProfileMenuItem(
-      icon: Icons.favorite_border,
+      icon: Icons.favorite_rounded,
       title: 'Favorit Saya',
       subtitle: _favoriteSubtitle,
-      iconColor: AppColors.hijauTua,
+      iconColor: const Color(0xFFE11D48),
+      iconBg: const Color(0xFFFFF1F2),
+      iconBorderColor: const Color(0xFFFFE4E6),
       onTap: _openFavorites,
     ),
     ProfileMenuItem(
-      icon: Icons.location_on_outlined,
+      icon: Icons.location_on_rounded,
       title: 'Daftar Alamat Pengiriman',
       subtitle: _settings.primaryAddress == null
           ? 'Belum ada alamat tersimpan'
           : '${_settings.primaryAddress!.label}: ${_settings.primaryAddress!.address}',
-      iconColor: AppColors.hijauMuda,
+      iconColor: AppColors.hijauTua,
       onTap: _openAddressForm,
     ),
     ProfileMenuItem(
-      icon: Icons.notifications_none,
+      icon: Icons.notifications_rounded,
       title: 'Notifikasi Pesanan',
       subtitle: 'Pemberitahuan status kiriman & promo',
-      iconColor: AppColors.hijauMuda,
+      iconColor: AppColors.hijauTua,
       trailing: Switch.adaptive(
         value: _notificationsEnabled,
         onChanged: _setNotificationsEnabled,
@@ -319,15 +327,15 @@ class _ProfilScreenState extends State<ProfilScreen> {
     ),
     if (_businessName != null && _businessStatus == 'terverifikasi')
       ProfileMenuItem(
-        icon: Icons.storefront_outlined,
+        icon: Icons.storefront_rounded,
         title: 'Buka Mode UMKM',
         subtitle: 'Kelola usaha melalui dashboard UMKM',
-        iconColor: AppConfig.primaryColor,
+        iconColor: AppColors.hijauTua,
         onTap: _switchToUmkm,
       ),
     if (_businessName != null && _businessStatus != 'terverifikasi')
       ProfileMenuItem(
-        icon: Icons.hourglass_top_outlined,
+        icon: Icons.hourglass_top_rounded,
         title: _businessStatus == 'dihapus'
             ? 'Akun UMKM Dihapus'
             : 'Status Pengajuan UMKM',
@@ -336,31 +344,38 @@ class _ProfilScreenState extends State<ProfilScreen> {
             : _businessStatus == 'ditolak'
             ? 'Pengajuan ditolak, periksa kembali data usaha'
             : 'Menunggu verifikasi admin desa',
-        iconColor: AppColors.hijauTua,
+        iconColor: const Color(0xFFD97706),
+        iconBg: const Color(0xFFFEF3C7),
+        iconBorderColor: const Color(0xFFFDE68A),
         onTap: _businessStatus == 'dihapus'
             ? null
             : () => _openBusinessRegistration(editing: true),
       ),
     if (_businessName != null && _businessStatus != 'dihapus')
       ProfileMenuItem(
-        icon: Icons.storefront_outlined,
+        icon: Icons.storefront_rounded,
         title: 'Hapus Status Mitra',
         subtitle: 'Kembali menggunakan akun sebagai pelanggan biasa',
-        iconColor: AppColors.hijauTua,
+        iconColor: AppColors.textGrey,
+        iconBg: AppColors.latar,
+        iconBorderColor: AppColors.garis,
         onTap: _confirmRemoveBusiness,
       ),
     ProfileMenuItem(
-      icon: Icons.info_outline,
+      icon: Icons.info_outline_rounded,
       title: 'Tentang Djajan',
       subtitle: 'Pemberdayaan warung & petani desa',
-      iconColor: AppColors.hijauMuda,
+      iconColor: AppColors.hijauTua,
       onTap: _openAboutDjajan,
     ),
     ProfileMenuItem(
-      icon: Icons.logout,
+      icon: Icons.logout_rounded,
       title: 'Keluar Akun',
       subtitle: 'Selesaikan sesi belanja di perangkat ini',
-      iconColor: AppColors.hijauTua,
+      iconColor: AppColors.danger,
+      iconBg: AppColors.dangerBg,
+      iconBorderColor: const Color(0xFFFECACA),
+      textColor: AppColors.danger,
       onTap: _confirmLogout,
     ),
   ];
@@ -431,10 +446,14 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
                           _settings.errorMessage!,
-                          style: const TextStyle(color: AppColors.hijauTua),
+                          style: const TextStyle(color: AppColors.danger),
                         ),
                       ),
-                    DjajanPageHeader(
+                    UmkmHeaderRow(
+                      padding: EdgeInsets.zero,
+                      iconBadge: const UmkmSquircleIcon(
+                        icon: Icons.person_rounded,
+                      ),
                       title: 'Profil Saya',
                       subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
                       rightAction: IconButton(
@@ -446,7 +465,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
                           size: 23,
                         ),
                       ),
-                      padding: EdgeInsets.zero,
                     ),
                     const SizedBox(height: 18),
                     _ProfileHeader(
@@ -486,10 +504,13 @@ class _ProfilScreenState extends State<ProfilScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const DjajanPageHeader(
+          const UmkmHeaderRow(
+            padding: EdgeInsets.zero,
+            iconBadge: UmkmSquircleIcon(
+              icon: Icons.person_rounded,
+            ),
             title: 'Profil Saya',
             subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
-            padding: EdgeInsets.zero,
           ),
           const SizedBox(height: 16),
           // Guest Header Card
@@ -645,10 +666,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
           _ProfileMenu(
             items: [
               ProfileMenuItem(
-                icon: Icons.info_outline,
+                icon: Icons.info_outline_rounded,
                 title: 'Tentang DJajan',
                 subtitle: 'Pemberdayaan kuliner dan UMKM lokal',
-                iconColor: AppColors.hijauMuda,
+                iconColor: AppColors.hijauTua,
                 onTap: _openAboutDjajan,
               ),
             ],
@@ -1395,6 +1416,10 @@ class _ProfileMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bg = item.iconBg ?? AppColors.hijauLembut;
+    final border = item.iconBorderColor ?? const Color(0xFFD8EBD8);
+    final titleColor = item.textColor ?? AppColors.textDark;
+
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
@@ -1402,7 +1427,7 @@ class _ProfileMenuTile extends StatelessWidget {
         onTap: item.onTap,
         borderRadius: BorderRadius.circular(18),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.garis),
@@ -1417,13 +1442,16 @@ class _ProfileMenuTile extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: item.iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  color: bg,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: border, width: 1),
                 ),
-                child: Icon(item.icon, size: 20, color: item.iconColor),
+                child: Center(
+                  child: Icon(item.icon, size: 21, color: item.iconColor),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1432,10 +1460,10 @@ class _ProfileMenuTile extends StatelessWidget {
                   children: [
                     Text(
                       item.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B),
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1445,7 +1473,7 @@ class _ProfileMenuTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11.5,
-                        color: Color(0xFF64748B),
+                        color: AppColors.textGrey,
                       ),
                     ),
                   ],
@@ -1455,9 +1483,9 @@ class _ProfileMenuTile extends StatelessWidget {
                 item.trailing!
               else
                 const Icon(
-                  Icons.chevron_right,
+                  Icons.chevron_right_rounded,
                   size: 20,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textGrey,
                 ),
             ],
           ),
