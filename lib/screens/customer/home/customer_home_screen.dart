@@ -362,35 +362,54 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
       rightAction: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (!auth.isLoggedIn) ...[
-            TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-              icon: const Icon(
-                Icons.login_rounded,
-                size: 16,
+            Container(
+              height: 42,
+              decoration: BoxDecoration(
                 color: AppColors.hijauTua,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.hijauTua.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              label: const Text(
-                'Masuk',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.hijauTua,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.hijauLembut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.login),
+                  borderRadius: BorderRadius.circular(14),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 13),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.login_rounded,
+                          size: 17,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          'Masuk',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
           ],
           AnimatedBuilder(
             animation: NotificationService(),
@@ -505,15 +524,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           filled: true,
           fillColor: AppColors.putih,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: AppColors.garis),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: AppColors.garis),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: AppColors.hijauTua, width: 1.4),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 15),
@@ -705,7 +724,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   const Icon(
                     Icons.search_off_rounded,
                     size: 48,
-                    color: Colors.grey,
+                    color: AppColors.textGrey,
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -716,7 +735,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   const Text(
                     'Coba ubah kata pencarian atau filter yang dipilih.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                    style: TextStyle(fontSize: 13, color: AppColors.textGrey),
                   ),
                   const SizedBox(height: 14),
                   TextButton(
