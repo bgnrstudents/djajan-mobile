@@ -247,8 +247,8 @@ class ProductCard extends StatelessWidget {
                           const SizedBox(height: 5),
                         ],
 
-                        SizedBox(
-                          height: 38,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 44),
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 180),
                             switchInCurve: Curves.easeInOut,

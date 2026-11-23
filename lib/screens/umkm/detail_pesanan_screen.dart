@@ -314,7 +314,10 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
                                       pesanan.status.label,
@@ -331,7 +334,6 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                                   : OC.primary),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 7,
@@ -344,9 +346,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                         borderRadius:
                                             BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: pesanan.isPreOrder
-                                              ? const Color(0xFFDCE8DE)
-                                              : const Color(0xFFDCE8DE),
+                                          color: const Color(0xFFDCE8DE),
                                         ),
                                       ),
                                       child: Row(
@@ -377,15 +377,15 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                                         ],
                                       ),
                                     ),
-                                    const Spacer(),
-                                    Text(
-                                      tanggalFmt.format(pesanan.tanggalPesan),
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: OC.muted,
-                                      ),
-                                    ),
                                   ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  tanggalFmt.format(pesanan.tanggalPesan),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: OC.muted,
+                                  ),
                                 ),
                                 const SizedBox(height: 3),
                                 if (pesanan.status == StatusPesanan.poBaru)

@@ -195,7 +195,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         ),
         const SizedBox(height: 9),
         SizedBox(
-          height: 326,
+          height: 256,
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(18, 3, 18, 3),
             scrollDirection: Axis.horizontal,

@@ -112,10 +112,11 @@ class _ProductOrderTypeSheetWidgetState
         right: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Drag handle
           Center(
             child: Container(
@@ -337,7 +338,8 @@ class _ProductOrderTypeSheetWidgetState
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildOptionCard({

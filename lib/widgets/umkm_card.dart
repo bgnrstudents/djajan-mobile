@@ -30,8 +30,8 @@ class UmkmCard extends StatelessWidget {
 
   Widget _buildFeaturedCard() {
     return SizedBox(
-      width: 250,
-      height: 320,
+      width: 230,
+      height: 248,
       child: Material(
         color: Colors.white,
         elevation: 2,
@@ -49,7 +49,7 @@ class UmkmCard extends StatelessWidget {
               children: [
                 _buildAwning(),
                 SizedBox(
-                  height: 126,
+                  height: 104,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -60,12 +60,12 @@ class UmkmCard extends StatelessWidget {
                       ),
                       if (umkm.isVerified)
                         Positioned(
-                          top: 10,
-                          left: 10,
+                          top: 8,
+                          left: 8,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 7,
-                              vertical: 4,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.96),
@@ -76,14 +76,14 @@ class UmkmCard extends StatelessWidget {
                               children: [
                                 Icon(
                                   Icons.verified_rounded,
-                                  size: 12,
+                                  size: 11,
                                   color: _primary,
                                 ),
-                                SizedBox(width: 4),
+                                SizedBox(width: 3),
                                 Text(
                                   'Terverifikasi',
                                   style: TextStyle(
-                                    fontSize: 9,
+                                    fontSize: 8.5,
                                     fontWeight: FontWeight.w700,
                                     color: _primary,
                                   ),
@@ -97,7 +97,7 @@ class UmkmCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -106,27 +106,14 @@ class UmkmCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                             color: _ink,
                           ),
                         ),
-                        if (umkm.description.trim().isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            umkm.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              height: 1.2,
-                              color: _muted,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 4),
                         Wrap(
-                          spacing: 6,
+                          spacing: 5,
                           runSpacing: 3,
                           children: [
                             _infoChip(Icons.restaurant_menu_rounded, umkm.type),
@@ -141,19 +128,19 @@ class UmkmCard extends StatelessWidget {
                           ],
                         ),
                         const Spacer(),
-                        const Divider(height: 8, color: AppColors.garis),
+                        const Divider(height: 6, color: AppColors.garis),
                         Row(
                           children: [
                             const Icon(
                               Icons.star_rounded,
-                              size: 15,
+                              size: 14,
                               color: AppColors.kuning,
                             ),
                             const SizedBox(width: 3),
                             Text(
                               umkm.rating.toStringAsFixed(1),
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 color: _ink,
                               ),
@@ -161,17 +148,17 @@ class UmkmCard extends StatelessWidget {
                             const Spacer(),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
+                                horizontal: 6,
+                                vertical: 2,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.hijauLembut,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 '$productCount menu',
                                 style: const TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 8.5,
                                   fontWeight: FontWeight.w700,
                                   color: _primary,
                                 ),
@@ -180,22 +167,22 @@ class UmkmCard extends StatelessWidget {
                           ],
                         ),
                         if (umkm.pickupLocation.trim().isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Row(
                             children: [
                               const Icon(
                                 Icons.location_on_outlined,
-                                size: 13,
+                                size: 12,
                                 color: _muted,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
                                   umkm.pickupLocation,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 9.5,
                                     color: _muted,
                                   ),
                                 ),

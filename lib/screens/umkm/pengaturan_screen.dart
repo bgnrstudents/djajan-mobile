@@ -568,16 +568,24 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                   spesialisCtrl.text.trim() != p.spesialis ||
                   telpCtrl.text.trim() != p.noTelpUsaha;
 
+              final viewInsetsBottom = MediaQuery.viewInsetsOf(ctx).bottom;
+              final screenHeight = MediaQuery.sizeOf(ctx).height;
+              final maxAllowedHeight = screenHeight - viewInsetsBottom;
+              final targetHeight = (screenHeight * 0.88).clamp(
+                120.0,
+                maxAllowedHeight > 120.0 ? maxAllowedHeight : 120.0,
+              );
+
               return AnimatedPadding(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOut,
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewInsetsOf(ctx).bottom,
+                  bottom: viewInsetsBottom,
                 ),
                 child: SafeArea(
                   top: false,
                   child: SizedBox(
-                    height: MediaQuery.sizeOf(ctx).height * 0.88,
+                    height: targetHeight,
                     child: Container(
                       decoration: const BoxDecoration(
                         color: OC.bg,
