@@ -15,6 +15,7 @@ class Umkm {
   final bool isVerified;
   final String phone;
   final bool codAvailable;
+  final String skemaPo;
 
   const Umkm({
     required this.id,
@@ -30,6 +31,7 @@ class Umkm {
     this.isVerified = true,
     this.phone = '',
     this.codAvailable = true,
+    this.skemaPo = 'Lunas di Awal (Full Payment)',
   });
 
   /// UMKM yang hanya melayani ambil sendiri (tanpa kurir warga).
@@ -58,6 +60,7 @@ class Umkm {
     bool? isVerified,
     String? phone,
     bool? codAvailable,
+    String? skemaPo,
   }) {
     return Umkm(
       id: id ?? this.id,
@@ -73,6 +76,7 @@ class Umkm {
       isVerified: isVerified ?? this.isVerified,
       phone: phone ?? this.phone,
       codAvailable: codAvailable ?? this.codAvailable,
+      skemaPo: skemaPo ?? this.skemaPo,
     );
   }
 
@@ -96,6 +100,7 @@ class Umkm {
       phone: (json['phone'] ?? json['no_telp_usaha']) as String? ?? '',
       codAvailable: json['cod_available'] as bool? ??
           (json['cod_aktif'] == 1 || json['cod_aktif'] == true || json['cod_aktif'] == '1'),
+      skemaPo: (json['skema_po'] as String?) ?? 'Lunas di Awal (Full Payment)',
     );
   }
 

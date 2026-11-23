@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_config.dart';
 import '../../../data/sample_catalog.dart';
+import '../../../models/order.dart';
 import '../../../models/product.dart';
 import '../../../widgets/favorite_button.dart';
 import '../../../widgets/app_network_image.dart';
@@ -22,7 +23,8 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final CartService _cartService = CartService();
-  int _quantity = 1;
+  late OrderType _selectedType;
+  late int _quantity;
 
   static const Color primaryGreen = AppConfig.primaryColor;
   static const Color textDark = AppColors.textDark;
@@ -30,6 +32,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   static const Color background = AppColors.latar;
 
   Product get p => widget.product;
+  bool get isPoActive => _selectedType == OrderType.preOrder;
+  int get minAllowedQty => isPoActive && p.minOrderPo > 0 ? p.minOrderPo : 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedType = p.parsedOrderType;
+    final minPo = p.minOrderPo > 0 ? p.minOrderPo : 1;
+    _quantity = (_selectedType == OrderType.preOrder) ? minPo : 1;
+  }
 
   void _increaseQty() {
     setState(() {
@@ -38,20 +50,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _decreaseQty() {
-    if (_quantity > 1) {
+    if (_quantity > minAllowedQty) {
       setState(() {
         _quantity--;
       });
     }
   }
 
+  void _onTypeChanged(OrderType newType) {
+    setState(() {
+      _selectedType = newType;
+      if (newType == OrderType.preOrder) {
+        if (_quantity < minAllowedQty) {
+          _quantity = minAllowedQty;
+        }
+      }
+    });
+  }
+
   void _addToCart() {
-    _cartService.addProduct(p, quantity: _quantity);
+    _cartService.addProduct(p, quantity: _quantity, type: _selectedType);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$_quantity x ${p.name} ditambahkan ke keranjang',
+          '$_quantity x ${p.name} (${isPoActive ? 'Pre-Order' : 'Ready Stock'}) ditambahkan ke keranjang',
         ),
         backgroundColor: primaryGreen,
         action: SnackBarAction(
@@ -69,7 +92,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _buyNow() {
-    _cartService.addProduct(p, quantity: _quantity);
+    _cartService.addProduct(p, quantity: _quantity, type: _selectedType);
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const CartScreen()),
     );
@@ -77,7 +100,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPO = p.isPreOrder;
+    final bool isPO = isPoActive;
     final int subtotal = p.price * _quantity;
 
     return Scaffold(
@@ -132,6 +155,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       const SizedBox(height: 13),
                       _buildRatingRow(),
+                      if (p.isBothMode) ...[
+                        const SizedBox(height: 16),
+                        _buildModeSelector(),
+                      ],
                       const SizedBox(height: 18),
                       _buildOrderTypeNotice(isPO),
                       const SizedBox(height: 24),
@@ -325,6 +352,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildBadges(bool isPO) {
+    if (p.isBothMode) {
+      return Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3E8FF),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE9D5FF)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.sync_alt_rounded,
+                  size: 15,
+                  color: Color(0xFF7E22CE),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'READY & PRE-ORDER',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.55,
+                    color: Color(0xFF7E22CE),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
     return Row(
       children: [
         Container(
@@ -355,6 +416,110 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildModeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.hijauLembut,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _onTypeChanged(OrderType.instant),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                decoration: BoxDecoration(
+                  color: !isPoActive ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: !isPoActive
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.bolt_rounded,
+                      size: 16,
+                      color:
+                          !isPoActive ? AppColors.hijauTua : AppColors.textGrey,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Pesan Sekarang',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            !isPoActive ? FontWeight.w700 : FontWeight.w600,
+                        color:
+                            !isPoActive ? AppColors.hijauTua : AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _onTypeChanged(OrderType.preOrder),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                decoration: BoxDecoration(
+                  color: isPoActive ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: isPoActive
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.event_available_rounded,
+                      size: 16,
+                      color: isPoActive
+                          ? const Color(0xFFD97706)
+                          : AppColors.textGrey,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Pre-Order',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            isPoActive ? FontWeight.w700 : FontWeight.w600,
+                        color: isPoActive
+                            ? const Color(0xFFD97706)
+                            : AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -394,6 +559,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final backgroundColor =
         isPO ? const Color(0xFFFFFBEB) : const Color(0xFFE8F5E9);
 
+    final String noticeText;
+    if (isPO) {
+      if (p.minOrderPo > 1) {
+        noticeText =
+            'Pre-Order minimal ${p.minOrderPo} ${p.unit.toLowerCase()}. Disiapkan fresh sesuai tanggal kebutuhan acara Anda.';
+      } else {
+        noticeText = 'Disiapkan fresh mengikuti jadwal pesanan acara Anda.';
+      }
+    } else {
+      noticeText = 'Siap disiapkan penjual setelah dipesan.';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
       decoration: BoxDecoration(
@@ -410,9 +587,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              isPO
-                  ? 'Disiapkan fresh mengikuti jadwal pesanan.'
-                  : 'Siap disiapkan penjual setelah dipesan.',
+              noticeText,
               style: TextStyle(
                 fontSize: 12,
                 height: 1.35,
@@ -753,7 +928,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           _quantityControl(
                             icon: Icons.remove_rounded,
-                            enabled: _quantity > 1,
+                            enabled: _quantity > minAllowedQty,
                             onTap: _decreaseQty,
                             borderRadius: const BorderRadius.horizontal(
                               left: Radius.circular(10),

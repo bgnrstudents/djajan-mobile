@@ -350,6 +350,11 @@ class Pesanan {
   final String? namaUmkm;
   final bool? isPreOrderExplicit;
 
+  // Skema Pre-Order & DP
+  final String? skemaPo;
+  final int nominalDp;
+  final int sisaBayar;
+
   Pesanan({
     required this.idPesanan,
     required this.namaPembeli,
@@ -378,6 +383,9 @@ class Pesanan {
     this.noTelpUmkm,
     this.namaUmkm,
     this.isPreOrderExplicit,
+    this.skemaPo,
+    this.nominalDp = 0,
+    this.sisaBayar = 0,
   });
 
   int get totalPorsi => items.fold(0, (s, i) => s + i.jumlah);
@@ -456,6 +464,9 @@ class Pesanan {
     noTelpUmkm: _strOrNull(j['no_telp_umkm'] ?? j['no_telp_usaha']),
     namaUmkm: _strOrNull(j['nama_umkm']),
     isPreOrderExplicit: j['is_preorder'] as bool?,
+    skemaPo: _strOrNull(j['skema_po']),
+    nominalDp: _int(j['nominal_dp']),
+    sisaBayar: _int(j['sisa_bayar']),
   );
 }
 

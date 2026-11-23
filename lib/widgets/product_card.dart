@@ -4,6 +4,7 @@ import '../services/cart_service.dart';
 import '../models/product.dart';
 import 'app_network_image.dart';
 import 'favorite_button.dart';
+import 'product_order_type_sheet.dart';
 import '../theme/app_theme.dart'; // includes AppColors + formatRupiah
 
 class ProductCard extends StatelessWidget {
@@ -27,7 +28,24 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isPreOrder = product.isPreOrder;
+    final bool isBoth = product.isBothMode;
     final cartService = CartService();
+
+    final Color badgeBg = isBoth
+        ? const Color(0xFFF3E8FF)
+        : (isPreOrder ? const Color(0xFFFFF7ED) : const Color(0xFFF0FDF4));
+    final Color badgeBorder = isBoth
+        ? const Color(0xFFE9D5FF)
+        : (isPreOrder ? const Color(0xFFFFEDD5) : const Color(0xFFDCFCE7));
+    final Color badgeColor = isBoth
+        ? const Color(0xFF7E22CE)
+        : (isPreOrder ? const Color(0xFFEA580C) : const Color(0xFF15803D));
+    final IconData badgeIcon = isBoth
+        ? Icons.sync_alt_rounded
+        : (isPreOrder ? Icons.schedule_rounded : Icons.bolt_rounded);
+    final String badgeText = isBoth
+        ? 'Ready & PO'
+        : (isPreOrder ? 'Pre-Order' : 'Ready Stock');
 
     return AnimatedBuilder(
       animation: cartService,
@@ -60,35 +78,25 @@ class ProductCard extends StatelessWidget {
                   vertical: featured ? 4 : 5,
                 ),
                 decoration: BoxDecoration(
-                  color: isPreOrder
-                      ? const Color(0xFFFFF7ED)
-                      : const Color(0xFFF0FDF4),
+                  color: badgeBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isPreOrder
-                        ? const Color(0xFFFFEDD5)
-                        : const Color(0xFFDCFCE7),
-                  ),
+                  border: Border.all(color: badgeBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isPreOrder ? Icons.schedule_rounded : Icons.bolt_rounded,
+                      badgeIcon,
                       size: featured ? 11 : 12,
-                      color: isPreOrder
-                          ? const Color(0xFFEA580C)
-                          : const Color(0xFF16A34A),
+                      color: badgeColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isPreOrder ? 'Pre-Order' : 'Ready Stock',
+                      badgeText,
                       style: TextStyle(
                         fontSize: featured ? 9.5 : 10.5,
                         fontWeight: FontWeight.w700,
-                        color: isPreOrder
-                            ? const Color(0xFFEA580C)
-                            : const Color(0xFF15803D),
+                        color: badgeColor,
                       ),
                     ),
                   ],
@@ -275,6 +283,19 @@ class ProductCard extends StatelessWidget {
                                               const SizedBox(height: 1),
                                             ],
                                             price,
+                                            if (isPreOrder && product.minOrderPo > 1) ...[
+                                              const SizedBox(height: 1),
+                                              Text(
+                                                'Min. ${product.minOrderPo} ${product.unit.toLowerCase()}',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFFD97706),
+                                                ),
+                                              ),
+                                            ],
                                           ],
                                         ),
                                       ),
@@ -284,7 +305,16 @@ class ProductCard extends StatelessWidget {
                                         ),
                                         onTap: product.isOutOfStock
                                             ? null
-                                            : onAddToCart,
+                                            : () {
+                                                if (product.isBothMode) {
+                                                  showProductOrderTypeSheet(
+                                                    context,
+                                                    product: product,
+                                                  );
+                                                } else {
+                                                  onAddToCart();
+                                                }
+                                              },
                                         borderRadius: BorderRadius.circular(
                                           featured ? 20 : 18,
                                         ),

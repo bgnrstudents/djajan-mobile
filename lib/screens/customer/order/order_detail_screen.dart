@@ -1876,6 +1876,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     String note;
     if (o.paymentMethod == PaymentMethod.cod) {
       note = 'Dibayar tunai saat pesanan tiba';
+    } else if (o.nominalDp > 0 && o.sisaBayar > 0) {
+      note = 'DP sudah dibayar — sisa dilunasi nanti';
     } else if (o.paymentMethod == PaymentMethod.midtrans) {
       note = o.status == OrderStatus.waitingPayment
           ? 'Menunggu pembayaran Anda'
@@ -1915,6 +1917,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               value: '-${rupiah(o.discount)}',
               color: OC.primary,
             ),
+          if (o.nominalDp > 0) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Divider(height: 1, color: OC.line),
+            ),
+            MoneyRow(
+              label: 'DP Dibayar (${o.skemaPo?.replaceAll('_', ' ').toUpperCase() ?? 'DP'})',
+              value: rupiah(o.nominalDp),
+            ),
+            MoneyRow(
+              label: 'Sisa Pelunasan',
+              value: o.sisaBayar > 0 ? rupiah(o.sisaBayar) : 'Lunas',
+              color: o.sisaBayar > 0 ? OC.amber : OC.primary,
+            ),
+          ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 6),
             child: Divider(height: 1, color: OC.line),

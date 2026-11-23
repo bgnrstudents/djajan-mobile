@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../order/midtrans_payment_screen.dart';
 import '../order/order_detail_screen.dart';
 import '../../../models/order.dart';
+import '../../../models/umkm.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/catalog_service.dart';
 import '../../../services/order_service.dart';
 import '../../auth/login_screen.dart';
 import '../order/order_widgets.dart';
@@ -414,8 +416,21 @@ class _CartScreenState extends State<CartScreen> {
     for (final item in items) {
       grouped.putIfAbsent(item.umkmId, () => []).add(item);
     }
-    // Validate pre-order dates
+    // Validasi minimal pembelian PO dan tanggal pre-order
     for (final entry in grouped.entries) {
+      for (final line in entry.value) {
+        if (line.type == OrderType.preOrder &&
+            line.minOrderPo > 1 &&
+            line.quantity < line.minOrderPo) {
+          showToast(
+            context,
+            'Minimal pemesanan Pre-Order "${line.productName}" adalah ${line.minOrderPo} ${line.unit}.',
+            error: true,
+          );
+          return;
+        }
+      }
+
       final isPO = entry.value.any((item) => item.type == OrderType.preOrder);
       if (isPO) {
         final date = _getPoDate(entry.key);
@@ -632,13 +647,40 @@ class _CartScreenState extends State<CartScreen> {
         final bool isEmpty = grouped.isEmpty;
 
         final selected = _selectedItems;
+        final bool hasPoSelected =
+            selected.any((item) => item.type == OrderType.preOrder);
+
+        // Cari UMKM data untuk skema PO
+        Umkm? activeUmkm;
+        if (selected.isNotEmpty) {
+          final firstUmkmId = selected.first.umkmId;
+          activeUmkm = CatalogService().umkmById(firstUmkmId);
+        }
+        final String skemaPo =
+            activeUmkm?.skemaPo ?? 'Lunas di Awal (Full Payment)';
+        final bool isTanpaDp = skemaPo.toLowerCase().contains('tanpa dp') ||
+            skemaPo.toLowerCase().contains('bayar saat');
+        final bool isDp30 = skemaPo.contains('30%');
+        final bool isDp50 = skemaPo.contains('50%');
+
         final disabledCodUmkms = selected
             .where((item) => !item.codAvailable)
             .map((item) => item.umkmName)
             .toSet()
             .toList();
-        final bool isCodAvailable =
-            selected.isNotEmpty && disabledCodUmkms.isEmpty;
+
+        // Jika ada item PO dan skema toko BUKAN Tanpa DP, COD dinonaktifkan
+        if (hasPoSelected && !isTanpaDp && activeUmkm != null) {
+          if (!disabledCodUmkms.contains(activeUmkm.name)) {
+            disabledCodUmkms.add(
+              '${activeUmkm.name} (Pre-Order wajib ${isDp30 ? 'DP 30%' : (isDp50 ? 'DP 50%' : 'Lunas')})',
+            );
+          }
+        }
+
+        final bool isCodAvailable = selected.isNotEmpty &&
+            disabledCodUmkms.isEmpty &&
+            (!hasPoSelected || isTanpaDp);
 
         // Jika opsi COD dinonaktifkan oleh UMKM yang dipilih, otomatis pindahkan ke Midtrans
         if (!isCodAvailable && _selectedPayment == 0 && selected.isNotEmpty) {
@@ -699,6 +741,13 @@ class _CartScreenState extends State<CartScreen> {
         }
 
         final int totalPembayaran = subtotalProduk + totalOngkir;
+
+        final bool isDpScheme = hasPoSelected && (isDp30 || isDp50);
+        final String dpLabel = isDp30 ? 'DP 30%' : (isDp50 ? 'DP 50%' : 'DP');
+        final int nominalDp = isDpScheme
+            ? (totalPembayaran * (isDp30 ? 0.30 : 0.50)).round()
+            : totalPembayaran;
+        final int sisaPelunasan = totalPembayaran - nominalDp;
 
         final needsBackButton =
             widget.onBack != null || Navigator.canPop(context);
@@ -784,6 +833,10 @@ class _CartScreenState extends State<CartScreen> {
                             subtotalProduk: subtotalProduk,
                             totalOngkir: totalOngkir,
                             totalPembayaran: totalPembayaran,
+                            isDpScheme: isDpScheme,
+                            dpLabel: dpLabel,
+                            nominalDp: nominalDp,
+                            sisaPelunasan: sisaPelunasan,
                           ),
                           const SizedBox(height: 14),
 
@@ -792,7 +845,12 @@ class _CartScreenState extends State<CartScreen> {
                           const SizedBox(height: 12),
 
                           // 7. Action button
-                          _buildCheckoutButton(totalPembayaran),
+                          _buildCheckoutButton(
+                            totalPembayaran,
+                            isDpScheme: isDpScheme,
+                            dpLabel: dpLabel,
+                            nominalDp: nominalDp,
+                          ),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -1481,6 +1539,38 @@ class _CartScreenState extends State<CartScreen> {
                   '${item.variant} • ${_formatRupiah(item.price.round())} / ${item.unit}',
                   style: const TextStyle(fontSize: 11.5, color: OC.muted),
                 ),
+                if (isPO && item.minOrderPo > 1) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: item.quantity < item.minOrderPo
+                          ? const Color(0xFFFEF2F2)
+                          : const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: item.quantity < item.minOrderPo
+                            ? const Color(0xFFFECACA)
+                            : const Color(0xFFFDE68A),
+                      ),
+                    ),
+                    child: Text(
+                      item.quantity < item.minOrderPo
+                          ? 'Min. order: ${item.minOrderPo} ${item.unit} (Belum tercapai)'
+                          : 'Min. order: ${item.minOrderPo} ${item.unit}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: item.quantity < item.minOrderPo
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1508,6 +1598,7 @@ class _CartScreenState extends State<CartScreen> {
                               _cartService.updateQuantity(
                                 item.productId,
                                 item.quantity - 1,
+                                type: item.type,
                               );
                             },
                             borderRadius: const BorderRadius.horizontal(
@@ -1546,6 +1637,7 @@ class _CartScreenState extends State<CartScreen> {
                               _cartService.updateQuantity(
                                 item.productId,
                                 item.quantity + 1,
+                                type: item.type,
                               );
                             },
                             borderRadius: const BorderRadius.horizontal(
@@ -1904,6 +1996,10 @@ class _CartScreenState extends State<CartScreen> {
     required int subtotalProduk,
     required int totalOngkir,
     required int totalPembayaran,
+    bool isDpScheme = false,
+    String dpLabel = 'DP',
+    int nominalDp = 0,
+    int sisaPelunasan = 0,
   }) {
     return _card(
       child: Column(
@@ -1961,6 +2057,82 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ],
           ),
+          if (isDpScheme) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bayar Sekarang ($dpLabel)',
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: OC.primary,
+                            ),
+                          ),
+                          const Text(
+                            'Uang muka via Midtrans / QRIS',
+                            style: TextStyle(fontSize: 11, color: OC.muted),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _formatRupiah(nominalDp),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: OC.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sisa Pelunasan',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFD97706),
+                            ),
+                          ),
+                          Text(
+                            'Dibayar saat pesanan diantar',
+                            style: TextStyle(fontSize: 10.5, color: OC.muted),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _formatRupiah(sisaPelunasan),
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFD97706),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1985,7 +2157,21 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   // 7. Checkout Button
-  Widget _buildCheckoutButton(int total) {
+  Widget _buildCheckoutButton(
+    int total, {
+    bool isDpScheme = false,
+    String dpLabel = 'DP',
+    int nominalDp = 0,
+  }) {
+    final String buttonLabel;
+    if (_selectedItems.isEmpty) {
+      buttonLabel = 'Pilih produk terlebih dahulu';
+    } else if (isDpScheme) {
+      buttonLabel = 'Bayar $dpLabel Sekarang (${_formatRupiah(nominalDp)})';
+    } else {
+      buttonLabel = 'Pesan Sekarang (${_formatRupiah(total)})';
+    }
+
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -2011,9 +2197,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               )
             : Text(
-                _selectedItems.isEmpty
-                    ? 'Pilih produk terlebih dahulu'
-                    : 'Pesan Sekarang (${_formatRupiah(total)})',
+                buttonLabel,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,

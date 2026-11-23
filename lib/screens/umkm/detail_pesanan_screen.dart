@@ -553,6 +553,67 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                     ),
                     const SizedBox(height: 14),
 
+                    // --------------- INFO DP / SKEMA PO ---------------
+                    if (pesanan.nominalDp > 0) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: OC.amber.withValues(alpha: 0.4)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.account_balance_wallet_outlined,
+                                    color: OC.amber, size: 20),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'SKEMA PEMBAYARAN PO',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: OC.amber,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: OC.amber.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    pesanan.skemaPo?.replaceAll('_', ' ').toUpperCase() ?? 'DP',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: OC.amber,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            _barisRincian(
+                              'DP Dibayar',
+                              formatRupiah(pesanan.nominalDp),
+                            ),
+                            _barisRincian(
+                              'Sisa Pelunasan',
+                              pesanan.sisaBayar > 0
+                                  ? formatRupiah(pesanan.sisaBayar)
+                                  : 'Lunas',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
                     if (pesanan.metodePengiriman.toLowerCase().contains('kurir') ||
                         pesanan.metodePengiriman.toLowerCase().contains('diantar')) ...[
                       _buildDeliveryMapCard(pesanan),

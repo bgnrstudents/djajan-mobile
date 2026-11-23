@@ -96,6 +96,8 @@ class CartLine {
   final String pickupLocation;
   final bool codAvailable;
   final bool pickupAvailable;
+  final int minOrderPo;
+  final String modePenjualan;
 
   const CartLine({
     required this.productId,
@@ -113,6 +115,8 @@ class CartLine {
     required this.pickupLocation,
     this.codAvailable = true,
     this.pickupAvailable = true,
+    this.minOrderPo = 0,
+    this.modePenjualan = 'ready',
   });
 
   double get subtotal => quantity * price;
@@ -134,6 +138,8 @@ class CartLine {
     String? pickupLocation,
     bool? codAvailable,
     bool? pickupAvailable,
+    int? minOrderPo,
+    String? modePenjualan,
   }) {
     return CartLine(
       productId: productId ?? this.productId,
@@ -151,6 +157,8 @@ class CartLine {
       pickupLocation: pickupLocation ?? this.pickupLocation,
       codAvailable: codAvailable ?? this.codAvailable,
       pickupAvailable: pickupAvailable ?? this.pickupAvailable,
+      minOrderPo: minOrderPo ?? this.minOrderPo,
+      modePenjualan: modePenjualan ?? this.modePenjualan,
     );
   }
 }
@@ -381,6 +389,9 @@ class Order {
   final DateTime? completedAt;
   final int? rating;
   final String? reviewNote;
+  final String? skemaPo;
+  final int nominalDp;
+  final int sisaBayar;
 
   const Order({
     required this.id,
@@ -408,6 +419,9 @@ class Order {
     this.completedAt,
     this.rating,
     this.reviewNote,
+    this.skemaPo,
+    this.nominalDp = 0,
+    this.sisaBayar = 0,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -472,9 +486,14 @@ class Order {
     final paymentStatus =
         paymentValues.any(
           (value) =>
-              value == 'paid' || value == 'settlement' || value == 'capture',
+              value == 'paid' ||
+              value == 'settlement' ||
+              value == 'capture' ||
+              value == 'dp_terbayar',
         )
-        ? 'paid'
+        ? (paymentValues.any((value) => value == 'dp_terbayar')
+            ? 'dp_terbayar'
+            : 'paid')
         : paymentValues.any(
             (value) =>
                 value == 'failed' ||
@@ -539,6 +558,9 @@ class Order {
       reviewNote: json['ulasan'] is Map
           ? _asString(json['ulasan']['komentar'])
           : null,
+      skemaPo: _asString(json['skema_po']),
+      nominalDp: _asInt(json['nominal_dp']),
+      sisaBayar: _asInt(json['sisa_bayar']),
     );
   }
 
@@ -578,6 +600,9 @@ class Order {
     DateTime? completedAt,
     int? rating,
     String? reviewNote,
+    String? skemaPo,
+    int? nominalDp,
+    int? sisaBayar,
   }) {
     return Order(
       id: id,
@@ -607,6 +632,9 @@ class Order {
       completedAt: completedAt ?? this.completedAt,
       rating: rating ?? this.rating,
       reviewNote: reviewNote ?? this.reviewNote,
+      skemaPo: skemaPo ?? this.skemaPo,
+      nominalDp: nominalDp ?? this.nominalDp,
+      sisaBayar: sisaBayar ?? this.sisaBayar,
     );
   }
 
@@ -657,6 +685,7 @@ class Order {
     if (lowerPay == 'paid' ||
         lowerPay == 'settlement' ||
         lowerPay == 'capture' ||
+        lowerPay == 'dp_terbayar' ||
         lowerOrder == 'diterima' ||
         lowerOrder == 'confirmed' ||
         lowerOrder == 'reviewing') {

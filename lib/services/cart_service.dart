@@ -26,14 +26,24 @@ class CartService extends ChangeNotifier {
 
   double get subtotal => _items.fold(0.0, (sum, item) => sum + item.subtotal);
 
-  int quantityForProduct(Product product) {
-    final cartLine = product.toCartLine();
-    final index = _items.indexWhere(
-      (item) =>
-          item.productId == cartLine.productId ||
-          (item.productName == product.name && item.umkmName == product.umkm),
-    );
-    return index < 0 ? 0 : _items[index].quantity;
+  int quantityForProduct(Product product, {OrderType? type}) {
+    final cartLine = product.toCartLine(type: type);
+    if (type != null) {
+      final index = _items.indexWhere(
+        (item) =>
+            (item.productId == cartLine.productId ||
+                (item.productName == product.name && item.umkmName == product.umkm)) &&
+            item.type == type,
+      );
+      return index < 0 ? 0 : _items[index].quantity;
+    }
+    return _items
+        .where(
+          (item) =>
+              item.productId == cartLine.productId ||
+              (item.productName == product.name && item.umkmName == product.umkm),
+        )
+        .fold(0, (sum, item) => sum + item.quantity);
   }
 
   Future<void> loadForCustomer(String customerId) async {
@@ -60,14 +70,16 @@ class CartService extends ChangeNotifier {
   }
 
   /// Menambahkan produk dari halaman Beranda atau Detail Produk
-  void addProduct(Product product, {int quantity = 1}) {
+  void addProduct(Product product, {int quantity = 1, OrderType? type}) {
     if (quantity <= 0) return;
-    final cartLine = product.toCartLine(quantity: quantity);
+    final targetType = type ?? product.parsedOrderType;
+    final cartLine = product.toCartLine(quantity: quantity, type: targetType);
 
     final index = _items.indexWhere(
       (l) =>
-          l.productId == cartLine.productId ||
-          (l.productName == product.name && l.umkmName == product.umkm),
+          (l.productId == cartLine.productId ||
+              (l.productName == product.name && l.umkmName == product.umkm)) &&
+          l.type == targetType,
     );
 
     if (index >= 0) {
@@ -81,7 +93,9 @@ class CartService extends ChangeNotifier {
 
   /// Menambahkan CartLine secara langsung
   void addCartLine(CartLine line) {
-    final index = _items.indexWhere((l) => l.productId == line.productId);
+    final index = _items.indexWhere(
+      (l) => l.productId == line.productId && l.type == line.type,
+    );
     if (index >= 0) {
       final existing = _items[index];
       _items[index] = existing.copyWith(
@@ -94,8 +108,10 @@ class CartService extends ChangeNotifier {
   }
 
   /// Mengubah jumlah item produk (jika <= 0, produk akan dihapus)
-  void updateQuantity(String productId, int newQuantity) {
-    final index = _items.indexWhere((l) => l.productId == productId);
+  void updateQuantity(String productId, int newQuantity, {OrderType? type}) {
+    final index = _items.indexWhere(
+      (l) => l.productId == productId && (type == null || l.type == type),
+    );
     if (index >= 0) {
       if (newQuantity <= 0) {
         _items.removeAt(index);
@@ -157,12 +173,16 @@ class CartService extends ChangeNotifier {
       }
 
       if (matchingProduct != null) {
+        final newType = matchingProduct.isBothMode
+            ? line.type // pertahankan pilihan mode pelanggan jika UMKM mengizinkan keduanya
+            : matchingProduct.parsedOrderType;
+
         final updatedLine = _items[i].copyWith(
           productName: matchingProduct.name,
           unit: matchingProduct.unit,
           imageUrl: matchingProduct.imageUrl,
           price: matchingProduct.price.toDouble(),
-          type: matchingProduct.parsedOrderType,
+          type: newType,
           umkmName: matchingProduct.umkm,
           umkmType: matchingProduct.umkmType,
           courierFee: matchingProduct.courierFee,
@@ -170,6 +190,8 @@ class CartService extends ChangeNotifier {
           pickupLocation: matchingProduct.pickupLocation,
           codAvailable: matchingProduct.codAvailable,
           pickupAvailable: matchingProduct.pickupAvailable,
+          minOrderPo: matchingProduct.minOrderPo,
+          modePenjualan: matchingProduct.modePenjualan,
         );
         if (updatedLine.productName != _items[i].productName ||
             updatedLine.unit != _items[i].unit ||
@@ -181,7 +203,9 @@ class CartService extends ChangeNotifier {
             updatedLine.courierFee != _items[i].courierFee ||
             updatedLine.pickupLocation != _items[i].pickupLocation ||
             updatedLine.codAvailable != _items[i].codAvailable ||
-            updatedLine.pickupAvailable != _items[i].pickupAvailable) {
+            updatedLine.pickupAvailable != _items[i].pickupAvailable ||
+            updatedLine.minOrderPo != _items[i].minOrderPo ||
+            updatedLine.modePenjualan != _items[i].modePenjualan) {
           _items[i] = updatedLine;
           hasChanged = true;
         }
@@ -240,6 +264,8 @@ class CartService extends ChangeNotifier {
     'pickup_location': item.pickupLocation,
     'cod_available': item.codAvailable,
     'pickup_available': item.pickupAvailable,
+    'min_order_po': item.minOrderPo,
+    'mode_penjualan': item.modePenjualan,
   };
 
   CartLine? _decodeItem(Map<String, dynamic> item) {
@@ -266,6 +292,8 @@ class CartService extends ChangeNotifier {
           item['pickup_location']?.toString() ?? 'Desa Kreyongan Atas',
       codAvailable: item['cod_available'] as bool? ?? true,
       pickupAvailable: item['pickup_available'] as bool? ?? true,
+      minOrderPo: (item['min_order_po'] as num?)?.toInt() ?? 0,
+      modePenjualan: item['mode_penjualan']?.toString() ?? 'ready',
     );
   }
 }

@@ -19,6 +19,8 @@ class Product {
   final bool codAvailable;
   final bool pickupAvailable;
   final int? stock;
+  final String modePenjualan; // 'ready', 'pre_order', 'keduanya'
+  final int minOrderPo;
 
   const Product({
     this.id = '',
@@ -39,15 +41,21 @@ class Product {
     this.codAvailable = true,
     this.pickupAvailable = true,
     this.stock,
+    this.modePenjualan = 'ready',
+    this.minOrderPo = 0,
   });
 
-  bool get isPreOrder => orderType.toLowerCase().contains('pre');
+  bool get isPreOrder =>
+      modePenjualan == 'pre_order' ||
+      (modePenjualan != 'keduanya' && orderType.toLowerCase().contains('pre'));
+  bool get isBothMode => modePenjualan == 'keduanya';
+  bool get isReadyOnly => modePenjualan == 'ready';
   bool get isOutOfStock => !isPreOrder && stock != null && stock! <= 0;
 
   OrderType get parsedOrderType =>
       isPreOrder ? OrderType.preOrder : OrderType.instant;
 
-  CartLine toCartLine({int quantity = 1}) {
+  CartLine toCartLine({int quantity = 1, OrderType? type}) {
     final validId = id.isNotEmpty
         ? id
         : 'prod_${name.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}';
@@ -63,7 +71,7 @@ class Product {
       imageUrl: imageUrl.isNotEmpty ? imageUrl : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
       quantity: quantity,
       price: price.toDouble(),
-      type: parsedOrderType,
+      type: type ?? parsedOrderType,
       umkmId: validUmkmId,
       umkmName: umkm,
       umkmType: umkmType,
@@ -71,6 +79,8 @@ class Product {
       pickupLocation: pickupLocation,
       codAvailable: codAvailable,
       pickupAvailable: pickupAvailable,
+      minOrderPo: minOrderPo,
+      modePenjualan: modePenjualan,
     );
   }
 
@@ -100,6 +110,11 @@ class Product {
       stock: (json['stok'] ?? json['stock']) is num
           ? (json['stok'] ?? json['stock']).toInt()
           : null,
+      modePenjualan: (json['mode_penjualan'] as String?) ??
+          ((json['order_type'] as String?)?.toLowerCase().contains('pre') == true
+              ? 'pre_order'
+              : 'ready'),
+      minOrderPo: (json['min_order_po'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -114,6 +129,8 @@ class Product {
       'rating': rating,
       'category': category,
       'order_type': orderType,
+      'mode_penjualan': modePenjualan,
+      'min_order_po': minOrderPo,
       'image_url': imageUrl,
       'description': description,
       'variant': variant,
