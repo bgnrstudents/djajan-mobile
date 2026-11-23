@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../../config/app_config.dart';
@@ -17,6 +18,7 @@ import '../../../theme/app_theme.dart';
 import 'alamat_form_page.dart';
 import '../order/order_widgets.dart';
 import '../../../widgets/umkm_app_bar.dart';
+import '../../../widgets/osm_map_picker.dart';
 
 const String kreonganKeyword = 'kreongan';
 
@@ -41,6 +43,9 @@ class ProfileFormField {
   final bool requiresKreongan;
   final bool requiredField;
   final IconData? prefixIcon;
+  final bool isLocationPicker;
+  final double? initialLatitude;
+  final double? initialLongitude;
 
   const ProfileFormField({
     required this.label,
@@ -51,6 +56,9 @@ class ProfileFormField {
     this.requiresKreongan = false,
     this.requiredField = true,
     this.prefixIcon,
+    this.isLocationPicker = false,
+    this.initialLatitude,
+    this.initialLongitude,
   });
 }
 
@@ -192,6 +200,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
   String? _businessAddress;
   String? _businessStatus;
   String? _businessSpecialty;
+  double? _businessLatitude;
+  double? _businessLongitude;
   bool _loadingBusiness = false;
 
   ProfileUser _user = const ProfileUser(name: '', phoneNumber: '');
@@ -213,6 +223,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
         _businessAddress = b['alamat']?.toString();
         _businessSpecialty = b['spesialis']?.toString();
         _businessStatus = b['status_verifikasi']?.toString();
+        _businessLatitude = double.tryParse(b['latitude']?.toString() ?? '');
+        _businessLongitude = double.tryParse(b['longitude']?.toString() ?? '');
       }
       _loadingBusiness = _businessName == null;
       _settings.load();
@@ -238,6 +250,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
         _businessAddress = business['alamat']?.toString();
         _businessSpecialty = business['spesialis']?.toString();
         _businessStatus = business['status_verifikasi']?.toString();
+        _businessLatitude = double.tryParse(business['latitude']?.toString() ?? '');
+        _businessLongitude = double.tryParse(business['longitude']?.toString() ?? '');
       }
       if (errorMessage != null) _settings.errorMessage = errorMessage;
       _loadingBusiness = false;
@@ -293,6 +307,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
       helperText: 'Pendaftaran usaha hanya untuk warga Kreongan.',
       requiresKreongan: true,
       prefixIcon: Icons.location_on_outlined,
+      isLocationPicker: true,
+      initialLatitude: _businessLatitude,
+      initialLongitude: _businessLongitude,
     ),
   ];
 
@@ -416,6 +433,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
         _businessAddress = b['alamat']?.toString();
         _businessSpecialty = b['spesialis']?.toString();
         _businessStatus = b['status_verifikasi']?.toString();
+        _businessLatitude = double.tryParse(b['latitude']?.toString() ?? '');
+        _businessLongitude = double.tryParse(b['longitude']?.toString() ?? '');
         _loadingBusiness = false;
       }
     }
@@ -834,6 +853,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
         'alamat': values['Alamat Usaha di Kreongan'],
         'no_telp_usaha': values['Nomor Handphone'],
         'email_usaha': _user.email,
+        if (values['latitude'] != null) 'latitude': values['latitude'],
+        if (values['longitude'] != null) 'longitude': values['longitude'],
       }) as Map<String, dynamic>;
       if (!mounted) return;
       setState(() {
@@ -841,6 +862,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
         _businessAddress = data['alamat']?.toString();
         _businessSpecialty = data['spesialis']?.toString();
         _businessStatus = data['status_verifikasi']?.toString();
+        _businessLatitude = double.tryParse(data['latitude']?.toString() ?? '');
+        _businessLongitude = double.tryParse(data['longitude']?.toString() ?? '');
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -996,15 +1019,15 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
   }
 
-  Future<Map<String, String>?> _openFormPage({
+  Future<Map<String, dynamic>?> _openFormPage({
     required String title,
     required String subtitle,
     required IconData icon,
     required List<ProfileFormField> fields,
   }) {
-    return Navigator.push<Map<String, String>>(
+    return Navigator.push<Map<String, dynamic>>(
       context,
-      MaterialPageRoute<Map<String, String>>(
+      MaterialPageRoute<Map<String, dynamic>>(
         builder: (_) => _ProfileFormPage(
           title: title,
           subtitle: subtitle,
@@ -1591,6 +1614,8 @@ class _ProfileFormPage extends StatefulWidget {
 class _ProfileFormPageState extends State<_ProfileFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final List<TextEditingController> _controllers;
+  double? _selectedLatitude;
+  double? _selectedLongitude;
 
   static const primaryColor = AppConfig.primaryColor;
   static const inkColor = Color(0xFF16201A);
@@ -1606,6 +1631,13 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
       for (final field in widget.fields)
         TextEditingController(text: field.initialValue),
     ];
+    for (final field in widget.fields) {
+      if (field.isLocationPicker) {
+        _selectedLatitude = field.initialLatitude;
+        _selectedLongitude = field.initialLongitude;
+        break;
+      }
+    }
   }
 
   @override
@@ -1614,6 +1646,47 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _pickLocation(int fieldIndex) async {
+    LatLng? initial;
+    if (_selectedLatitude != null && _selectedLongitude != null) {
+      initial = LatLng(_selectedLatitude!, _selectedLongitude!);
+    } else {
+      // Pusat Desa Kreyongan Atas, Jember (-8.1630, 113.7100)
+      initial = const LatLng(-8.1630, 113.7100);
+    }
+
+    final result = await showOsmMapPicker(
+      context,
+      initialLatLng: initial,
+      confirmLabel: 'Gunakan Lokasi Usaha Ini',
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _selectedLatitude = result.latitude;
+      _selectedLongitude = result.longitude;
+      if (result.alamatTeks.isNotEmpty) {
+        final alamat = result.alamatTeks;
+        if (!alamat.toLowerCase().contains(kreonganKeyword)) {
+          _controllers[fieldIndex].text = '$alamat, Kreongan Atas';
+        } else {
+          _controllers[fieldIndex].text = alamat;
+        }
+      }
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Titik lokasi usaha berhasil ditentukan dari peta.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: primaryColor,
+        ),
+      );
+    }
   }
 
   @override
@@ -1695,13 +1768,54 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                     index < widget.fields.length;
                     index++
                   ) ...[
-                    Text(
-                      widget.fields[index].label,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: inkColor,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          widget.fields[index].label,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: inkColor,
+                          ),
+                        ),
+                        if (widget.fields[index].isLocationPicker) ...[
+                          const Spacer(),
+                          InkWell(
+                            onTap: () => _pickLocation(index),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.hijauLembut,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFD8EBD8)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.map_rounded,
+                                    size: 14,
+                                    color: primaryColor,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Pilih di Peta',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 6),
                     TextFormField(
@@ -1751,7 +1865,7 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                            color: AppColors.hijauTua,
+                            color: AppColors.danger,
                           ),
                         ),
                       ),
@@ -1760,15 +1874,59 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                             (value == null || value.trim().isEmpty)) {
                           return '${widget.fields[index].label} wajib diisi';
                         }
-                        if (value != null &&
-                            value.trim().isNotEmpty &&
-                            widget.fields[index].requiresKreongan &&
-                            !value.toLowerCase().contains(kreonganKeyword)) {
-                          return 'Alamat usaha harus berada di wilayah Kreongan';
+                        if (widget.fields[index].requiresKreongan) {
+                          final isMapPicked = _selectedLatitude != null &&
+                              _selectedLongitude != null;
+                          final containsKeyword = value != null &&
+                              value.toLowerCase().contains(kreonganKeyword);
+                          if (!isMapPicked && !containsKeyword) {
+                            return 'Alamat usaha harus berada di wilayah Kreongan (pilih dari peta)';
+                          }
                         }
                         return null;
                       },
                     ),
+                    if (widget.fields[index].isLocationPicker &&
+                        _selectedLatitude != null &&
+                        _selectedLongitude != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              size: 16,
+                              color: primaryColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Titik tersimpan: ${_selectedLatitude!.toStringAsFixed(5)}, ${_selectedLongitude!.toStringAsFixed(5)}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              size: 16,
+                              color: primaryColor,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (index < widget.fields.length - 1)
                       const SizedBox(height: 16),
                   ],
@@ -1805,10 +1963,16 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
   void _saveForm() {
     if (!_formKey.currentState!.validate()) return;
 
-    final values = <String, String>{
+    final values = <String, dynamic>{
       for (var index = 0; index < widget.fields.length; index++)
         widget.fields[index].label: _controllers[index].text.trim(),
     };
+    if (_selectedLatitude != null) {
+      values['latitude'] = _selectedLatitude;
+    }
+    if (_selectedLongitude != null) {
+      values['longitude'] = _selectedLongitude;
+    }
 
     Navigator.pop(context, values);
   }

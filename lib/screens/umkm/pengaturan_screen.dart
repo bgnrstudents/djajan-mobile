@@ -10,6 +10,7 @@ import '../../services/umkm_data_service.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/osm_map_picker.dart';
 import '../../widgets/umkm_app_bar.dart';
+import '../../theme/app_theme.dart';
 import '../customer/order/order_widgets.dart';
 
 /// Satu baris form zona ongkir yang sedang diedit di layar ini.
@@ -669,6 +670,83 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Center(
+                                    child: Column(
+                                      children: [
+                                        Stack(
+                                          alignment: Alignment.bottomRight,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(alpha: 0.08),
+                                                    blurRadius: 10,
+                                                    offset: const Offset(0, 3),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: GambarJaringan(
+                                                url: service.profile.fotoProfilUrl,
+                                                width: 76,
+                                                height: 76,
+                                                radius: 38,
+                                                ikonKosong: Icons.storefront_rounded,
+                                                cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              right: 0,
+                                              bottom: 0,
+                                              child: Material(
+                                                color: AppColors.hijauTua,
+                                                shape: const CircleBorder(),
+                                                child: InkWell(
+                                                  onTap: () async {
+                                                    await _gantiFoto();
+                                                    setSheetState(() {});
+                                                  },
+                                                  customBorder: const CircleBorder(),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(color: Colors.white, width: 2),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.camera_alt_rounded,
+                                                      size: 14,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextButton.icon(
+                                          onPressed: () async {
+                                            await _gantiFoto();
+                                            setSheetState(() {});
+                                          },
+                                          icon: const Icon(Icons.photo_camera_outlined, size: 16, color: OC.primary),
+                                          label: const Text(
+                                            'Ubah Foto Profil Usaha',
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: OC.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
                                   const Text(
                                     'DETAIL PROFIL',
                                     style: TextStyle(
@@ -1453,66 +1531,81 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar Toko + Centang Verifikasi
-                    Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: GambarJaringan(
-                            url: profile.fotoProfilUrl,
-                            width: 60,
-                            height: 60,
-                            radius: 30,
-                            ikonKosong: Icons.storefront_rounded,
-                            cacheBuster:
-                                DateTime.now().millisecondsSinceEpoch.toString(),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Material(
-                            color: const Color(0xFF22C55E),
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              onTap: _mengunggahFoto ? null : _gantiFoto,
-                              customBorder: const CircleBorder(),
-                              child: Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 1.5,
-                                  ),
+                    // Avatar Toko + Tombol Kamera Ganti Foto
+                    GestureDetector(
+                      onTap: _mengunggahFoto ? null : _gantiFoto,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                                child: Center(
-                                  child: _mengunggahFoto
-                                      ? const SizedBox(
-                                          width: 10,
-                                          height: 10,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 1.5,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.check_rounded,
-                                          size: 12,
-                                          color: Colors.white,
-                                        ),
+                              ],
+                            ),
+                            child: GambarJaringan(
+                              url: profile.fotoProfilUrl,
+                              width: 62,
+                              height: 62,
+                              radius: 31,
+                              ikonKosong: Icons.storefront_rounded,
+                              cacheBuster:
+                                  DateTime.now().millisecondsSinceEpoch.toString(),
+                            ),
+                          ),
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Material(
+                              color: AppColors.hijauTua,
+                              shape: const CircleBorder(),
+                              elevation: 2,
+                              child: InkWell(
+                                onTap: _mengunggahFoto ? null : _gantiFoto,
+                                customBorder: const CircleBorder(),
+                                child: Tooltip(
+                                  message: 'Ganti Foto Profil Usaha',
+                                  child: Container(
+                                    width: 26,
+                                    height: 26,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: _mengunggahFoto
+                                          ? const SizedBox(
+                                              width: 12,
+                                              height: 12,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 1.8,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.camera_alt_rounded,
+                                              size: 13,
+                                              color: Colors.white,
+                                            ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 12),
 
