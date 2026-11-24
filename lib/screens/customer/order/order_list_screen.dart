@@ -472,11 +472,30 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Total Pembayaran',
-                          style: TextStyle(fontSize: 12, color: OC.muted),
+                        Text(
+                          o.nominalDp > 0 && o.status == OrderStatus.waitingPayment
+                              ? 'Tagihan DP (${o.skemaPo?.replaceAll('_', ' ').toUpperCase() ?? 'DP'})'
+                              : 'Total Pembayaran',
+                          style: const TextStyle(fontSize: 12, color: OC.muted),
                         ),
-                        Text(rupiah(o.total), style: OT.moneyLarge),
+                        Text(
+                          rupiah(o.nominalDp > 0 && o.status == OrderStatus.waitingPayment
+                              ? o.nominalDp
+                              : o.total),
+                          style: OT.moneyLarge.copyWith(
+                            color: o.nominalDp > 0 && o.status == OrderStatus.waitingPayment
+                                ? const Color(0xFFD97706)
+                                : null,
+                          ),
+                        ),
+                        if (o.nominalDp > 0 && o.status == OrderStatus.waitingPayment)
+                          Text(
+                            'Total PO: ${rupiah(o.total)}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: OC.faint,
+                            ),
+                          ),
                         Text(
                           fmtDateComma(o.createdAt),
                           style: const TextStyle(
@@ -490,7 +509,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   if (o.status == OrderStatus.waitingPayment)
                     FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: OC.primary,
+                        backgroundColor: o.nominalDp > 0 ? const Color(0xFFD97706) : OC.primary,
                         minimumSize: const Size(0, 40),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
@@ -520,7 +539,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
                       child: Text(
                         o.paymentMethod == PaymentMethod.cod
                             ? 'Konfirmasi'
-                            : 'Bayar',
+                            : (o.nominalDp > 0 ? 'Bayar DP' : 'Bayar'),
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

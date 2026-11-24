@@ -670,19 +670,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       case OrderStatus.waitingPayment:
         tag = o.hasPreOrder ? 'PO Aktif' : 'Pesanan Aktif';
         final cod = o.paymentMethod == PaymentMethod.cod;
-        chip = cod ? 'Menunggu Konfirmasi' : 'Menunggu Pembayaran';
-        headline = o.paymentDeadline != null
-            ? 'Bayar sebelum ${fmtDateComma(o.paymentDeadline!)}'
-            : 'Konfirmasi pesanan Anda';
+        final isDp = o.nominalDp > 0 && o.sisaBayar > 0;
+        final skema = o.skemaPo?.replaceAll('_', ' ').toUpperCase() ?? 'DP';
+        chip = cod
+            ? 'Menunggu Konfirmasi'
+            : (isDp ? 'Menunggu Pembayaran DP ($skema)' : 'Menunggu Pembayaran');
+        headline = isDp
+            ? 'Bayar DP ${rupiah(o.nominalDp)}${o.paymentDeadline != null ? ' sebelum ${fmtDateComma(o.paymentDeadline!)}' : ''}'
+            : (o.paymentDeadline != null
+                ? 'Bayar sebelum ${fmtDateComma(o.paymentDeadline!)}'
+                : 'Konfirmasi pesanan Anda');
         body = cod
             ? 'Konfirmasi pesanan agar $short dapat segera memprosesnya.'
+            : isDp
+            ? 'Pesanan Pre-Order ini menggunakan skema $skema. Selesaikan pembayaran DP sebesar ${rupiah(o.nominalDp)} via Midtrans agar $short dapat segera memproses pesanan Anda. Sisa ${rupiah(o.sisaBayar)} dilunasi nanti.'
             : o.paymentMethod == PaymentMethod.midtrans
             ? 'Selesaikan pembayaran melalui Midtrans agar $short dapat segera memproses pesanan Anda.'
             : 'Unggah bukti transfer agar $short dapat segera memproses pesanan Anda.';
         icon = Icons.account_balance_wallet_outlined;
         action = FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: OC.primary,
+            backgroundColor: isDp ? const Color(0xFFD97706) : OC.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -709,9 +717,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               );
             }
           },
-          icon: const Icon(Icons.upload_file_rounded, size: 18),
+          icon: const Icon(Icons.payment_rounded, size: 18),
           label: Text(
-            cod ? 'Konfirmasi Pesanan' : 'Bayar Sekarang',
+            cod
+                ? 'Konfirmasi Pesanan'
+                : (isDp
+                    ? 'Bayar DP Sekarang (${rupiah(o.nominalDp)})'
+                    : 'Bayar Sekarang'),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         );
@@ -1877,17 +1889,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   // -------------------------------------------------------------- payment
 
   Widget _paymentCard(Order o) {
+    final bool isDpOrder = o.nominalDp > 0 && o.sisaBayar > 0;
+    final bool isWaitingPayment = o.status == OrderStatus.waitingPayment;
+    final String skemaLabel =
+        o.skemaPo?.replaceAll('_', ' ').toUpperCase() ?? 'DP';
+
     String note;
     if (o.paymentMethod == PaymentMethod.cod) {
       note = 'Dibayar tunai saat pesanan tiba';
-    } else if (o.nominalDp > 0 && o.sisaBayar > 0) {
-      note = 'DP sudah dibayar — sisa dilunasi nanti';
+    } else if (isWaitingPayment) {
+      if (isDpOrder) {
+        note = 'Wajib bayar DP ($skemaLabel) sekarang via Midtrans';
+      } else {
+        note = 'Menunggu pembayaran Anda';
+      }
+    } else if (isDpOrder) {
+      note = 'DP ($skemaLabel) sudah dibayar — sisa dilunasi nanti';
     } else if (o.paymentMethod == PaymentMethod.midtrans) {
-      note = o.status == OrderStatus.waitingPayment
-          ? 'Menunggu pembayaran Anda'
-          : 'Pembayaran instan terverifikasi';
-    } else if (o.status == OrderStatus.waitingPayment) {
-      note = 'Menunggu pembayaran Anda';
+      note = 'Pembayaran instan terverifikasi';
     } else if (o.hasProof) {
       note = 'Bukti transfer diterima';
     } else {
@@ -1921,19 +1940,105 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               value: '-${rupiah(o.discount)}',
               color: OC.primary,
             ),
-          if (o.nominalDp > 0) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: Divider(height: 1, color: OC.line),
-            ),
-            MoneyRow(
-              label: 'DP Dibayar (${o.skemaPo?.replaceAll('_', ' ').toUpperCase() ?? 'DP'})',
-              value: rupiah(o.nominalDp),
-            ),
-            MoneyRow(
-              label: 'Sisa Pelunasan',
-              value: o.sisaBayar > 0 ? rupiah(o.sisaBayar) : 'Lunas',
-              color: o.sisaBayar > 0 ? OC.amber : OC.primary,
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Divider(height: 1, color: OC.line),
+          ),
+          MoneyRow(
+            label: 'Total Keseluruhan PO',
+            value: rupiah(o.total),
+          ),
+          if (isDpOrder) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isWaitingPayment
+                    ? const Color(0xFFFFFBEB)
+                    : const Color(0xFFEAF3EC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isWaitingPayment
+                      ? const Color(0xFFFDE68A)
+                      : const Color(0xFFD0E6D5),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 16,
+                        color: isWaitingPayment
+                            ? const Color(0xFFD97706)
+                            : OC.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'SKEMA PEMBAYARAN: $skemaLabel',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isWaitingPayment
+                              ? const Color(0xFFD97706)
+                              : OC.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isWaitingPayment
+                            ? 'Wajib Bayar Sekarang (DP)'
+                            : 'DP Terbayar',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: isWaitingPayment
+                              ? const Color(0xFFB45309)
+                              : OC.primary,
+                        ),
+                      ),
+                      Text(
+                        rupiah(o.nominalDp),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: isWaitingPayment
+                              ? const Color(0xFFB45309)
+                              : OC.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Sisa Pelunasan Nanti',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: OC.muted,
+                        ),
+                      ),
+                      Text(
+                        o.sisaBayar > 0 ? rupiah(o.sisaBayar) : 'Lunas',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: OC.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
           const Padding(
@@ -1947,9 +2052,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      o.hasPreOrder
-                          ? 'Total Pembayaran PO'
-                          : 'Total Pembayaran',
+                      isWaitingPayment && isDpOrder
+                          ? 'Tagihan DP Saat Ini'
+                          : (o.hasPreOrder
+                              ? 'Total Pembayaran PO'
+                              : 'Total Pembayaran'),
                       style: OT.cardTitle,
                     ),
                     Text(note, style: OT.caption),
@@ -1957,7 +2064,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                 ),
               ),
               const SizedBox(width: 10),
-              Text(rupiah(o.total), style: OT.moneyLarge),
+              Text(
+                isWaitingPayment && isDpOrder
+                    ? rupiah(o.nominalDp)
+                    : rupiah(o.total),
+                style: OT.moneyLarge.copyWith(
+                  color: isWaitingPayment && isDpOrder
+                      ? const Color(0xFFD97706)
+                      : null,
+                ),
+              ),
             ],
           ),
         ],
