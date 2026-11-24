@@ -1022,17 +1022,48 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
   // ------------------------------------------------ Beralih ke Akun Pembeli
   Future<void> _switchToCustomer() async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Beralih ke mode pelanggan...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
     try {
-      context.read<UmkmDataService>().clearState();
       final session = await context.read<AuthService>().switchToCustomer();
       if (!mounted) return;
       if (session.role != AuthRole.pelanggan) {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
+      context.read<UmkmDataService>().clearState();
       Navigator.of(context)
           .pushNamedAndRemoveUntil(AppRoutes.customerHome, (_) => false);
     } on ApiException catch (error) {
-      if (mounted) pesanGagal(context, error.pesan);
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        pesanGagal(context, error.pesan);
+      }
+    } catch (_) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        pesanGagal(
+          context,
+          'Gagal beralih ke mode pelanggan. Silakan coba lagi.',
+        );
+      }
     }
   }
 
@@ -1918,7 +1949,11 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = context.watch<UmkmDataService>().profile;
+    final umkmService = context.watch<UmkmDataService>();
+    if (!umkmService.sudahLogin) {
+      return const SizedBox.shrink();
+    }
+    final profile = umkmService.profile;
     final hasLocation = profile.latitude != null && profile.longitude != null;
     final bodyContent = ListView(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 32),

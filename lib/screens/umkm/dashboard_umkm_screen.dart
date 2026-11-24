@@ -50,19 +50,49 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
   }
 
   Future<void> _switchToCustomer() async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Beralih ke mode pelanggan...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
     try {
-      context.read<UmkmDataService>().clearState();
       final session = await context.read<AuthService>().switchToCustomer();
       if (!mounted) return;
       if (session.role != AuthRole.pelanggan) {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
+      context.read<UmkmDataService>().clearState();
       Navigator.of(context)
           .pushNamedAndRemoveUntil('/customer/home', (_) => false);
     } on ApiException catch (error) {
       if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.pesan)));
+      }
+    } catch (_) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal beralih ke mode pelanggan.'),
+          ),
+        );
       }
     }
   }
