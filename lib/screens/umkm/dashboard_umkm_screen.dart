@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/umkm_seller_models.dart';
+import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../services/category_service.dart';
 import '../../services/umkm_data_service.dart';
@@ -50,24 +51,11 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
   }
 
   Future<void> _switchToCustomer() async {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Beralih ke mode pelanggan...'),
-              ],
-            ),
-          ),
-        ),
-      ),
+    showModeSwitchLoadingDialog(
+      context,
+      title: 'Beralih ke Mode Pelanggan',
+      subtitle: 'Menyiapkan halaman belanja...',
+      icon: Icons.shopping_bag_outlined,
     );
 
     try {
@@ -77,8 +65,8 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
       context.read<UmkmDataService>().clearState();
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil('/customer/home', (_) => false);
+      Navigator.of(context, rootNavigator: true)
+          .pushNamedAndRemoveUntil(AppRoutes.customerHome, (_) => false);
     } on ApiException catch (error) {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();

@@ -529,3 +529,85 @@ class LogoDjajanLengkap extends StatelessWidget {
     );
   }
 }
+
+/// Dialog loading transisi antar mode (Pelanggan <-> UMKM) yang konsisten dan elegan.
+void showModeSwitchLoadingDialog(
+  BuildContext context, {
+  required String title,
+  required String subtitle,
+  required IconData icon,
+}) {
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    useRootNavigator: true,
+    builder: (dialogCtx) => PopScope(
+      canPop: false,
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.hijauLembut,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.hijauTua,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textGrey,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: AppColors.hijauTua,
+                  strokeWidth: 2.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}

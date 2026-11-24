@@ -1022,24 +1022,11 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
   // ------------------------------------------------ Beralih ke Akun Pembeli
   Future<void> _switchToCustomer() async {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Beralih ke mode pelanggan...'),
-              ],
-            ),
-          ),
-        ),
-      ),
+    showModeSwitchLoadingDialog(
+      context,
+      title: 'Beralih ke Mode Pelanggan',
+      subtitle: 'Menyiapkan halaman belanja...',
+      icon: Icons.shopping_bag_outlined,
     );
 
     try {
@@ -1049,7 +1036,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
       context.read<UmkmDataService>().clearState();
-      Navigator.of(context)
+      Navigator.of(context, rootNavigator: true)
           .pushNamedAndRemoveUntil(AppRoutes.customerHome, (_) => false);
     } on ApiException catch (error) {
       if (mounted) {

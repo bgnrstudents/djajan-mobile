@@ -19,6 +19,7 @@ import 'alamat_form_page.dart';
 import '../order/order_widgets.dart';
 import '../../../widgets/umkm_app_bar.dart';
 import '../../../widgets/osm_map_picker.dart';
+import '../../../widgets/app_widgets.dart';
 
 const String kreonganKeyword = 'kreongan';
 
@@ -881,19 +882,32 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Future<void> _switchToUmkm() async {
+    showModeSwitchLoadingDialog(
+      context,
+      title: 'Beralih ke Mode UMKM',
+      subtitle: 'Menyiapkan dashboard toko Anda...',
+      icon: Icons.storefront_rounded,
+    );
     try {
       final session = await context.read<AuthService>().switchToUmkm();
       if (!mounted) return;
       context.read<UmkmDataService>().loadProfileFromLogin(session.data);
-      Navigator.pushNamedAndRemoveUntil(
-        context,
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
         AppRoutes.umkmDashboard,
         (_) => false,
       );
     } on ApiException catch (error) {
       if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.pesan)));
+      }
+    } catch (_) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal beralih ke mode UMKM.')),
+        );
       }
     }
   }
