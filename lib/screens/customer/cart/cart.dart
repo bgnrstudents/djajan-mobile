@@ -791,109 +791,136 @@ class _CartScreenState extends State<CartScreen> {
           body: Stack(
             children: [
               const HeaderBotanicalBackdrop(height: 220),
-              Column(
-                children: [
-                  // Header dengan back button jika diperlukan
-                  if (needsBackButton)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 14, 6),
-                      child: Row(
-                        children: [
-                          DjajanBackButton(
-                            onPressed:
-                                widget.onBack ?? () => Navigator.pop(context),
-                          ),
-                          const SizedBox(width: 8),
-                          const Expanded(
-                            child: UmkmHeaderRow(
-                              padding: EdgeInsets.zero,
-                              iconBadge: UmkmSquircleIcon(
-                                icon: Icons.shopping_cart_rounded,
+              SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    // Header dengan back button jika diperlukan
+                    if (needsBackButton)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                        child: Row(
+                          children: [
+                            DjajanBackButton(
+                              onPressed:
+                                  widget.onBack ?? () => Navigator.pop(context),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Keranjang Belanja',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: OC.ink,
+                                      letterSpacing: -0.3,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  Text(
+                                    'Cek kembali item jajan & katering pilihanmu',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: OC.muted,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              title: 'Keranjang Belanja',
-                              subtitle:
-                                  'Cek kembali item jajan & katering pilihanmu',
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    const UmkmHeaderRow(
-                      padding: EdgeInsets.fromLTRB(14, 14, 14, 8),
-                      iconBadge: UmkmSquircleIcon(
-                        icon: Icons.shopping_cart_rounded,
-                      ),
-                      title: 'Keranjang Belanja',
-                      subtitle: 'Cek kembali item jajan & katering pilihanmu',
-                    ),
-                  // Content
-              Expanded(
-                child: isEmpty
-                    ? _buildEmptyCart()
-                    : ListView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                          ],
                         ),
-                        children: [
-                          // 1. Notice banner
-                          _buildNoticeBanner(grouped.length),
-                          const SizedBox(height: 10),
-                          _buildSelectionBar(),
-                          const SizedBox(height: 10),
-
-                          // 2. Receiver info
-                          _buildReceiverCard(),
-                          const SizedBox(height: 10),
-
-                          // 3. Vendor Cards (per UMKM)
-                          for (final entry in grouped.entries) ...[
-                            _buildUmkmCard(entry.key, entry.value),
-                            const SizedBox(height: 10),
-                          ],
-
-                          // 4. Payment method
-                          if (_selectedItems.isNotEmpty) ...[
-                            _buildPaymentMethodCard(
-                              isCodAvailable: isCodAvailable,
-                              disabledCodUmkmNames: disabledCodUmkms,
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-
-                          // 5. Payment summary
-                          _buildPaymentSummaryCard(
-                            subtotalProduk: subtotalProduk,
-                            totalOngkir: totalOngkir,
-                            totalPembayaran: totalPembayaran,
-                            isDpScheme: isDpScheme,
-                            dpLabel: dpLabel,
-                            nominalDp: nominalDp,
-                            sisaPelunasan: sisaPelunasan,
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(14, 10, 14, 10),
+                        child: UmkmHeaderRow(
+                          padding: EdgeInsets.zero,
+                          iconBadge: UmkmSquircleIcon(
+                            icon: Icons.shopping_cart_rounded,
                           ),
-                          const SizedBox(height: 14),
-
-                          // 6. Trust footer
-                          _buildTrustFooter(),
-                          const SizedBox(height: 12),
-
-                          // 7. Action button
-                          _buildCheckoutButton(
-                            totalPembayaran,
-                            isDpScheme: isDpScheme,
-                            dpLabel: dpLabel,
-                            nominalDp: nominalDp,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
+                          title: 'Keranjang Belanja',
+                          subtitle: 'Cek kembali item jajan & katering pilihanmu',
+                        ),
                       ),
+                    // Content
+                    Expanded(
+                      child: isEmpty
+                          ? _buildEmptyCart()
+                          : ListView(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              children: [
+                                // 1. Notice banner
+                                _buildNoticeBanner(grouped.length),
+                                const SizedBox(height: 10),
+                                _buildSelectionBar(),
+                                const SizedBox(height: 10),
+
+                                // 2. Receiver info
+                                _buildReceiverCard(),
+                                const SizedBox(height: 10),
+
+                                // 3. Vendor Cards (per UMKM)
+                                for (final entry in grouped.entries) ...[
+                                  _buildUmkmCard(entry.key, entry.value),
+                                  const SizedBox(height: 10),
+                                ],
+
+                                // 4. Payment method
+                                if (_selectedItems.isNotEmpty) ...[
+                                  _buildPaymentMethodCard(
+                                    isCodAvailable: isCodAvailable,
+                                    disabledCodUmkmNames: disabledCodUmkms,
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+
+                                // 5. Payment summary
+                                _buildPaymentSummaryCard(
+                                  subtotalProduk: subtotalProduk,
+                                  totalOngkir: totalOngkir,
+                                  totalPembayaran: totalPembayaran,
+                                  isDpScheme: isDpScheme,
+                                  dpLabel: dpLabel,
+                                  nominalDp: nominalDp,
+                                  sisaPelunasan: sisaPelunasan,
+                                ),
+                                const SizedBox(height: 14),
+
+                                // 6. Trust footer
+                                _buildTrustFooter(),
+                                const SizedBox(height: 12),
+
+                                // 7. Action button
+                                _buildCheckoutButton(
+                                  totalPembayaran,
+                                  isDpScheme: isDpScheme,
+                                  dpLabel: dpLabel,
+                                  nominalDp: nominalDp,
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        ],
-      ),
-    );
+        );
       },
     );
   }
