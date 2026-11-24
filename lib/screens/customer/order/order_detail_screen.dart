@@ -1410,7 +1410,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                             ),
                           ),
                         )
-                      else if (s.trailing != null && state == _StepState.done)
+                      else if (s.trailing != null &&
+                          s.trailing!.isNotEmpty &&
+                          state == _StepState.done)
                         Padding(
                           padding: const EdgeInsets.only(top: 1),
                           child: Text(
@@ -1551,7 +1553,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   children: [
                     Expanded(
                       child: Text(
-                        '${i.quantity}x @ ${rupiah(i.price)}/${i.unit.toLowerCase()}',
+                        '${i.quantity} x ${rupiah(i.price)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: OT.secondary,

@@ -211,10 +211,16 @@ const _months = [
 
 String _t(int v) => v.toString().padLeft(2, '0');
 
+bool _hasSpecificTime(DateTime d) =>
+    !(d.hour == 0 && d.minute == 0 && d.second == 0);
+
 String fmtDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
-String fmtTime(DateTime d) => '${_t(d.hour)}:${_t(d.minute)} WIB';
-String fmtDateTime(DateTime d) => '${fmtDate(d)} (${fmtTime(d)})';
-String fmtDateComma(DateTime d) => '${fmtDate(d)}, ${fmtTime(d)}';
+String fmtTime(DateTime d) =>
+    _hasSpecificTime(d) ? '${_t(d.hour)}:${_t(d.minute)} WIB' : '';
+String fmtDateTime(DateTime d) =>
+    _hasSpecificTime(d) ? '${fmtDate(d)} (${fmtTime(d)})' : fmtDate(d);
+String fmtDateComma(DateTime d) =>
+    _hasSpecificTime(d) ? '${fmtDate(d)}, ${fmtTime(d)}' : fmtDate(d);
 
 // --------------------------------------------------------------- helpers
 
