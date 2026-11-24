@@ -301,11 +301,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
       prefixIcon: Icons.phone_outlined,
     ),
     ProfileFormField(
-      label: 'Alamat Usaha di Kreongan',
+      label: 'Alamat Usaha',
       initialValue: _businessAddress ?? '',
       maxLines: 3,
-      helperText: 'Pendaftaran usaha hanya untuk warga Kreongan.',
-      requiresKreongan: true,
+      helperText: 'Tentukan titik lokasi usaha Anda melalui peta.',
+      requiresKreongan: false,
       prefixIcon: Icons.location_on_outlined,
       isLocationPicker: true,
       initialLatitude: _businessLatitude,
@@ -850,7 +850,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
       final data = await ApiService.post('pelanggan/umkm_daftar', {
         'nama_usaha': values['Nama Usaha'],
         'spesialis': values['Spesialisasi Usaha'],
-        'alamat': values['Alamat Usaha di Kreongan'],
+        'alamat': values['Alamat Usaha'] ?? values['Alamat Usaha di Kreongan'] ?? '',
         'no_telp_usaha': values['Nomor Handphone'],
         'email_usaha': _user.email,
         if (values['latitude'] != null) 'latitude': values['latitude'],
@@ -1669,12 +1669,7 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
       _selectedLatitude = result.latitude;
       _selectedLongitude = result.longitude;
       if (result.alamatTeks.isNotEmpty) {
-        final alamat = result.alamatTeks;
-        if (!alamat.toLowerCase().contains(kreonganKeyword)) {
-          _controllers[fieldIndex].text = '$alamat, Kreongan Atas';
-        } else {
-          _controllers[fieldIndex].text = alamat;
-        }
+        _controllers[fieldIndex].text = result.alamatTeks;
       }
     });
 
