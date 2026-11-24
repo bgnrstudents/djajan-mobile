@@ -16,6 +16,10 @@ import '../order/address_picker_sheet.dart';
 import '../../../widgets/app_network_image.dart';
 import '../../../widgets/umkm_app_bar.dart';
 
+/// Composite key agar produk "keduanya" bisa masuk keranjang
+/// sebagai dua baris terpisah (instant vs PO) tanpa bentrok productId.
+String _cartKey(CartLine item) => '${item.productId}_${item.type.name}';
+
 class CartScreen extends StatefulWidget {
   final bool showAppBar;
   final VoidCallback? onBack;
@@ -35,8 +39,8 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final CartService _cartService = CartService();
   final OrderService _orderService = OrderService();
-  final Set<String> _selectedProductIds = {};
-  final Set<String> _knownProductIds = {};
+  final Set<String> _selectedKeys = {};
+  final Set<String> _knownKeys = {};
 
   // Recipient state
   bool _addressHasCoords = false;
@@ -94,8 +98,20 @@ class _CartScreenState extends State<CartScreen> {
   /// Hitung ongkir untuk satu UMKM tertentu dari API ongkir_hitung
   Future<void> _calculateOngkirForUmkm(String umkmId, CartLine firstLine) async {
     final umkmIdInt = int.tryParse(umkmId);
-    if (umkmIdInt == null || !_addressHasCoords) return;
-    if (_ongkirLoading[umkmId] == true) return; // Sudah loading
+    if (umkmIdInt == null || !_addressHasCoords) {
+      _courierFees[umkmId] = firstLine.courierFee?.round() ?? 0;
+      return;
+    }
+    if (_ongkirLoading[umkmId] == true || _courierFees.containsKey(umkmId)) {
+      return; // Sudah loading atau sudah ada hasil
+    }
+
+    final auth = context.read<AuthService>();
+    if (!auth.isLoggedIn || !auth.isPelanggan) {
+      // User belum login sebagai pelanggan, gunakan ongkir default toko agar tidak 401 looping
+      _courierFees[umkmId] = firstLine.courierFee?.round() ?? 0;
+      return;
+    }
 
     if (mounted) setState(() => _ongkirLoading[umkmId] = true);
     try {
@@ -121,7 +137,12 @@ class _CartScreenState extends State<CartScreen> {
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _ongkirLoading[umkmId] = false);
+      setState(() {
+        _ongkirLoading[umkmId] = false;
+        // Fallback ke tarif default toko agar _courierFees.containsKey(umkmId) bernilai TRUE dan tidak memicu loop rebuild!
+        _courierFees[umkmId] = firstLine.courierFee?.round() ?? 0;
+        _ongkirMessage[umkmId] = 'Tarif standar kurir';
+      });
     }
   }
 
@@ -144,24 +165,24 @@ class _CartScreenState extends State<CartScreen> {
   bool _isSubmitting = false;
 
   void _syncSelection() {
-    final productIds = _cartService.items.map((item) => item.productId).toSet();
-    _selectedProductIds.removeWhere((id) => !productIds.contains(id));
-    _selectedProductIds.addAll(productIds.difference(_knownProductIds));
-    _knownProductIds
-      ..removeWhere((id) => !productIds.contains(id))
-      ..addAll(productIds);
+    final keys = _cartService.items.map(_cartKey).toSet();
+    _selectedKeys.removeWhere((k) => !keys.contains(k));
+    _selectedKeys.addAll(keys.difference(_knownKeys));
+    _knownKeys
+      ..removeWhere((k) => !keys.contains(k))
+      ..addAll(keys);
   }
 
   List<CartLine> get _selectedItems => _cartService.items
-      .where((item) => _selectedProductIds.contains(item.productId))
+      .where((item) => _selectedKeys.contains(_cartKey(item)))
       .toList();
 
-  void _toggleProduct(String productId, bool selected) {
+  void _toggleProduct(String key, bool selected) {
     setState(() {
       if (selected) {
-        _selectedProductIds.add(productId);
+        _selectedKeys.add(key);
       } else {
-        _selectedProductIds.remove(productId);
+        _selectedKeys.remove(key);
       }
     });
   }
@@ -169,11 +190,11 @@ class _CartScreenState extends State<CartScreen> {
   void _toggleAll(bool selected) {
     setState(() {
       if (selected) {
-        _selectedProductIds
+        _selectedKeys
           ..clear()
-          ..addAll(_cartService.items.map((item) => item.productId));
+          ..addAll(_cartService.items.map(_cartKey));
       } else {
-        _selectedProductIds.clear();
+        _selectedKeys.clear();
       }
     });
   }
@@ -454,6 +475,7 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     setState(() => _isSubmitting = true);
+    bool dialogShown = false;
 
     try {
       final options = <String, VendorCheckout>{};
@@ -518,6 +540,7 @@ class _CartScreenState extends State<CartScreen> {
       }
 
       // Tampilkan loader modal tanpa henti agar interaksi terkunci dan transisi mulus
+      dialogShown = true;
       showDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -581,8 +604,9 @@ class _CartScreenState extends State<CartScreen> {
       _cartService.removeProducts(items.map((item) => item.productId));
 
       // Tutup dialog loader sebelum berpindah layar
-      if (mounted) {
+      if (dialogShown && mounted) {
         Navigator.of(context, rootNavigator: true).pop();
+        dialogShown = false;
       }
 
       if (!mounted) return;
@@ -615,19 +639,25 @@ class _CartScreenState extends State<CartScreen> {
         );
       }
     } on OrderException catch (e) {
-      if (mounted) {
+      if (dialogShown && mounted) {
         Navigator.of(
           context,
           rootNavigator: true,
         ).pop(); // Tutup dialog loader jika gagal
+        dialogShown = false;
+      }
+      if (mounted) {
         showToast(context, e.message, error: true);
       }
     } catch (e) {
-      if (mounted) {
+      if (dialogShown && mounted) {
         Navigator.of(
           context,
           rootNavigator: true,
         ).pop(); // Tutup dialog loader jika gagal
+        dialogShown = false;
+      }
+      if (mounted) {
         showToast(context, 'Terjadi kesalahan: $e', error: true);
       }
     } finally {
@@ -650,11 +680,11 @@ class _CartScreenState extends State<CartScreen> {
         final bool hasPoSelected =
             selected.any((item) => item.type == OrderType.preOrder);
 
-        // Cari UMKM data untuk skema PO
+        // Cari UMKM data untuk skema PO — gunakan Provider CatalogService
         Umkm? activeUmkm;
         if (selected.isNotEmpty) {
           final firstUmkmId = selected.first.umkmId;
-          activeUmkm = CatalogService().umkmById(firstUmkmId);
+          activeUmkm = context.read<CatalogService>().umkmById(firstUmkmId);
         }
         final String skemaPo =
             activeUmkm?.skemaPo ?? 'Lunas di Awal (Full Payment)';
@@ -698,7 +728,7 @@ class _CartScreenState extends State<CartScreen> {
         for (final entry in grouped.entries) {
           final umkmId = entry.key;
           final lines = entry.value
-              .where((item) => _selectedProductIds.contains(item.productId))
+              .where((item) => _selectedKeys.contains(_cartKey(item)))
               .toList();
           if (lines.isEmpty) continue;
           final int umkmItemsTotal = lines.fold(
@@ -1175,7 +1205,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildUmkmCard(String umkmId, List<CartLine> lines) {
     final first = lines.first;
     final selectedLines = lines
-        .where((item) => _selectedProductIds.contains(item.productId))
+        .where((item) => _selectedKeys.contains(_cartKey(item)))
         .toList();
     final bool hasPreOrder = selectedLines.any(
       (l) => l.type == OrderType.preOrder,
@@ -1477,7 +1507,7 @@ class _CartScreenState extends State<CartScreen> {
   // Row for each Product Item in Cart
   Widget _buildCartItemRow(CartLine item) {
     final bool isPO = item.type == OrderType.preOrder;
-    final bool isSelected = _selectedProductIds.contains(item.productId);
+    final bool isSelected = _selectedKeys.contains(_cartKey(item));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1488,7 +1518,7 @@ class _CartScreenState extends State<CartScreen> {
             value: isSelected,
             activeColor: OC.primary,
             onChanged: (value) =>
-                _toggleProduct(item.productId, value ?? false),
+                _toggleProduct(_cartKey(item), value ?? false),
           ),
           _productImage(
             imageUrl: item.imageUrl,
