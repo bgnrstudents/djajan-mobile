@@ -44,6 +44,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _increaseQty() {
+    final maxStock = !isPoActive && p.stock != null ? p.stock! : null;
+    if (maxStock != null && _quantity >= maxStock) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Stok produk hanya tersedia $maxStock pcs'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     setState(() {
       _quantity++;
     });
@@ -53,6 +64,115 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (_quantity > minAllowedQty) {
       setState(() {
         _quantity--;
+      });
+    }
+  }
+
+  Future<void> _showQuantityDialog() async {
+    final controller = TextEditingController(text: '$_quantity');
+    final maxStock = !isPoActive && p.stock != null ? p.stock! : null;
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Ubah Jumlah Pesanan',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                p.name,
+                style: const TextStyle(fontSize: 13, color: textMuted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: primaryGreen,
+                ),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  filled: true,
+                  fillColor: AppColors.hijauLembut,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  helperText: isPoActive
+                      ? 'Minimal pemesanan Pre-Order: $minAllowedQty pcs'
+                      : (maxStock != null
+                          ? 'Maksimal stok tersedia: $maxStock pcs'
+                          : null),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: primaryGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                final input = int.tryParse(controller.text.trim());
+                if (input != null && input > 0) {
+                  Navigator.pop(dialogCtx, input);
+                } else {
+                  Navigator.pop(dialogCtx);
+                }
+              },
+              child: const Text('Terapkan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      int finalQty = result;
+      if (finalQty < minAllowedQty) {
+        finalQty = minAllowedQty;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Jumlah disesuaikan ke minimal pemesanan: $minAllowedQty pcs',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else if (maxStock != null && finalQty > maxStock) {
+        finalQty = maxStock;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Jumlah disesuaikan ke batas stok maksimal: $maxStock pcs',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      setState(() {
+        _quantity = finalQty;
       });
     }
   }
@@ -934,23 +1054,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               left: Radius.circular(10),
                             ),
                           ),
-                          SizedBox(
-                            width: 34,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 160),
-                              transitionBuilder: (child, animation) =>
-                                  ScaleTransition(
-                                scale: animation,
-                                child: child,
-                              ),
-                              child: Text(
-                                '$_quantity',
-                                key: ValueKey(_quantity),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                  color: textDark,
+                          Tooltip(
+                            message: 'Ketuk untuk ketik jumlah',
+                            child: InkWell(
+                              onTap: _showQuantityDialog,
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                constraints: const BoxConstraints(minWidth: 36),
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 160),
+                                  transitionBuilder: (child, animation) =>
+                                      ScaleTransition(
+                                    scale: animation,
+                                    child: child,
+                                  ),
+                                  child: Text(
+                                    '$_quantity',
+                                    key: ValueKey(_quantity),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: textDark,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

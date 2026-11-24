@@ -203,6 +203,106 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
+  Future<void> _showQuantityDialog(CartLine item) async {
+    final controller = TextEditingController(text: '${item.quantity}');
+    final isPo = item.type == OrderType.preOrder;
+    final minAllowed = isPo && item.minOrderPo > 0 ? item.minOrderPo : 1;
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Ubah Jumlah',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.productName,
+                style: const TextStyle(fontSize: 13, color: OC.muted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: OC.primary,
+                ),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  filled: true,
+                  fillColor: OC.mint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  helperText: isPo
+                      ? 'Minimal pemesanan Pre-Order: $minAllowed pcs'
+                      : 'Ketik 0 jika ingin menghapus dari keranjang',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: OC.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                final input = int.tryParse(controller.text.trim());
+                if (input != null && input >= 0) {
+                  Navigator.pop(dialogCtx, input);
+                } else {
+                  Navigator.pop(dialogCtx);
+                }
+              },
+              child: const Text('Terapkan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      if (result == 0) {
+        _cartService.updateQuantity(item.productId, 0, type: item.type);
+        return;
+      }
+      int finalQty = result;
+      if (finalQty < minAllowed) {
+        finalQty = minAllowed;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Jumlah disesuaikan ke minimal pemesanan: $minAllowed pcs',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      _cartService.updateQuantity(item.productId, finalQty, type: item.type);
+    }
+  }
+
   @override
   void dispose() {
     for (final c in _poPurposeControllers.values) {
@@ -1679,17 +1779,26 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 3,
-                            ),
-                            child: Text(
-                              '${item.quantity}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: OC.ink,
+                          Tooltip(
+                            message: 'Ketuk untuk ketik jumlah',
+                            child: InkWell(
+                              onTap: () => _showQuantityDialog(item),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Container(
+                                constraints: const BoxConstraints(minWidth: 28),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 3,
+                                ),
+                                child: Text(
+                                  '${item.quantity}',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: OC.ink,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
