@@ -719,7 +719,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       case OrderStatus.reviewing:
         tag = o.hasPreOrder ? 'PO Aktif' : 'Pesanan Aktif';
         chip = 'Menunggu Persetujuan UMKM';
-        headline = 'Estimasi konfirmasi dalam 30 menit';
+        headline = o.hasPreOrder
+            ? (o.paymentDeadline != null
+                ? 'Estimasi konfirmasi s/d ${fmtDateComma(o.paymentDeadline!)}'
+                : 'Estimasi konfirmasi maksimal 24 jam')
+            : 'Estimasi konfirmasi dalam 30 menit';
         body = o.hasPreOrder
             ? '$short sedang meninjau ketersediaan bahan dapur segar & kapasitas porsi Pre-Order Anda.'
             : '$short sedang memeriksa ketersediaan pesanan Anda.';
