@@ -678,7 +678,7 @@ class _CartScreenState extends State<CartScreen> {
                   const SizedBox(height: 18),
                   Text(
                     paymentMethod == PaymentMethod.midtrans
-                        ? 'Menghubungkan ke Midtrans...'
+                        ? 'Menyiapkan pembayaran online...'
                         : 'Membuat pesanan...',
                     style: const TextStyle(
                       fontSize: 15,
@@ -2253,7 +2253,7 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                           const Text(
-                            'Uang muka via Midtrans / QRIS',
+                            'Uang muka online (QRIS / E-Wallet / Transfer)',
                             style: TextStyle(fontSize: 11, color: OC.muted),
                           ),
                         ],
@@ -2276,7 +2276,7 @@ class _CartScreenState extends State<CartScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sisa Pelunasan',
+                            'Sisa Bayar Nanti',
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
@@ -2284,7 +2284,7 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                           Text(
-                            'Dibayar saat pesanan diantar',
+                            'Dibayar saat pesanan sampai',
                             style: TextStyle(fontSize: 10.5, color: OC.muted),
                           ),
                         ],

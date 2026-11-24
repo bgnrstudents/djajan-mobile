@@ -194,7 +194,7 @@ class ApiService {
             'Periksa: route-nya sudah ada di routes/api.php, dan bootstrap/app.php '
             'sudah mendaftarkan routes/api.php (api: __DIR__."/../routes/api.php").';
       case 401:
-        return 'Sesi login sudah tidak valid (401). Silakan login ulang.';
+        return 'Sesi login Anda telah berakhir. Silakan masuk kembali.';
       case 403:
         return 'Akses ditolak server (403). Periksa middleware/izin pada route ini.';
       case 500:

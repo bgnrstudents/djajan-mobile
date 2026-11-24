@@ -683,9 +683,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         body = cod
             ? 'Konfirmasi pesanan agar $short dapat segera memprosesnya.'
             : isDp
-            ? 'Pesanan Pre-Order ini menggunakan skema $skema. Selesaikan pembayaran DP sebesar ${rupiah(o.nominalDp)} via Midtrans agar $short dapat segera memproses pesanan Anda. Sisa ${rupiah(o.sisaBayar)} dilunasi nanti.'
+            ? 'Pesanan Pre-Order ini menggunakan skema $skema. Selesaikan pembayaran Uang Muka (DP) sebesar ${rupiah(o.nominalDp)} agar $short dapat segera memproses pesanan Anda. Sisa ${rupiah(o.sisaBayar)} dibayar saat pesanan sampai.'
             : o.paymentMethod == PaymentMethod.midtrans
-            ? 'Selesaikan pembayaran melalui Midtrans agar $short dapat segera memproses pesanan Anda.'
+            ? 'Selesaikan pembayaran online agar $short dapat segera memproses pesanan Anda.'
             : 'Unggah bukti transfer agar $short dapat segera memproses pesanan Anda.';
         icon = Icons.account_balance_wallet_outlined;
         action = FilledButton.icon(
@@ -1191,10 +1191,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           trailing: fmtTime(o.createdAt),
         ),
         _Step(
-          'Pembayaran Midtrans',
+          'Pembayaran Online',
           isPaid
-              ? 'Pembayaran instan via Midtrans telah terverifikasi otomatis.'
-              : 'Selesaikan pembayaran instan via Midtrans (QRIS, e-wallet, atau VA).',
+              ? 'Pembayaran online telah terverifikasi otomatis.'
+              : 'Selesaikan pembayaran online via QRIS, e-wallet, atau Virtual Account.',
           Icons.account_balance_wallet_outlined,
         ),
         _Step(
@@ -1899,14 +1899,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       note = 'Dibayar tunai saat pesanan tiba';
     } else if (isWaitingPayment) {
       if (isDpOrder) {
-        note = 'Wajib bayar DP ($skemaLabel) sekarang via Midtrans';
+        note = 'Wajib bayar DP ($skemaLabel) sekarang secara online';
       } else {
         note = 'Menunggu pembayaran Anda';
       }
     } else if (isDpOrder) {
-      note = 'DP ($skemaLabel) sudah dibayar — sisa dilunasi nanti';
+      note = 'DP ($skemaLabel) sudah dibayar — sisa dibayar saat pesanan sampai';
     } else if (o.paymentMethod == PaymentMethod.midtrans) {
-      note = 'Pembayaran instan terverifikasi';
+      note = 'Pembayaran online terverifikasi';
     } else if (o.hasProof) {
       note = 'Bukti transfer diterima';
     } else {

@@ -91,7 +91,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     if (url == null || url.isEmpty) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Tautan pembayaran Midtrans belum tersedia untuk pesanan ini.';
+          _errorMessage = 'Tautan pembayaran belum tersedia untuk pesanan ini.';
         });
       }
       return;
@@ -164,7 +164,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Pembayaran Midtrans'),
+          title: const Text('Pembayaran Online'),
           backgroundColor: OC.primary,
           foregroundColor: Colors.white,
           leading: IconButton(
@@ -232,7 +232,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                             CircularProgressIndicator(color: OC.primary),
                             SizedBox(height: 16),
                             Text(
-                              'Menghubungkan ke gerbang pembayaran Midtrans...',
+                              'Menyiapkan metode pembayaran online...',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -268,7 +268,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
           content: Text(
             paid
                 ? 'Pembayaran sudah diterima. Pesanan menunggu diproses UMKM.'
-                : 'Pembayaran sudah dikirim. Status akan diperbarui setelah notifikasi Midtrans diterima.',
+                : 'Pembayaran sudah dikirim. Status pesanan akan otomatis terverifikasi.',
           ),
           actions: [
             TextButton(

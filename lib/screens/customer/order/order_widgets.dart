@@ -316,8 +316,8 @@ String generateOrderWhatsAppMessage(Order order, {String? umkmName}) {
   final payText = isCod
       ? 'Bayar di Tempat (COD)'
       : (order.status == OrderStatus.waitingPayment
-          ? 'Menunggu Pembayaran (Midtrans)'
-          : 'Lunas (Midtrans)');
+          ? 'Menunggu Pembayaran Online'
+          : 'Lunas (Pembayaran Online)');
 
   final deliveryText = main.delivery == DeliveryMethod.courier
       ? 'Diantar Kurir Warga'

@@ -118,7 +118,7 @@ class ReceiptData {
           : 'Ambil Sendiri (Pickup)',
       paymentMethod: order.paymentMethod == PaymentMethod.cod
           ? 'COD (Bayar di Tempat)'
-          : 'Midtrans (Online)',
+          : 'Pembayaran Online (QRIS / Transfer)',
       paymentStatus: payStatus,
       items: items,
       subtotal: order.subtotal,
