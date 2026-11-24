@@ -55,7 +55,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadLocation();
+      }
+    });
   }
 
   Future<void> _loadLocation({CustomerAddress? selected}) async {

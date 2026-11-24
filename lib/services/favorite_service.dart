@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 
 import '../models/product.dart';
 import '../models/umkm.dart';
@@ -15,6 +16,18 @@ class FavoriteService extends ChangeNotifier {
   final Set<String> _productIds = {};
   final Set<String> _umkmIds = {};
 
+  void _safeNotify() {
+    final binding = WidgetsBinding.instance;
+    if (binding.schedulerPhase == SchedulerPhase.persistentCallbacks ||
+        binding.schedulerPhase == SchedulerPhase.midFrameMicrotasks) {
+      binding.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    } else {
+      notifyListeners();
+    }
+  }
+
   // ----------------------------------------------------------- Produk
   bool isProductFavorite(String productId) => _productIds.contains(productId);
 
@@ -26,7 +39,7 @@ class FavoriteService extends ChangeNotifier {
     } else {
       _productIds.add(productId);
     }
-    notifyListeners();
+    _safeNotify();
     return !wasFavorite;
   }
 
@@ -41,7 +54,7 @@ class FavoriteService extends ChangeNotifier {
     } else {
       _umkmIds.add(umkmId);
     }
-    notifyListeners();
+    _safeNotify();
     return !wasFavorite;
   }
 
@@ -68,7 +81,7 @@ class FavoriteService extends ChangeNotifier {
     _umkmIds
       ..clear()
       ..addAll(((data['umkm'] as List?) ?? []).map((id) => id.toString()));
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> syncProduct(String id, bool favorite) async {
@@ -91,6 +104,6 @@ class FavoriteService extends ChangeNotifier {
   void clear() {
     _productIds.clear();
     _umkmIds.clear();
-    notifyListeners();
+    _safeNotify();
   }
 }

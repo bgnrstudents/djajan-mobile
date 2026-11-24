@@ -50,7 +50,11 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAddress();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadAddress();
+      }
+    });
   }
 
   Future<void> _loadAddress() async {

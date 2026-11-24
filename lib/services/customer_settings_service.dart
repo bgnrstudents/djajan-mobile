@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 
 import '../models/customer_settings_models.dart';
 import 'api_service.dart';
@@ -13,6 +14,18 @@ class CustomerSettingsService extends ChangeNotifier {
   bool loading = false;
   String? errorMessage;
 
+  void _safeNotify() {
+    final binding = WidgetsBinding.instance;
+    if (binding.schedulerPhase == SchedulerPhase.persistentCallbacks ||
+        binding.schedulerPhase == SchedulerPhase.midFrameMicrotasks) {
+      binding.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    } else {
+      notifyListeners();
+    }
+  }
+
   List<CustomerAddress> get addresses => List.unmodifiable(_addresses);
   CustomerAddress? get primaryAddress {
     for (final address in _addresses) {
@@ -25,7 +38,7 @@ class CustomerSettingsService extends ChangeNotifier {
     if (!ApiService.hasToken) return;
     loading = true;
     errorMessage = null;
-    notifyListeners();
+    _safeNotify();
     try {
       final results = await Future.wait([
         ApiService.get('pelanggan/alamat_list'),
@@ -43,7 +56,7 @@ class CustomerSettingsService extends ChangeNotifier {
       errorMessage = error.pesan;
     } finally {
       loading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -59,14 +72,14 @@ class CustomerSettingsService extends ChangeNotifier {
     bool primary = false,
   }) async {
     final data = await ApiService.post('pelanggan/alamat_simpan', {
-      'id_alamat': ?id,
+      'id_alamat': id,
       'label': label,
       'nama_penerima': recipient,
       'no_telp': phone,
       'alamat': address,
       'catatan': note,
-      'latitude': ?latitude,
-      'longitude': ?longitude,
+      'latitude': latitude,
+      'longitude': longitude,
       'utama': primary,
     });
     final saved = CustomerAddress.fromJson(data as Map<String, dynamic>);
@@ -92,13 +105,13 @@ class CustomerSettingsService extends ChangeNotifier {
         }
       }
     }
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> deleteAddress(int id) async {
     await ApiService.post('pelanggan/alamat_hapus', {'id_alamat': id});
     _addresses.removeWhere((item) => item.id == id);
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> setPrimary(int id) async {
@@ -120,12 +133,12 @@ class CustomerSettingsService extends ChangeNotifier {
         primary: item.id == primary.id,
       );
     }
-    notifyListeners();
+    _safeNotify();
   }
 
   void clear() {
     _addresses.clear();
     FavoriteService().clear();
-    notifyListeners();
+    _safeNotify();
   }
 }
