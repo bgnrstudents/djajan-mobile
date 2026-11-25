@@ -26,6 +26,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String _sentToEmail = '';
+  String? _noticeMessage;
+  AuthNoticeTone _noticeTone = AuthNoticeTone.error;
 
   @override
   void dispose() {
@@ -34,6 +36,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _showNotice(String message, AuthNoticeTone tone) {
+    setState(() {
+      _noticeMessage = message;
+      _noticeTone = tone;
+    });
   }
 
   String? _validateEmail(String? value) {
@@ -59,7 +68,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!(_emailFormKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _noticeMessage = null;
+    });
 
     try {
       await ApiService.postJson('password/forgot', {'email': email});
@@ -67,21 +79,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _sentToEmail = email;
         _step = 1;
+        _noticeMessage = 'Kode OTP 6 digit telah dikirim ke $email.';
+        _noticeTone = AuthNoticeTone.info;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Kode OTP telah dikirim ke $email'),
-          backgroundColor: AuthStyle.primary,
-        ),
-      );
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.pesan),
-            backgroundColor: AuthStyle.danger,
-          ),
-        );
+        _showNotice(e.pesan, AuthNoticeTone.error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -96,7 +99,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final password = _passwordController.text;
     final confirm = _confirmPasswordController.text;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _noticeMessage = null;
+    });
 
     try {
       await ApiService.postJson('password/reset', {
@@ -108,15 +114,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
       setState(() {
         _step = 2;
+        _noticeMessage = null;
       });
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.pesan),
-            backgroundColor: AuthStyle.danger,
-          ),
-        );
+        _showNotice(e.pesan, AuthNoticeTone.error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -125,25 +127,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _resendOtp() async {
     if (_loading || _sentToEmail.isEmpty) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _noticeMessage = null;
+    });
 
     try {
       await ApiService.postJson('password/forgot', {'email': _sentToEmail});
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Kode baru telah dikirim ulang ke $_sentToEmail'),
-          backgroundColor: AuthStyle.primary,
-        ),
+      _showNotice(
+        'Kode verifikasi baru telah dikirim ulang ke $_sentToEmail.',
+        AuthNoticeTone.info,
       );
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.pesan),
-            backgroundColor: AuthStyle.danger,
-          ),
-        );
+        _showNotice(e.pesan, AuthNoticeTone.error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -152,39 +150,51 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AuthStyle.bg,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.paddingOf(context).bottom + 16,
-        ),
-        child: Column(
+    return AuthScreenShell(
+      headerTitle: 'Lupa Kata Sandi',
+      headerSubtitle: 'Atur ulang sandi akunmu dengan kode OTP email.',
+      headerTopExtra: 8.0,
+      bottomBuilder: const AuthSecurityBadge(),
+      contentBuilder: (context, compact) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const AuthHero(
-              title: 'Lupa Kata Sandi',
-              subtitle: 'Atur ulang kata sandi akunmu dengan verifikasi email',
-            ),
-            Transform.translate(
-              offset: const Offset(0, -34),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                child: Column(
-                  children: [
-                    AuthCard(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        child: _buildCurrentStep(),
-                      ),
-                    ),
-                    const SizedBox(height: 26),
-                    const AuthFooter(),
-                  ],
+            _StepProgressBar(currentStep: _step),
+            const SizedBox(height: 16),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, -0.06),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
                 ),
               ),
+              child: _noticeMessage == null
+                  ? const SizedBox.shrink(key: ValueKey('no-fp-notice'))
+                  : Padding(
+                      key: ValueKey(_noticeMessage),
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: AuthNotice(
+                        message: _noticeMessage!,
+                        tone: _noticeTone,
+                      ),
+                    ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _buildCurrentStep(),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -207,30 +217,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         key: const ValueKey('step0'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CircleIcon(
+          const _StepHeading(
             icon: Icons.lock_reset_rounded,
-            color: AuthStyle.primary,
+            title: 'Pulihkan Akses Akun',
+            description:
+                'Masukkan email terdaftar pada akun Djajan Anda untuk menerima 6 digit kode verifikasi.',
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Lupa Kata Sandi?',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: AuthStyle.textDark,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Masukkan alamat email yang terdaftar pada akun DJajan Anda. Kami akan mengirimkan 6 digit kode verifikasi.',
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.5,
-              color: AuthStyle.textGrey,
-            ),
-          ),
-          const SizedBox(height: 20),
-
+          const SizedBox(height: 18),
           AuthTextField(
             label: 'Alamat Email',
             hint: 'nama@email.com',
@@ -239,27 +232,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             enabled: !_loading,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.email],
             validator: _validateEmail,
             onFieldSubmitted: (_) => _submitEmail(),
           ),
-          const SizedBox(height: 22),
-
+          const SizedBox(height: 18),
           AuthPrimaryButton(
+            key: const ValueKey('forgot-send-button'),
             label: 'Kirim Kode Verifikasi',
             icon: Icons.send_rounded,
             loading: _loading,
             onPressed: _submitEmail,
           ),
-          const SizedBox(height: 14),
-
+          const SizedBox(height: 12),
           Center(
             child: TextButton.icon(
-              onPressed: () => Navigator.pop(context),
+              onPressed: _loading ? null : () => Navigator.pop(context),
               icon: const Icon(Icons.arrow_back_rounded, size: 16),
               label: const Text('Kembali ke Halaman Masuk'),
               style: TextButton.styleFrom(
-                foregroundColor: AuthStyle.textGrey,
-                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                foregroundColor: AuthStyle.primary,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -275,30 +271,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         key: const ValueKey('step1'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CircleIcon(
+          _StepHeading(
             icon: Icons.mark_email_read_rounded,
-            color: AuthStyle.primary,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Verifikasi Kode OTP',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: AuthStyle.textDark,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Kode verifikasi telah dikirim ke $_sentToEmail. Masukkan kode tersebut dan buat kata sandi baru Anda.',
-            style: const TextStyle(
-              fontSize: 12.5,
-              height: 1.5,
-              color: AuthStyle.textGrey,
-            ),
+            title: 'Verifikasi Kode OTP',
+            description:
+                'Masukkan kode 6 digit yang dikirim ke $_sentToEmail beserta kata sandi baru Anda.',
           ),
           const SizedBox(height: 18),
-
           AuthTextField(
             label: 'Kode OTP (6 Digit)',
             hint: '123456',
@@ -314,7 +293,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             validator: _validateOtp,
           ),
           const SizedBox(height: 14),
-
           AuthTextField(
             label: 'Kata Sandi Baru',
             hint: 'Minimal 8 karakter',
@@ -323,19 +301,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             enabled: !_loading,
             obscure: _obscurePassword,
             textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.newPassword],
             validator: AuthValidators.kataSandi,
             suffix: IconButton(
-              tooltip: _obscurePassword ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi',
+              tooltip: _obscurePassword
+                  ? 'Tampilkan kata sandi'
+                  : 'Sembunyikan kata sandi',
               icon: Icon(
-                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
                 size: 20,
                 color: AuthStyle.textGrey,
               ),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
           const SizedBox(height: 14),
-
           AuthTextField(
             label: 'Ulangi Kata Sandi Baru',
             hint: 'Ketik ulang kata sandi baru',
@@ -350,49 +333,71 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
             onFieldSubmitted: (_) => _submitReset(),
             suffix: IconButton(
-              tooltip: _obscureConfirm ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi',
+              tooltip: _obscureConfirm
+                  ? 'Tampilkan kata sandi'
+                  : 'Sembunyikan kata sandi',
               icon: Icon(
-                _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                _obscureConfirm
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
                 size: 20,
                 color: AuthStyle.textGrey,
               ),
-              onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              onPressed: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
             ),
           ),
-          const SizedBox(height: 22),
-
+          const SizedBox(height: 18),
           AuthPrimaryButton(
+            key: const ValueKey('forgot-reset-button'),
             label: 'Simpan Kata Sandi Baru',
             icon: Icons.check_circle_rounded,
             loading: _loading,
             onPressed: _submitReset,
           ),
           const SizedBox(height: 12),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: () => setState(() => _step = 0),
+              TextButton.icon(
+                onPressed: _loading
+                    ? null
+                    : () => setState(() {
+                        _step = 0;
+                        _noticeMessage = null;
+                      }),
+                icon: const Icon(Icons.edit_outlined, size: 15),
+                label: const Text('Ganti Email'),
                 style: TextButton.styleFrom(
                   foregroundColor: AuthStyle.textGrey,
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: const Text('Ganti Email', style: TextStyle(fontSize: 12.5)),
               ),
-              TextButton(
-                onPressed: _resendOtp,
+              TextButton.icon(
+                onPressed: _loading ? null : _resendOtp,
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Kirim Ulang Kode'),
                 style: TextButton.styleFrom(
                   foregroundColor: AuthStyle.primary,
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text(
-                  'Kirim Ulang Kode',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -407,30 +412,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       key: const ValueKey('step2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _CircleIcon(
+        const _StepHeading(
           icon: Icons.check_circle_rounded,
-          color: AuthStyle.success,
+          title: 'Kata Sandi Diperbarui',
+          description:
+              'Kata sandi akun Anda berhasil diatur ulang. Silakan masuk kembali menggunakan kata sandi baru Anda.',
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Kata Sandi Diperbarui',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: AuthStyle.textDark,
-          ),
+        const AuthInfoBox(
+          icon: Icons.verified_user_outlined,
+          text:
+              'Demi keamanan akun, gunakan kata sandi yang kuat dan jangan bagikan kode OTP kepada siapa pun.',
         ),
-        const SizedBox(height: 6),
-        const Text(
-          'Kata sandi akun Anda berhasil diatur ulang. Silakan masuk kembali menggunakan kata sandi baru Anda.',
-          style: TextStyle(
-            fontSize: 12.5,
-            height: 1.5,
-            color: AuthStyle.textGrey,
-          ),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         AuthPrimaryButton(
+          key: const ValueKey('forgot-login-button'),
           label: 'Masuk Sekarang',
           icon: Icons.login_rounded,
           onPressed: () => Navigator.pop(context),
@@ -440,22 +436,156 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 }
 
-class _CircleIcon extends StatelessWidget {
-  const _CircleIcon({required this.icon, required this.color});
+/// Indikator langkah bergaya pill: Email -> OTP -> Selesai.
+class _StepProgressBar extends StatelessWidget {
+  const _StepProgressBar({required this.currentStep});
 
-  final IconData icon;
-  final Color color;
+  final int currentStep;
+
+  static const _labels = ['Email', 'OTP & Sandi', 'Selesai'];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56,
-      width: 56,
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        shape: BoxShape.circle,
+        color: AuthStyle.field,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AuthStyle.border),
       ),
-      child: Icon(icon, color: color, size: 28),
+      child: Row(
+        children: [
+          for (var i = 0; i < _labels.length; i++) ...[
+            Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                decoration: BoxDecoration(
+                  color: i == currentStep
+                      ? AuthStyle.primary
+                      : i < currentStep
+                      ? AuthStyle.softMint
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == currentStep
+                            ? Colors.white.withValues(alpha: 0.22)
+                            : i < currentStep
+                            ? AuthStyle.primary
+                            : AuthStyle.border,
+                      ),
+                      child: i < currentStep
+                          ? const Icon(
+                              Icons.check_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            )
+                          : Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: i == currentStep
+                                    ? Colors.white
+                                    : AuthStyle.textGrey,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        _labels[i],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: i == currentStep
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: i == currentStep
+                              ? Colors.white
+                              : i < currentStep
+                              ? AuthStyle.primary
+                              : AuthStyle.textGrey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (i < _labels.length - 1) const SizedBox(width: 4),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Header kompak di dalam kartu dengan ikon soft-mint dan deskripsi langkah.
+class _StepHeading extends StatelessWidget {
+  const _StepHeading({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: AuthStyle.softMint,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AuthStyle.softMintDeep),
+          ),
+          child: Icon(icon, color: AuthStyle.primary, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AuthStyle.textDark,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  height: 1.45,
+                  color: AuthStyle.textGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

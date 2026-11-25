@@ -10,7 +10,8 @@ import '../../config/app_config.dart';
 class AuthStyle {
   AuthStyle._();
 
-  static const Color primary = AppConfig.primaryColor; // #175D2B Deep Forest Green
+  static const Color primary =
+      AppConfig.primaryColor; // #175D2B Deep Forest Green
   static const Color accent = AppConfig.secondaryColor;
 
   static const Color bg = Color(0xFFF3F7F3);
@@ -36,168 +37,563 @@ class AuthStyle {
 
 enum AuthMode { login, register }
 
-/// Header mint lembut yang ringkas untuk dipadukan dengan kartu form mengambang.
-class AuthLightHeader extends StatelessWidget {
-  const AuthLightHeader({
+/// Kerangka layout bersama untuk Login, Register, dan Lupa Kata Sandi.
+/// Mengunci dimensi responsif pada ukuran layar penuh (bukan tinggi sisa
+/// saat keyboard muncul) agar tampilan tidak membesar/melompat ketika mengetik.
+class AuthScreenShell extends StatelessWidget {
+  const AuthScreenShell({
     super.key,
-    required this.mode,
-    this.compact = false,
-    this.showBackButton = false,
+    required this.contentBuilder,
+    this.headerTitle = 'Selamat\nDatang!',
+    this.headerSubtitle = 'Belanja & kelola usahamu lebih mudah.',
+    this.headerTopExtra = 0.0,
+    this.bottomBuilder,
   });
 
-  final AuthMode mode;
-  final bool compact;
-  final bool showBackButton;
+  final Widget Function(BuildContext context, bool compact) contentBuilder;
+  final String headerTitle;
+  final String headerSubtitle;
+  final double headerTopExtra;
+  final Widget? bottomBuilder;
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final illustrationWidth = compact ? 108.0 : 132.0;
-    final illustrationHeight = compact ? 102.0 : 124.0;
+    final canPop = Navigator.canPop(context);
+    final padding = MediaQuery.paddingOf(context);
+    final topPadding = padding.top;
+    final bottomInset = padding.bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned.fill(
-          child: CustomPaint(painter: _AuthTopWashPainter()),
-        ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            topPadding + (showBackButton ? 8 : 16),
-            16,
-            compact ? 42 : 48,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      backgroundColor: AuthStyle.bg,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Gunakan screenHeight (bukan constraints.maxHeight yang menyusut
+          // saat keyboard terbuka) agar card dan header tidak tiba-tiba berubah
+          // skala/lebar ("nge-zoom") ketika user mulai mengetik.
+          final compact = constraints.maxWidth < 360 || screenHeight < 680;
+          final horizontalPadding = constraints.maxWidth >= 600
+              ? 28.0
+              : compact
+              ? 14.0
+              : 18.0;
+          final cardTop =
+              topPadding +
+              headerTopExtra +
+              (canPop
+                  ? (compact ? 196.0 : 212.0)
+                  : (compact ? 160.0 : 178.0));
+          final heroHeight = cardTop + 38.0;
+
+          return Stack(
             children: [
-              if (showBackButton) ...[
-                Material(
-                  color: AuthStyle.primary.withValues(alpha: 0.10),
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () => Navigator.pop(context),
-                    child: const SizedBox(
-                      height: 38,
-                      width: 38,
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        color: AuthStyle.primary,
-                        size: 20,
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: screenHeight,
+                child: IgnorePointer(
+                  child: CustomPaint(painter: AuthBottomWavePainter()),
+                ),
+              ),
+              SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: bottomInset + 20),
+                child: Stack(
+                  children: [
+                    AuthBrandHeader(
+                      height: heroHeight,
+                      compact: compact,
+                      showBackButton: canPop,
+                      title: headerTitle,
+                      subtitle: headerSubtitle,
+                    ),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            cardTop,
+                            horizontalPadding,
+                            0,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              AuthCard(
+                                padding: EdgeInsets.fromLTRB(
+                                  compact ? 15 : 18,
+                                  18,
+                                  compact ? 15 : 18,
+                                  20,
+                                ),
+                                child: contentBuilder(context, compact),
+                              ),
+                              if (bottomBuilder != null) ...[
+                                const SizedBox(height: 16),
+                                bottomBuilder!,
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-              ],
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              'assets/images/logo_djajan_mark.png',
-                              height: compact ? 30 : 34,
-                              width: compact ? 30 : 34,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Djajan',
-                              style: TextStyle(
-                                fontSize: compact ? 18 : 19.5,
-                                fontWeight: FontWeight.w800,
-                                color: AuthStyle.primary,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: compact ? 10 : 12),
-                        Text(
-                          'Masuk atau\nDaftar',
-                          style: TextStyle(
-                            fontSize: compact ? 22 : 25,
-                            fontWeight: FontWeight.w800,
-                            color: AuthStyle.textDark,
-                            height: 1.12,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Jajan & kelola usaha lokal lebih mudah.',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            height: 1.35,
-                            color: AuthStyle.textGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: illustrationWidth,
-                    height: illustrationHeight,
-                    child: CustomPaint(
-                      painter: StorefrontIllustrationPainter(),
-                    ),
-                  ),
-                ],
               ),
             ],
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 }
 
-class _AuthTopWashPainter extends CustomPainter {
+/// Header gradien hijau tua mewah dengan ilustrasi toko & skuter pengantar di kanan.
+class AuthBrandHeader extends StatelessWidget {
+  const AuthBrandHeader({
+    super.key,
+    required this.height,
+    this.compact = false,
+    this.showBackButton = false,
+    this.title = 'Selamat\nDatang!',
+    this.subtitle = 'Belanja & kelola usahamu lebih mudah.',
+  });
+
+  final double height;
+  final bool compact;
+  final bool showBackButton;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final artWidth = compact ? 116.0 : 148.0;
+    final artHeight = compact ? 104.0 : 132.0;
+
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0B4326),
+            Color(0xFF135A31),
+            Color(0xFF1B703F),
+          ],
+          stops: [0.0, 0.52, 1.0],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: _HeaderGridGlowPainter()),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 16 : 20,
+              topPadding + (showBackButton ? 8 : (compact ? 14 : 18)),
+              compact ? 12 : 16,
+              36,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showBackButton) ...[
+                  Material(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => Navigator.pop(context),
+                      child: const SizedBox(
+                        height: 36,
+                        width: 36,
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                height: compact ? 32 : 36,
+                                width: compact ? 32 : 36,
+                                padding: const EdgeInsets.all(5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(11),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.16,
+                                      ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Image.asset(
+                                  'assets/images/logo_djajan_mark.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              const SizedBox(width: 9),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Djajan',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: compact ? 17 : 19,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                        letterSpacing: -0.3,
+                                        height: 1.05,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 1),
+                                    const Text(
+                                      'Dari Desa, Untuk Semua',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        color: Color(0xFFD4EED8),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: compact ? 10 : 12),
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: compact ? 21 : 24,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                              height: 1.08,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: compact ? 11.5 : 12,
+                              color: const Color(0xFFD4EED8),
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: artWidth,
+                      height: artHeight,
+                      child: CustomPaint(
+                        painter: _HeaderWarungScooterPainter(),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderGridGlowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final basePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFEAF4EC),
-          Color(0xFFD8EBDC),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final bgRRect = RRect.fromRectAndCorners(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      bottomLeft: const Radius.circular(32),
-      bottomRight: const Radius.circular(32),
-    );
-    canvas.save();
-    canvas.clipRRect(bgRRect);
-    canvas.drawRRect(bgRRect, basePaint);
-
-    final blob1 = Paint()..color = const Color(0xFFC4E1CA).withValues(alpha: 0.45);
+    // Lingkaran cahaya lembut di kanan atas
     canvas.drawCircle(
-      Offset(size.width * 0.88, size.height * 0.14),
-      size.width * 0.27,
-      blob1,
+      Offset(size.width * 0.88, size.height * 0.16),
+      size.width * 0.25,
+      Paint()..color = Colors.white.withValues(alpha: 0.06),
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.94, size.height * 0.68),
+      size.width * 0.16,
+      Paint()..color = Colors.white.withValues(alpha: 0.05),
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.06, size.height * 0.82),
+      size.width * 0.14,
+      Paint()..color = Colors.white.withValues(alpha: 0.04),
     );
 
-    final blob2 = Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.35);
-    canvas.drawCircle(
-      Offset(size.width * 0.96, size.height * 0.58),
-      size.width * 0.20,
-      blob2,
+    // Aksen grid tipis di bagian kanan belakang toko
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.06)
+      ..strokeWidth = 0.8;
+    const step = 13.0;
+    final startX = size.width * 0.50;
+    final endX = size.width * 0.94;
+    final startY = size.height * 0.14;
+    final endY = size.height * 0.70;
+
+    for (var x = startX; x <= endX; x += step) {
+      canvas.drawLine(Offset(x, startY), Offset(x, endY), gridPaint);
+    }
+    for (var y = startY; y <= endY; y += step) {
+      canvas.drawLine(Offset(startX, y), Offset(endX, y), gridPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Ilustrasi toko UMKM bernuansa krem-mint + skuter pengantar di header hijau tua.
+class _HeaderWarungScooterPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    final wallLight = const Color(0xFFEDF5EE);
+    final wallShade = const Color(0xFFD5E6D8);
+    final darkGreen = const Color(0xFF175D2B);
+    final midGreen = const Color(0xFF4F9660);
+    final mintAccent = const Color(0xFF83BC8E);
+    final warmWindow = const Color(0xFFFEF3C7);
+    final stroke = Paint()
+      ..color = const Color(0xFF1D4D2E)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+
+    // Pohon lembut di belakang kanan
+    canvas.drawOval(
+      Rect.fromLTWH(w * 0.80, h * 0.22, w * 0.17, h * 0.42),
+      Paint()..color = const Color(0xFF3E834E).withValues(alpha: 0.65),
     );
-    canvas.restore();
+    canvas.drawLine(
+      Offset(w * 0.885, h * 0.55),
+      Offset(w * 0.885, h * 0.84),
+      Paint()
+        ..color = const Color(0xFF174A28)
+        ..strokeWidth = 2.2,
+    );
+
+    // Bayangan lantai di bawah toko & skuter
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.04, h * 0.84, w * 0.92, h * 0.05),
+        const Radius.circular(6),
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.18),
+    );
+
+    // Bagian samping kanan bangunan (dengan unit AC kecil)
+    final sideBlock = RRect.fromRectAndCorners(
+      Rect.fromLTWH(w * 0.64, h * 0.30, w * 0.24, h * 0.55),
+      topRight: const Radius.circular(5),
+    );
+    canvas.drawRRect(sideBlock, Paint()..color = wallShade);
+    canvas.drawRRect(sideBlock, stroke);
+
+    final acRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.68, h * 0.37, w * 0.14, h * 0.10),
+      const Radius.circular(2.5),
+    );
+    canvas.drawRRect(acRect, Paint()..color = wallLight);
+    canvas.drawRRect(acRect, stroke);
+    canvas.drawCircle(
+      Offset(w * 0.72, h * 0.42),
+      w * 0.025,
+      Paint()..color = mintAccent,
+    );
+
+    // Bangunan utama toko
+    final mainBlock = RRect.fromRectAndCorners(
+      Rect.fromLTWH(w * 0.10, h * 0.24, w * 0.55, h * 0.61),
+      topLeft: const Radius.circular(5),
+      topRight: const Radius.circular(5),
+    );
+    canvas.drawRRect(mainBlock, Paint()..color = wallLight);
+    canvas.drawRRect(mainBlock, stroke);
+
+    // Lis atap atas
+    final roofTrim = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.08, h * 0.22, w * 0.60, h * 0.06),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(roofTrim, Paint()..color = wallShade);
+    canvas.drawRRect(roofTrim, stroke);
+
+    // Jendela etalase kiri (hangat bercahaya)
+    final windowRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.15, h * 0.46, w * 0.27, h * 0.22),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(windowRect, Paint()..color = warmWindow);
+    canvas.drawRRect(windowRect, stroke);
+
+    // Rak pot / jajanan kecil di ambang jendela
+    for (var i = 0; i < 3; i++) {
+      final bx = w * (0.18 + i * 0.08);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(bx, h * 0.62, w * 0.05, h * 0.05),
+          const Radius.circular(1.5),
+        ),
+        Paint()..color = const Color(0xFFD97706),
+      );
+      canvas.drawCircle(
+        Offset(bx + w * 0.025, h * 0.60),
+        w * 0.028,
+        Paint()..color = midGreen,
+      );
+    }
+
+    // Pintu toko di tengah-kanan
+    final doorRect = RRect.fromRectAndCorners(
+      Rect.fromLTWH(w * 0.46, h * 0.45, w * 0.14, h * 0.40),
+      topLeft: const Radius.circular(3),
+      topRight: const Radius.circular(3),
+    );
+    canvas.drawRRect(doorRect, Paint()..color = wallShade);
+    canvas.drawRRect(doorRect, stroke);
+    final doorGlass = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.485, h * 0.49, w * 0.09, h * 0.14),
+      const Radius.circular(2),
+    );
+    canvas.drawRRect(doorGlass, Paint()..color = warmWindow);
+    canvas.drawRRect(doorGlass, stroke);
+
+    // Kanopi bergaris hijau tua & putih di atas etalase
+    const stripes = 6;
+    final aTopL = Offset(w * 0.10, h * 0.30);
+    final aTopR = Offset(w * 0.64, h * 0.30);
+    final aBotL = Offset(w * 0.05, h * 0.41);
+    final aBotR = Offset(w * 0.63, h * 0.41);
+    for (var i = 0; i < stripes; i++) {
+      final t0 = i / stripes;
+      final t1 = (i + 1) / stripes;
+      final p0 = Offset.lerp(aTopL, aTopR, t0)!;
+      final p1 = Offset.lerp(aTopL, aTopR, t1)!;
+      final p2 = Offset.lerp(aBotL, aBotR, t1)!;
+      final p3 = Offset.lerp(aBotL, aBotR, t0)!;
+      final path = Path()
+        ..moveTo(p0.dx, p0.dy)
+        ..lineTo(p1.dx, p1.dy)
+        ..lineTo(p2.dx, p2.dy)
+        ..quadraticBezierTo(
+          (p2.dx + p3.dx) / 2,
+          p2.dy + h * 0.03,
+          p3.dx,
+          p3.dy,
+        )
+        ..close();
+      canvas.drawPath(
+        path,
+        Paint()..color = i.isEven ? darkGreen : Colors.white,
+      );
+      canvas.drawPath(path, stroke);
+    }
+
+    // Tanaman pot di kiri depan
+    canvas.drawCircle(
+      Offset(w * 0.09, h * 0.70),
+      w * 0.055,
+      Paint()..color = midGreen,
+    );
+    canvas.drawCircle(
+      Offset(w * 0.06, h * 0.73),
+      w * 0.04,
+      Paint()..color = mintAccent,
+    );
+    final leftPot = Path()
+      ..moveTo(w * 0.05, h * 0.75)
+      ..lineTo(w * 0.13, h * 0.75)
+      ..lineTo(w * 0.115, h * 0.85)
+      ..lineTo(w * 0.065, h * 0.85)
+      ..close();
+    canvas.drawPath(leftPot, Paint()..color = const Color(0xFFD97706));
+    canvas.drawPath(leftPot, stroke);
+
+    // Tanaman kecil di sebelah pintu
+    canvas.drawCircle(
+      Offset(w * 0.65, h * 0.77),
+      w * 0.038,
+      Paint()..color = mintAccent,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.625, h * 0.79, w * 0.05, h * 0.06),
+        const Radius.circular(2),
+      ),
+      Paint()..color = wallLight,
+    );
+
+    // Skuter pengantar kecil di kanan depan
+    final wheelPaint = Paint()..color = const Color(0xFF1F2937);
+    final rimPaint = Paint()..color = Colors.white;
+    // Roda belakang & depan
+    for (final wx in [w * 0.74, w * 0.90]) {
+      canvas.drawCircle(Offset(wx, h * 0.81), w * 0.046, wheelPaint);
+      canvas.drawCircle(Offset(wx, h * 0.81), w * 0.022, rimPaint);
+    }
+    // Bodi skuter mint
+    final scooterBody = Path()
+      ..moveTo(w * 0.70, h * 0.78)
+      ..quadraticBezierTo(w * 0.73, h * 0.71, w * 0.80, h * 0.73)
+      ..lineTo(w * 0.86, h * 0.75)
+      ..lineTo(w * 0.85, h * 0.64)
+      ..lineTo(w * 0.88, h * 0.64)
+      ..lineTo(w * 0.92, h * 0.79)
+      ..lineTo(w * 0.71, h * 0.80)
+      ..close();
+    canvas.drawPath(scooterBody, Paint()..color = mintAccent);
+    canvas.drawPath(scooterBody, stroke);
+
+    // Jok & stang + lampu depan
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.73, h * 0.70, w * 0.085, h * 0.032),
+        const Radius.circular(3),
+      ),
+      Paint()..color = darkGreen,
+    );
+    canvas.drawCircle(
+      Offset(w * 0.895, h * 0.66),
+      w * 0.022,
+      Paint()..color = warmWindow,
+    );
   }
 
   @override
@@ -235,251 +631,6 @@ class AuthBottomWavePainter extends CustomPainter {
       )
       ..close();
     canvas.drawPath(rightWave, rightPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Ilustrasi vektor toko UMKM bergaya clean editorial (tanpa aset eksternal).
-class StorefrontIllustrationPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final darkGreen = AuthStyle.primary;
-    final midGreen = const Color(0xFF3E834E);
-    final softGreen = const Color(0xFF7BB888);
-    final glassTint = const Color(0xFFD9ECDE);
-    final wallWhite = const Color(0xFFF9FBF9);
-    final wallShade = const Color(0xFFEAEFEA);
-    final strokePaint = Paint()
-      ..color = const Color(0xFF23482E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round;
-
-    // Awan lembut di belakang atap
-    final cloudPaint = Paint()..color = Colors.white.withValues(alpha: 0.75);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.44, h * 0.05, w * 0.46, h * 0.11),
-        const Radius.circular(14),
-      ),
-      cloudPaint,
-    );
-    canvas.drawCircle(Offset(w * 0.62, h * 0.07), w * 0.08, cloudPaint);
-
-    // Bayangan tanah
-    final groundPaint = Paint()..color = const Color(0xFFCDE1D1);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.06, h * 0.87, w * 0.90, h * 0.06),
-        const Radius.circular(10),
-      ),
-      groundPaint,
-    );
-
-    // Dinding sisi kiri (perspektif 3/4)
-    final sideWall = Path()
-      ..moveTo(w * 0.14, h * 0.34)
-      ..lineTo(w * 0.34, h * 0.39)
-      ..lineTo(w * 0.34, h * 0.88)
-      ..lineTo(w * 0.14, h * 0.83)
-      ..close();
-    canvas.drawPath(sideWall, Paint()..color = wallShade);
-    canvas.drawPath(sideWall, strokePaint);
-
-    // Dinding depan toko
-    final frontWall = RRect.fromRectAndCorners(
-      Rect.fromLTWH(w * 0.34, h * 0.37, w * 0.56, h * 0.51),
-      topRight: const Radius.circular(6),
-    );
-    canvas.drawRRect(frontWall, Paint()..color = wallWhite);
-    canvas.drawRRect(frontWall, strokePaint);
-
-    // Pintu kaca ganda + etalase kaca
-    final frameRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.40, h * 0.48, w * 0.44, h * 0.40),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(frameRect, Paint()..color = glassTint);
-    canvas.drawRRect(frameRect, strokePaint);
-
-    // Kusen pembagi pintu
-    canvas.drawLine(
-      Offset(w * 0.545, h * 0.48),
-      Offset(w * 0.545, h * 0.88),
-      strokePaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.695, h * 0.48),
-      Offset(w * 0.695, h * 0.88),
-      strokePaint,
-    );
-
-    // Kilau kaca diagonal
-    final glarePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.65)
-      ..strokeWidth = 3.2
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(w * 0.43, h * 0.54),
-      Offset(w * 0.50, h * 0.64),
-      glarePaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.58, h * 0.53),
-      Offset(w * 0.65, h * 0.63),
-      glarePaint,
-    );
-
-    // Gagang pintu
-    canvas.drawLine(
-      Offset(w * 0.525, h * 0.66),
-      Offset(w * 0.525, h * 0.72),
-      strokePaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.565, h * 0.66),
-      Offset(w * 0.565, h * 0.72),
-      strokePaint,
-    );
-
-    // Kanopi atap bergaris hijau-putih
-    const stripeCount = 6;
-    final awningTopLeft = Offset(w * 0.10, h * 0.25);
-    final awningTopRight = Offset(w * 0.92, h * 0.22);
-    final awningBotLeft = Offset(w * 0.05, h * 0.41);
-    final awningBotRight = Offset(w * 0.94, h * 0.39);
-
-    for (var i = 0; i < stripeCount; i++) {
-      final t0 = i / stripeCount;
-      final t1 = (i + 1) / stripeCount;
-      final p0 = Offset.lerp(awningTopLeft, awningTopRight, t0)!;
-      final p1 = Offset.lerp(awningTopLeft, awningTopRight, t1)!;
-      final p2 = Offset.lerp(awningBotLeft, awningBotRight, t1)!;
-      final p3 = Offset.lerp(awningBotLeft, awningBotRight, t0)!;
-
-      final stripePath = Path()
-        ..moveTo(p0.dx, p0.dy)
-        ..lineTo(p1.dx, p1.dy)
-        ..lineTo(p2.dx, p2.dy)
-        ..quadraticBezierTo(
-          (p2.dx + p3.dx) / 2,
-          (p2.dy + p3.dy) / 2 + h * 0.04,
-          p3.dx,
-          p3.dy,
-        )
-        ..close();
-
-      canvas.drawPath(
-        stripePath,
-        Paint()..color = i.isEven ? darkGreen : wallWhite,
-      );
-      canvas.drawPath(stripePath, strokePaint);
-    }
-
-    // Papan nama gantung di kanan pintu
-    final bracket = Path()
-      ..moveTo(w * 0.74, h * 0.50)
-      ..lineTo(w * 0.87, h * 0.50);
-    canvas.drawPath(bracket, strokePaint);
-
-    final signRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.74, h * 0.54, w * 0.17, h * 0.16),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(signRect, Paint()..color = Colors.white);
-    canvas.drawRRect(signRect, strokePaint);
-
-    // Ikon daun kecil di papan nama
-    final signCenter = Offset(w * 0.825, h * 0.62);
-    canvas.drawCircle(signCenter, w * 0.055, Paint()..color = AuthStyle.softMint);
-    final leafPath = Path()
-      ..moveTo(signCenter.dx - 4, signCenter.dy + 3)
-      ..quadraticBezierTo(
-        signCenter.dx - 4,
-        signCenter.dy - 5,
-        signCenter.dx + 4,
-        signCenter.dy - 4,
-      )
-      ..quadraticBezierTo(
-        signCenter.dx + 4,
-        signCenter.dy + 4,
-        signCenter.dx - 4,
-        signCenter.dy + 3,
-      );
-    canvas.drawPath(leafPath, Paint()..color = darkGreen);
-
-    // Pot tanaman kiri
-    _drawPottedPlant(
-      canvas,
-      Offset(w * 0.19, h * 0.88),
-      potWidth: w * 0.11,
-      potHeight: h * 0.09,
-      leafRadius: w * 0.075,
-      potColor: const Color(0xFFB5C7B8),
-      leafColor: midGreen,
-      strokePaint: strokePaint,
-    );
-    _drawPottedPlant(
-      canvas,
-      Offset(w * 0.30, h * 0.89),
-      potWidth: w * 0.09,
-      potHeight: h * 0.07,
-      leafRadius: w * 0.055,
-      potColor: Colors.white,
-      leafColor: softGreen,
-      strokePaint: strokePaint,
-    );
-
-    // Semak hijau kanan
-    canvas.drawCircle(
-      Offset(w * 0.90, h * 0.85),
-      w * 0.065,
-      Paint()..color = midGreen,
-    );
-    canvas.drawCircle(
-      Offset(w * 0.85, h * 0.87),
-      w * 0.045,
-      Paint()..color = softGreen,
-    );
-  }
-
-  void _drawPottedPlant(
-    Canvas canvas,
-    Offset baseCenter, {
-    required double potWidth,
-    required double potHeight,
-    required double leafRadius,
-    required Color potColor,
-    required Color leafColor,
-    required Paint strokePaint,
-  }) {
-    final leafCenter = Offset(baseCenter.dx, baseCenter.dy - potHeight - leafRadius * 0.65);
-    canvas.drawCircle(leafCenter, leafRadius, Paint()..color = leafColor);
-    canvas.drawCircle(
-      Offset(leafCenter.dx - leafRadius * 0.45, leafCenter.dy + 3),
-      leafRadius * 0.62,
-      Paint()..color = leafColor,
-    );
-    canvas.drawCircle(
-      Offset(leafCenter.dx + leafRadius * 0.45, leafCenter.dy + 4),
-      leafRadius * 0.58,
-      Paint()..color = leafColor,
-    );
-
-    final pot = Path()
-      ..moveTo(baseCenter.dx - potWidth * 0.55, baseCenter.dy - potHeight)
-      ..lineTo(baseCenter.dx + potWidth * 0.55, baseCenter.dy - potHeight)
-      ..lineTo(baseCenter.dx + potWidth * 0.38, baseCenter.dy)
-      ..lineTo(baseCenter.dx - potWidth * 0.38, baseCenter.dy)
-      ..close();
-    canvas.drawPath(pot, Paint()..color = potColor);
-    canvas.drawPath(pot, strokePaint);
   }
 
   @override
@@ -612,10 +763,7 @@ class AuthOrDivider extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AuthStyle.textGrey,
-            ),
+            style: const TextStyle(fontSize: 12, color: AuthStyle.textGrey),
           ),
         ),
         const Expanded(child: Divider(color: AuthStyle.border, thickness: 1)),
@@ -696,13 +844,37 @@ class _GoogleLogoPainter extends CustomPainter {
       ..strokeCap = StrokeCap.butt;
 
     // Merah (atas)
-    canvas.drawArc(rect, -math.pi * 0.80, math.pi * 0.56, false, arcPaint(const Color(0xFFEA4335)));
+    canvas.drawArc(
+      rect,
+      -math.pi * 0.80,
+      math.pi * 0.56,
+      false,
+      arcPaint(const Color(0xFFEA4335)),
+    );
     // Kuning (kiri)
-    canvas.drawArc(rect, math.pi * 0.72, math.pi * 0.48, false, arcPaint(const Color(0xFFFBBC05)));
+    canvas.drawArc(
+      rect,
+      math.pi * 0.72,
+      math.pi * 0.48,
+      false,
+      arcPaint(const Color(0xFFFBBC05)),
+    );
     // Hijau (bawah)
-    canvas.drawArc(rect, math.pi * 0.18, math.pi * 0.55, false, arcPaint(const Color(0xFF34A853)));
+    canvas.drawArc(
+      rect,
+      math.pi * 0.18,
+      math.pi * 0.55,
+      false,
+      arcPaint(const Color(0xFF34A853)),
+    );
     // Biru (kanan bawah)
-    canvas.drawArc(rect, -math.pi * 0.04, math.pi * 0.25, false, arcPaint(const Color(0xFF4285F4)));
+    canvas.drawArc(
+      rect,
+      -math.pi * 0.04,
+      math.pi * 0.25,
+      false,
+      arcPaint(const Color(0xFF4285F4)),
+    );
 
     // Palang horizontal biru pada huruf G
     final barPaint = Paint()
@@ -784,152 +956,6 @@ class AuthSecurityBadge extends StatelessWidget {
   }
 }
 
-/// Header bergradien dengan logo, judul, dan subjudul.
-class AuthHero extends StatelessWidget {
-  const AuthHero({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    this.height = 282,
-  });
-
-  final String title;
-  final String subtitle;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    final canPop = Navigator.canPop(context);
-
-    return Container(
-      height: height,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: AuthStyle.heroGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Dekorasi lingkaran lembut supaya header tidak terlihat datar.
-          const Positioned(
-            top: -42,
-            right: -30,
-            child: _Bubble(size: 132, opacity: 0.07),
-          ),
-          const Positioned(
-            top: 58,
-            left: -50,
-            child: _Bubble(size: 112, opacity: 0.05),
-          ),
-          const Positioned(
-            bottom: -30,
-            right: 42,
-            child: _Bubble(size: 82, opacity: 0.04),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 22),
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      height: 40,
-                      width: 40,
-                      child: canPop
-                          ? Material(
-                              color: Colors.white.withValues(alpha: 0.16),
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => Navigator.pop(context),
-                                child: const Icon(
-                                  Icons.arrow_back_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    height: 76,
-                    width: 76,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/images/logoNoBg.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.35,
-                      color: Colors.white.withValues(alpha: 0.84),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Bubble extends StatelessWidget {
-  const _Bubble({required this.size, required this.opacity});
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: size,
-      width: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: opacity),
-      ),
-    );
-  }
-}
-
 /// Kartu putih pembungkus form.
 class AuthCard extends StatelessWidget {
   const AuthCard({super.key, required this.child, this.padding});
@@ -944,12 +970,13 @@ class AuthCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.fromLTRB(20, 22, 20, 22),
       decoration: BoxDecoration(
         color: AuthStyle.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFE5EEE7)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.07),
-            blurRadius: 26,
-            offset: const Offset(0, 12),
+            color: const Color(0xFF0F4B28).withValues(alpha: 0.09),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -1111,7 +1138,22 @@ InputDecoration authInputDecoration({
   return InputDecoration(
     hintText: hint,
     hintStyle: const TextStyle(fontSize: 14, color: AuthStyle.hint),
-    prefixIcon: Icon(icon, size: 20, color: AuthStyle.textGrey),
+    prefixIcon: Padding(
+      padding: const EdgeInsets.only(left: 14, right: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: AuthStyle.textGrey),
+          const SizedBox(width: 10),
+          Container(
+            width: 1,
+            height: 20,
+            color: AuthStyle.border,
+          ),
+        ],
+      ),
+    ),
+    prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
     suffixIcon: suffix,
     filled: true,
     fillColor: AuthStyle.field,
@@ -1245,55 +1287,6 @@ class AuthLinkRow extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Badge "Didukung oleh BUMDes" + catatan hak cipta.
-class AuthFooter extends StatelessWidget {
-  const AuthFooter({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 330),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: AuthStyle.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.verified_rounded,
-                  size: 16,
-                  color: AuthStyle.primary,
-                ),
-                SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    'Didukung oleh pelaku usaha lokal',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AuthStyle.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Pemberdayaan Ekonomi Warga © 2025 Djajan',
-          style: TextStyle(fontSize: 12, color: AuthStyle.hint),
         ),
       ],
     );

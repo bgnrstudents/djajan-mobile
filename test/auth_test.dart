@@ -1,4 +1,5 @@
 import 'package:djajan_mobile/screens/auth/auth_widgets.dart';
+import 'package:djajan_mobile/screens/auth/forgot_password_screen.dart';
 import 'package:djajan_mobile/screens/auth/login_screen.dart';
 import 'package:djajan_mobile/screens/auth/register_screen.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,8 @@ void main() {
     await tester.pumpWidget(_wrap(const LoginScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Masuk atau\nDaftar'), findsOneWidget);
+    expect(find.text('Selamat\nDatang!'), findsOneWidget);
+    expect(find.text('Belanja & kelola usahamu lebih mudah.'), findsOneWidget);
     expect(find.byType(AuthCard), findsOneWidget);
     expect(find.byKey(const ValueKey('auth-tab-login')), findsOneWidget);
     expect(find.byKey(const ValueKey('auth-tab-register')), findsOneWidget);
@@ -39,7 +41,7 @@ void main() {
     expect(find.text('Lupa sandi?'), findsOneWidget);
     expect(find.text('Masuk dengan Google'), findsOneWidget);
     expect(find.text('Akun Anda aman dan terlindungi'), findsOneWidget);
-    expect(find.text('Daftar Sekarang'), findsOneWidget);
+    expect(find.text('Belum punya akun?'), findsNothing);
     expect(find.byKey(const ValueKey('login-submit-button')), findsOneWidget);
   });
 
@@ -93,13 +95,15 @@ void main() {
     await tester.pumpWidget(_wrap(const RegisterScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Masuk atau\nDaftar'), findsOneWidget);
+    expect(find.text('Selamat\nDatang!'), findsOneWidget);
+    expect(find.text('Belanja & kelola usahamu lebih mudah.'), findsOneWidget);
     expect(find.byType(AuthCard), findsOneWidget);
     expect(find.text('Nama Lengkap'), findsOneWidget);
     expect(find.text('Nomor WhatsApp'), findsOneWidget);
     expect(find.text('Email (Opsional)'), findsOneWidget);
     expect(find.text('Ulangi Kata Sandi'), findsOneWidget);
     expect(find.text('Daftar dengan Google'), findsOneWidget);
+    expect(find.text('Sudah punya akun?'), findsNothing);
     expect(find.text('Penjual UMKM'), findsNothing);
   });
 
@@ -114,10 +118,11 @@ void main() {
     await tester.pumpWidget(_wrap(const RegisterScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Masuk atau\nDaftar'), findsOneWidget);
+    expect(find.text('Selamat\nDatang!'), findsOneWidget);
+    expect(find.text('Belanja & kelola usahamu lebih mudah.'), findsOneWidget);
     expect(find.byType(AuthCard), findsOneWidget);
     final subtitleRect = tester.getRect(
-      find.text('Jajan & kelola usaha lokal lebih mudah.'),
+      find.text('Belanja & kelola usahamu lebih mudah.'),
     );
     final cardRect = tester.getRect(find.byType(AuthCard));
     expect(subtitleRect.bottom, lessThan(cardRect.top));
@@ -181,15 +186,60 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Lupa Kata Sandi'), findsOneWidget);
+    expect(find.text('Pulihkan Akses Akun'), findsOneWidget);
+    expect(find.text('Akun Anda aman dan terlindungi'), findsOneWidget);
 
-    final sendButton = find.widgetWithText(
-      ElevatedButton,
-      'Kirim Kode Verifikasi',
-    );
+    final sendButton = find.byKey(const ValueKey('forgot-send-button'));
     await tester.ensureVisible(sendButton);
     await tester.tap(sendButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Email wajib diisi'), findsOneWidget);
+  });
+
+  testWidgets('Halaman lupa kata sandi rapi pada layar sempit', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_wrap(const ForgotPasswordScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lupa Kata Sandi'), findsOneWidget);
+    expect(find.byType(AuthCard), findsOneWidget);
+    final subtitleRect = tester.getRect(
+      find.text('Atur ulang sandi akunmu dengan kode OTP email.'),
+    );
+    final cardRect = tester.getRect(find.byType(AuthCard));
+    expect(subtitleRect.bottom, lessThan(cardRect.top));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Dimensi card dan header tidak berubah saat keyboard terbuka', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(_wrap(const LoginScreen()));
+    await tester.pumpAndSettle();
+
+    final cardBefore = tester.getRect(find.byType(AuthCard));
+    final headerBefore = tester.getRect(find.byType(AuthBrandHeader));
+
+    // Simulasi keyboard HP terbuka (tinggi sisa turun di bawah threshold 680px).
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+
+    final cardAfter = tester.getRect(find.byType(AuthCard));
+    final headerAfter = tester.getRect(find.byType(AuthBrandHeader));
+
+    expect(cardAfter.width, cardBefore.width);
+    expect(headerAfter.height, headerBefore.height);
+    expect(tester.takeException(), isNull);
   });
 }

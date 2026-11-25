@@ -306,156 +306,64 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = Navigator.canPop(context);
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final isLogin = _mode == AuthMode.login;
 
-    return Scaffold(
-      backgroundColor: AuthStyle.bg,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 360 || constraints.maxHeight < 680;
-          final horizontalPadding = constraints.maxWidth >= 600
-              ? 28.0
-              : compact
-              ? 14.0
-              : 18.0;
-          final isLogin = _mode == AuthMode.login;
-
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(painter: AuthBottomWavePainter()),
+    return AuthScreenShell(
+      bottomBuilder: const AuthSecurityBadge(),
+      contentBuilder: (context, compact) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthModeSwitcher(
+              mode: _mode,
+              enabled: !_loading,
+              onChanged: _switchMode,
+            ),
+            const SizedBox(height: 16),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, -0.06),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
                 ),
               ),
-              SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: bottomInset + 6),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 500),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        AuthLightHeader(
-                          mode: _mode,
-                          compact: compact,
-                          showBackButton: canPop,
-                        ),
-                        Transform.translate(
-                          offset: const Offset(0, -28),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                AuthCard(
-                                  padding: EdgeInsets.fromLTRB(
-                                    compact ? 15 : 18,
-                                    18,
-                                    compact ? 15 : 18,
-                                    20,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      AuthModeSwitcher(
-                                        mode: _mode,
-                                        enabled: !_loading,
-                                        onChanged: _switchMode,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      AnimatedSwitcher(
-                                        duration: const Duration(
-                                          milliseconds: 220,
-                                        ),
-                                        switchInCurve: Curves.easeOutCubic,
-                                        switchOutCurve: Curves.easeInCubic,
-                                        transitionBuilder: (child, animation) =>
-                                            FadeTransition(
-                                          opacity: animation,
-                                          child: SlideTransition(
-                                            position: Tween<Offset>(
-                                              begin: const Offset(0, -0.06),
-                                              end: Offset.zero,
-                                            ).animate(animation),
-                                            child: child,
-                                          ),
-                                        ),
-                                        child: _noticeMessage == null
-                                            ? const SizedBox.shrink(
-                                                key: ValueKey('no-auth-notice'),
-                                              )
-                                            : Padding(
-                                                key: ValueKey(_noticeMessage),
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 14,
-                                                ),
-                                                child: AuthNotice(
-                                                  message: _noticeMessage!,
-                                                  tone: _noticeTone,
-                                                ),
-                                              ),
-                                      ),
-                                      AnimatedSwitcher(
-                                        duration: const Duration(
-                                          milliseconds: 220,
-                                        ),
-                                        switchInCurve: Curves.easeOutCubic,
-                                        switchOutCurve: Curves.easeInCubic,
-                                        child: isLogin
-                                            ? _buildLoginForm()
-                                            : _buildRegisterForm(),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      AuthOrDivider(
-                                        label: isLogin
-                                            ? 'atau masuk dengan'
-                                            : 'atau daftar dengan',
-                                      ),
-                                      const SizedBox(height: 12),
-                                      AuthGoogleButton(
-                                        label: isLogin
-                                            ? 'Masuk dengan Google'
-                                            : 'Daftar dengan Google',
-                                        enabled: !_loading,
-                                        onPressed: _loginWithGoogle,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                const AuthSecurityBadge(),
-                                const SizedBox(height: 14),
-                                AuthLinkRow(
-                                  question: isLogin
-                                      ? 'Belum punya akun?'
-                                      : 'Sudah punya akun?',
-                                  action: isLogin
-                                      ? 'Daftar Sekarang'
-                                      : 'Masuk di sini',
-                                  trailingIcon: Icons.chevron_right_rounded,
-                                  onTap: () => _switchMode(
-                                    isLogin
-                                        ? AuthMode.register
-                                        : AuthMode.login,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+              child: _noticeMessage == null
+                  ? const SizedBox.shrink(key: ValueKey('no-auth-notice'))
+                  : Padding(
+                      key: ValueKey(_noticeMessage),
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: AuthNotice(
+                        message: _noticeMessage!,
+                        tone: _noticeTone,
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: isLogin ? _buildLoginForm() : _buildRegisterForm(),
+            ),
+            const SizedBox(height: 16),
+            AuthOrDivider(
+              label: isLogin ? 'atau masuk dengan' : 'atau daftar dengan',
+            ),
+            const SizedBox(height: 12),
+            AuthGoogleButton(
+              label: isLogin ? 'Masuk dengan Google' : 'Daftar dengan Google',
+              enabled: !_loading,
+              onPressed: _loginWithGoogle,
+            ),
+          ],
+        );
+      },
     );
   }
 
