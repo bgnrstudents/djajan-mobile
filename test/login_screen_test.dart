@@ -101,8 +101,9 @@ Future<void> _submitLoginFailure(
     'pelanggan@example.com',
   );
   await tester.enterText(find.byType(TextFormField).at(1), 'password123');
-  await tester.ensureVisible(find.text('Masuk'));
-  await tester.tap(find.text('Masuk'));
+  final submitButton = find.byKey(const ValueKey('login-submit-button'));
+  await tester.ensureVisible(submitButton);
+  await tester.tap(submitButton);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
 }

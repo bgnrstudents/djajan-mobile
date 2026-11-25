@@ -14,26 +14,33 @@ void _useTallScreen(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Future<void> _tapButton(WidgetTester tester, String label) async {
-  final button = find.widgetWithText(ElevatedButton, label);
+Future<void> _tapButton(WidgetTester tester, Key key) async {
+  final button = find.byKey(key);
   await tester.ensureVisible(button);
   await tester.pumpAndSettle();
   await tester.tap(button);
 }
 
 void main() {
-  testWidgets('Halaman masuk menampilkan elemen utama', (tester) async {
+  testWidgets('Halaman masuk menampilkan elemen utama desain baru', (
+    tester,
+  ) async {
     _useTallScreen(tester);
     await tester.pumpWidget(_wrap(const LoginScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Selamat Datang'), findsOneWidget);
-    expect(find.text('Masuk ke Akun'), findsOneWidget);
+    expect(find.text('Masuk atau\nDaftar'), findsOneWidget);
+    expect(find.byType(AuthCard), findsOneWidget);
+    expect(find.byKey(const ValueKey('auth-tab-login')), findsOneWidget);
+    expect(find.byKey(const ValueKey('auth-tab-register')), findsOneWidget);
     expect(find.text('Nomor WhatsApp atau Email'), findsOneWidget);
     expect(find.text('Kata Sandi'), findsOneWidget);
+    expect(find.text('Ingat saya'), findsOneWidget);
     expect(find.text('Lupa sandi?'), findsOneWidget);
+    expect(find.text('Masuk dengan Google'), findsOneWidget);
+    expect(find.text('Akun Anda aman dan terlindungi'), findsOneWidget);
     expect(find.text('Daftar Sekarang'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Masuk'), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-submit-button')), findsOneWidget);
   });
 
   testWidgets('Validasi halaman masuk menampilkan pesan error', (tester) async {
@@ -41,7 +48,7 @@ void main() {
     await tester.pumpWidget(_wrap(const LoginScreen()));
     await tester.pumpAndSettle();
 
-    await _tapButton(tester, 'Masuk');
+    await _tapButton(tester, const ValueKey('login-submit-button'));
     await tester.pumpAndSettle();
 
     expect(find.text('Nomor WhatsApp atau email wajib diisi'), findsOneWidget);
@@ -61,18 +68,38 @@ void main() {
     expect(find.text('Contoh format yang benar: 081234567890'), findsOneWidget);
   });
 
+  testWidgets('Berpindah tab dari Masuk ke Daftar di halaman yang sama', (
+    tester,
+  ) async {
+    _useTallScreen(tester);
+    await tester.pumpWidget(_wrap(const LoginScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('auth-tab-register')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nama Lengkap'), findsOneWidget);
+    expect(find.text('Nomor WhatsApp'), findsOneWidget);
+    expect(find.text('Email (Opsional)'), findsOneWidget);
+    expect(find.text('Ulangi Kata Sandi'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('register-submit-button')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Halaman daftar menampilkan seluruh field', (tester) async {
     _useTallScreen(tester);
     await tester.pumpWidget(_wrap(const RegisterScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Buat Akun Baru'), findsOneWidget);
-    expect(find.text('Daftar sebagai Pembeli Warga'), findsOneWidget);
+    expect(find.text('Masuk atau\nDaftar'), findsOneWidget);
+    expect(find.byType(AuthCard), findsOneWidget);
     expect(find.text('Nama Lengkap'), findsOneWidget);
     expect(find.text('Nomor WhatsApp'), findsOneWidget);
     expect(find.text('Email (Opsional)'), findsOneWidget);
     expect(find.text('Ulangi Kata Sandi'), findsOneWidget);
-    // Pilihan peran sudah dihapus dari halaman daftar.
+    expect(find.text('Daftar dengan Google'), findsOneWidget);
     expect(find.text('Penjual UMKM'), findsNothing);
   });
 
@@ -87,15 +114,16 @@ void main() {
     await tester.pumpWidget(_wrap(const RegisterScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Buat Akun Baru'), findsOneWidget);
-    final headerSubtitle = tester.getRect(
-      find.text('Daftar dan mulai belanja dari UMKM sekitar.'),
+    expect(find.text('Masuk atau\nDaftar'), findsOneWidget);
+    expect(find.byType(AuthCard), findsOneWidget);
+    final subtitleRect = tester.getRect(
+      find.text('Jajan & kelola usaha lokal lebih mudah.'),
     );
-    final formCard = tester.getRect(find.byType(AuthCard));
-    expect(headerSubtitle.bottom, lessThan(formCard.top));
+    final cardRect = tester.getRect(find.byType(AuthCard));
+    expect(subtitleRect.bottom, lessThan(cardRect.top));
     expect(find.text('Nama Lengkap'), findsOneWidget);
 
-    final submitButton = find.widgetWithText(ElevatedButton, 'Daftar Sekarang');
+    final submitButton = find.byKey(const ValueKey('register-submit-button'));
     await tester.ensureVisible(submitButton);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
@@ -119,7 +147,7 @@ void main() {
     await tester.tap(firstField);
     await tester.pumpAndSettle();
 
-    final submitButton = find.widgetWithText(ElevatedButton, 'Daftar Sekarang');
+    final submitButton = find.byKey(const ValueKey('register-submit-button'));
     await tester.ensureVisible(submitButton);
     await tester.pumpAndSettle();
 
@@ -144,7 +172,7 @@ void main() {
     expect(find.text('Kata sandi tidak sama'), findsOneWidget);
   });
 
-  testWidgets('Alur lupa kata sandi sampai kode terkirim', (tester) async {
+  testWidgets('Navigasi ke lupa kata sandi dan validasi email', (tester) async {
     _useTallScreen(tester);
     await tester.pumpWidget(_wrap(const LoginScreen()));
     await tester.pumpAndSettle();
@@ -152,24 +180,16 @@ void main() {
     await tester.tap(find.text('Lupa sandi?'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reset Kata Sandi'), findsOneWidget);
+    expect(find.text('Lupa Kata Sandi'), findsOneWidget);
 
-    await _tapButton(tester, 'Kirim Kode Reset');
-    await tester.pumpAndSettle();
-    expect(find.text('Nomor WhatsApp atau email wajib diisi'), findsOneWidget);
-
-    await tester.enterText(find.byType(TextFormField).first, '081234567890');
-    await tester.pumpAndSettle();
-
-    await _tapButton(tester, 'Kirim Kode Reset');
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Kode Terkirim'), findsOneWidget);
-    expect(
-      find.widgetWithText(ElevatedButton, 'Kembali ke Halaman Masuk'),
-      findsOneWidget,
+    final sendButton = find.widgetWithText(
+      ElevatedButton,
+      'Kirim Kode Verifikasi',
     );
+    await tester.ensureVisible(sendButton);
+    await tester.tap(sendButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Email wajib diisi'), findsOneWidget);
   });
 }
