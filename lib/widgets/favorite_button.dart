@@ -11,14 +11,18 @@ class FavoriteButton extends StatelessWidget {
   final String? productId;
   final String? umkmId;
   final double size;
+  final double? buttonSize;
   final Color? backgroundColor;
+  final Color? inactiveColor;
 
   const FavoriteButton({
     super.key,
     this.productId,
     this.umkmId,
     this.size = 18,
+    this.buttonSize,
     this.backgroundColor,
+    this.inactiveColor,
   }) : assert(
          (productId != null) ^ (umkmId != null),
          'Isi salah satu: productId atau umkmId.',
@@ -34,6 +38,14 @@ class FavoriteButton extends StatelessWidget {
         final isFav = productId != null
             ? favorites.isProductFavorite(productId!)
             : favorites.isUmkmFavorite(umkmId!);
+
+        final icon = Icon(
+          isFav ? Icons.favorite : Icons.favorite_border,
+          size: size,
+          color: isFav
+              ? AppColors.hijauTua
+              : (inactiveColor ?? AppColors.textGrey),
+        );
 
         return Material(
           color: backgroundColor ?? Colors.white.withValues(alpha: 0.92),
@@ -71,16 +83,16 @@ class FavoriteButton extends StatelessWidget {
                 _showFavoriteSnackBar(context, nowFavorite);
               }
             },
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Icon(
-                isFav ? Icons.favorite : Icons.favorite_border,
-                size: size,
-                color: isFav
-                    ? AppColors.hijauTua
-                    : AppColors.textGrey,
-              ),
-            ),
+            child: buttonSize != null
+                ? SizedBox(
+                    width: buttonSize,
+                    height: buttonSize,
+                    child: Center(child: icon),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: icon,
+                  ),
           ),
         );
       },

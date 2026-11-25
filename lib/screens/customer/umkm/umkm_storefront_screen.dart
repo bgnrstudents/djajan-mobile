@@ -233,17 +233,33 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
       actions: [
         Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
-          child: FavoriteButton(umkmId: umkm.id),
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            shape: BoxShape.circle,
+            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
+          ),
+          child: FavoriteButton(
+            umkmId: umkm.id,
+            size: 20,
+            buttonSize: 40,
+            backgroundColor: Colors.transparent,
+            inactiveColor: textDark,
+          ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.92),
             shape: BoxShape.circle,
             boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
           ),
           child: IconButton(
+            padding: EdgeInsets.zero,
             tooltip: 'Hubungi penjual',
             icon: const Icon(
               Icons.chat_bubble_outline,
@@ -258,21 +274,25 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         AnimatedBuilder(
           animation: _cartService,
           builder: (context, _) {
             final count = _cartService.totalQuantity;
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.92),
                 shape: BoxShape.circle,
                 boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
               ),
               child: Stack(
+                alignment: Alignment.center,
                 children: [
                   IconButton(
+                    padding: EdgeInsets.zero,
                     icon: const Icon(
                       Icons.shopping_cart_outlined,
                       color: textDark,
