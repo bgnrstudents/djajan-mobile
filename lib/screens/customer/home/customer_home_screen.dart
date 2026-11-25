@@ -26,7 +26,6 @@ import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/umkm_app_bar.dart';
-import '../../auth/auth_widgets.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -610,6 +609,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _buildHeroBanner() {
+    final auth = context.watch<AuthService>();
+    final rawName = (auth.session?.data['nama']?.toString() ?? '').trim();
+    final firstName =
+        rawName.isEmpty ? '' : rawName.split(RegExp(r'\s+')).first;
+    final greetingTitle = firstName.isEmpty
+        ? 'Selamat Datang\ndi Djajan!'
+        : 'Selamat Datang,\n$firstName!';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Center(
@@ -619,14 +626,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             key: const ValueKey('customer-home-hero'),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
                 colors: [
                   Colors.white,
-                  Color(0xFFF3FAF5),
-                  Color(0xFFEAF3EC),
+                  Color(0xFFF5FBF7),
+                  Color(0xFFEDF8F1),
                 ],
-                stops: [0.0, 0.58, 1.0],
+                stops: [0.0, 0.52, 1.0],
               ),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(color: const Color(0xFFDCE8DE)),
@@ -642,136 +649,147 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < 330;
-                final storeWidth = compact ? 92.0 : 124.0;
-                final storeHeight = compact ? 88.0 : 116.0;
+                final imageWidth = compact
+                    ? 132.0
+                    : (constraints.maxWidth * 0.47).clamp(155.0, 236.0);
+                final textRightPadding = compact ? 108.0 : imageWidth - 18;
 
                 return Stack(
                   children: [
-                    Positioned.fill(
-                      child: CustomPaint(painter: _HomeHeroBackdropPainter()),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: imageWidth,
+                      child: ShaderMask(
+                        shaderCallback: (rect) => const LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.transparent,
+                            Colors.white,
+                          ],
+                          stops: [0.0, 0.24],
+                        ).createShader(rect),
+                        blendMode: BlendMode.dstIn,
+                        child: Image.asset(
+                          'assets/images/home_warung_hero.png',
+                          key: const ValueKey('customer-home-hero-image'),
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.fromLTRB(
                         compact ? 14 : 18,
+                        compact ? 16 : 18,
+                        textRightPadding,
                         compact ? 15 : 18,
-                        compact ? 10 : 14,
-                        compact ? 14 : 16,
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE2EFE5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE2EFE5),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 6.5,
-                                        height: 6.5,
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.hijauTua,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Flexible(
-                                        child: Text(
-                                          '${umkms.length} Warung Sekitar Aktif',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: AppColors.hijauTua,
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  width: 6.5,
+                                  height: 6.5,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.hijauTua,
+                                    shape: BoxShape.circle,
                                   ),
                                 ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Jajanan Desa,\nLangsung ke Rumah.',
-                                  style: TextStyle(
-                                    color: AppColors.textDark,
-                                    fontSize: compact ? 17.5 : 20,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.15,
-                                    letterSpacing: -0.45,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Pesan menu siap santap atau pre-order dari UMKM terdekat.',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: AppColors.textGrey,
-                                    fontSize: compact ? 11 : 11.5,
-                                    height: 1.38,
-                                  ),
-                                ),
-                                const SizedBox(height: 13),
-                                Material(
-                                  color: AppColors.hijauTua,
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: InkWell(
-                                    onTap: () => _openCatalog(
-                                      category: selectedCategory,
-                                      query: searchController.text.trim(),
-                                    ),
-                                    borderRadius: BorderRadius.circular(24),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: compact ? 12 : 14,
-                                        vertical: 9,
-                                      ),
-                                      child: const FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Jelajahi Menu',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            SizedBox(width: 6),
-                                            Icon(
-                                              Icons.arrow_forward_rounded,
-                                              color: Colors.white,
-                                              size: 15,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    '${umkms.length} Warung Sekitar Aktif',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: AppColors.hijauTua,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          SizedBox(
-                            width: storeWidth,
-                            height: storeHeight,
-                            child: CustomPaint(
-                              painter: StorefrontIllustrationPainter(),
+                          const SizedBox(height: 10),
+                          Text(
+                            greetingTitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.textDark,
+                              fontSize: compact ? 17 : 20,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
+                              letterSpacing: -0.45,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Temukan jajanan & masakan rumahan favorit dari warung sekitar.',
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: compact ? 10.5 : 11.5,
+                              height: 1.38,
+                            ),
+                          ),
+                          const SizedBox(height: 13),
+                          Material(
+                            color: AppColors.hijauTua,
+                            borderRadius: BorderRadius.circular(24),
+                            child: InkWell(
+                              onTap: () => _openCatalog(
+                                category: selectedCategory,
+                                query: searchController.text.trim(),
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 12 : 14,
+                                  vertical: 9,
+                                ),
+                                child: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Jelajahi Menu',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: Colors.white,
+                                        size: 15,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -1140,34 +1158,4 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     );
   }
-}
-
-class _HomeHeroBackdropPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final arcPaint = Paint()
-      ..color = const Color(0xFFD6EAD9).withValues(alpha: 0.55);
-    final arcPath = Path()
-      ..moveTo(size.width * 0.56, size.height)
-      ..quadraticBezierTo(
-        size.width * 0.66,
-        size.height * 0.25,
-        size.width,
-        0,
-      )
-      ..lineTo(size.width, size.height)
-      ..close();
-    canvas.drawPath(arcPath, arcPaint);
-
-    final innerArc = Paint()
-      ..color = const Color(0xFF175D2B).withValues(alpha: 0.06);
-    canvas.drawCircle(
-      Offset(size.width * 0.92, size.height * 0.96),
-      size.height * 0.42,
-      innerArc,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -73,6 +73,7 @@ flutter:
     - assets/images/logo_djajan_mark.png
     - assets/images/logo_djajan.png
     - assets/images/djajan_welcome_banner.png
+    - assets/images/home_warung_hero.png
     - assets/images/javanese_village_background.png
     - assets/fonts/OFL.txt
   fonts:
