@@ -28,7 +28,7 @@ void main() {
     ApiService.clientForTesting = http.Client();
   });
 
-  testWidgets('without a saved session, splash opens home without a delay', (
+  testWidgets('without a saved session, splash displays briefly then opens home', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -51,6 +51,13 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.text('Beranda'), findsNothing);
+
+    await tester.pump(const Duration(seconds: 2));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
 

@@ -12,7 +12,12 @@ import '../../services/umkm_data_service.dart';
 import '../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final Duration minimumDisplayDuration;
+
+  const SplashScreen({
+    super.key,
+    this.minimumDisplayDuration = const Duration(seconds: 2),
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -53,7 +58,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   late final AnimationController _entranceController;
   late final AnimationController _ambientController;
-  late final AnimationController _progressController;
   late final Animation<double> _logoFade;
   late final Animation<double> _logoScale;
   Timer? _tipTimer;
@@ -61,12 +65,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   int _tipIndex = 0;
   int _illustrationIndex = 0;
-  String _statusMessage = 'Memeriksa sesi akun Anda...';
+  String _statusMessage = 'Menyiapkan Djajan untuk Anda...';
   String? _errorMessage;
   String _errorTitle = 'Koneksi belum tersedia';
-  AuthSession? _pendingSession;
   bool _isLoading = false;
-  bool _canContinue = false;
   bool _navigationStarted = false;
 
   @override
@@ -80,10 +82,6 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 3200),
     )..repeat(reverse: true);
-    _progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
     _logoFade = CurvedAnimation(
       parent: _entranceController,
       curve: Curves.easeOutCubic,
@@ -118,42 +116,33 @@ class _SplashScreenState extends State<SplashScreen>
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _canContinue = false;
-      _statusMessage = 'Memeriksa sesi akun Anda...';
+      _statusMessage = 'Menyiapkan Djajan untuk Anda...';
     });
+
+    final startedAt = DateTime.now();
 
     try {
       final session = await context.read<AuthService>().restoreSession();
       if (!mounted) return;
-      _pendingSession = session;
-      if (session == null) {
-        _openApp(null);
-        return;
-      }
 
-      if (session.role == AuthRole.umkm) {
-        context.read<UmkmDataService>().loadProfileFromLogin(session.data);
-        _statusMessage = 'Menyiapkan ruang usaha Anda...';
-      } else {
-        setState(() => _statusMessage = 'Memuat riwayat pesanan Anda...');
-        try {
-          await context.read<OrderService>().loadFromApi();
-        } on ApiException catch (error) {
-          if (!mounted) return;
-          if (error.statusCode == 401) {
-            _openApp(null);
-            return;
-          }
-          setState(() {
-            _isLoading = false;
-            _errorTitle = 'Riwayat pesanan belum dimuat';
-            _errorMessage = error.pesan;
-            _canContinue = true;
-          });
-          return;
+      if (session != null) {
+        if (session.role == AuthRole.umkm) {
+          context.read<UmkmDataService>().loadProfileFromLogin(session.data);
+          setState(() => _statusMessage = 'Menyiapkan halaman usaha...');
+        } else {
+          setState(() => _statusMessage = 'Membuka etalase UMKM...');
+          // Muat riwayat pesanan di latar belakang agar tidak menahan masuk beranda.
+          unawaited(
+            context.read<OrderService>().loadFromApi().catchError((_) {}),
+          );
         }
       }
 
+      final remaining =
+          widget.minimumDisplayDuration - DateTime.now().difference(startedAt);
+      if (remaining > Duration.zero) {
+        await Future<void>.delayed(remaining);
+      }
       if (!mounted) return;
       _openApp(session);
     } on ApiException catch (error) {
@@ -164,10 +153,6 @@ class _SplashScreenState extends State<SplashScreen>
         _errorMessage = error.pesan;
       });
     }
-  }
-
-  void _continueWithoutOrders() {
-    _openApp(_pendingSession);
   }
 
   void _openApp(AuthSession? session) {
@@ -189,7 +174,6 @@ class _SplashScreenState extends State<SplashScreen>
     _illustrationTimer?.cancel();
     _entranceController.dispose();
     _ambientController.dispose();
-    _progressController.dispose();
     super.dispose();
   }
 
@@ -547,77 +531,46 @@ class _SplashScreenState extends State<SplashScreen>
       return _buildErrorPanel();
     }
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            RotationTransition(
-              turns: _progressController,
-              child: const Icon(
-                Icons.sync_rounded,
-                color: AppColors.hijauTua,
-                size: 19,
-              ),
-            ),
-            const SizedBox(width: 9),
-            Flexible(
-              child: Text(
-                _statusMessage,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textGrey,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _buildProgressTrack(),
-      ],
-    );
-  }
-
-  Widget _buildProgressTrack() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: SizedBox(
-        height: 4,
-        child: LayoutBuilder(
-          builder: (context, constraints) => AnimatedBuilder(
-            animation: _progressController,
-            builder: (context, _) {
-              final travel = constraints.maxWidth * 0.72;
-              return Stack(
-                children: [
-                  const Positioned.fill(
-                    child: ColoredBox(color: Color(0xFFDDE9DF)),
-                  ),
-                  Positioned(
-                    left: (constraints.maxWidth - travel) *
-                        _progressController.value,
-                    width: travel,
-                    top: 0,
-                    bottom: 0,
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xFF5B9E68),
-                            Color(0xFF175D2B),
-                            Color(0xFFF2B705),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.garis),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.hijauTua.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-        ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 15,
+            height: 15,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.hijauTua,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              _statusMessage,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -669,27 +622,15 @@ class _SplashScreenState extends State<SplashScreen>
             ],
           ),
           const SizedBox(height: 11),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              FilledButton.icon(
-                onPressed: _isLoading ? null : _restoreSession,
-                icon: const Icon(Icons.refresh_rounded, size: 17),
-                label: const Text('Coba lagi'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.hijauTua,
-                  foregroundColor: Colors.white,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
-              if (_canContinue)
-                TextButton(
-                  onPressed: _continueWithoutOrders,
-                  child: const Text('Lanjutkan ke beranda'),
-                ),
-            ],
+          FilledButton.icon(
+            onPressed: _isLoading ? null : _restoreSession,
+            icon: const Icon(Icons.refresh_rounded, size: 17),
+            label: const Text('Coba lagi'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.hijauTua,
+              foregroundColor: Colors.white,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
         ],
       ),
