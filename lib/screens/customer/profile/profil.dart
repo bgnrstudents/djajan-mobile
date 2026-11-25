@@ -314,14 +314,12 @@ class _ProfilScreenState extends State<ProfilScreen> {
     ),
   ];
 
-  List<ProfileMenuItem> get _menuItems => [
+  List<ProfileMenuItem> get _activityMenuItems => [
     ProfileMenuItem(
       icon: Icons.favorite_rounded,
       title: 'Favorit Saya',
       subtitle: _favoriteSubtitle,
-      iconColor: const Color(0xFFE11D48),
-      iconBg: const Color(0xFFFFF1F2),
-      iconBorderColor: const Color(0xFFFFE4E6),
+      iconColor: AppColors.hijauTua,
       onTap: _openFavorites,
     ),
     ProfileMenuItem(
@@ -340,9 +338,13 @@ class _ProfilScreenState extends State<ProfilScreen> {
       iconColor: AppColors.hijauTua,
       trailing: Switch.adaptive(
         value: _notificationsEnabled,
+        activeTrackColor: AppColors.hijauTua,
         onChanged: _setNotificationsEnabled,
       ),
     ),
+  ];
+
+  List<ProfileMenuItem> get _settingsMenuItems => [
     if (_businessName != null && _businessStatus == 'terverifikasi')
       ProfileMenuItem(
         icon: Icons.storefront_rounded,
@@ -386,17 +388,18 @@ class _ProfilScreenState extends State<ProfilScreen> {
       iconColor: AppColors.hijauTua,
       onTap: _openAboutDjajan,
     ),
-    ProfileMenuItem(
-      icon: Icons.logout_rounded,
-      title: 'Keluar Akun',
-      subtitle: 'Selesaikan sesi belanja di perangkat ini',
-      iconColor: AppColors.danger,
-      iconBg: AppColors.dangerBg,
-      iconBorderColor: const Color(0xFFFECACA),
-      textColor: AppColors.danger,
-      onTap: _confirmLogout,
-    ),
   ];
+
+  ProfileMenuItem get _logoutMenuItem => ProfileMenuItem(
+    icon: Icons.logout_rounded,
+    title: 'Keluar Akun',
+    subtitle: 'Selesaikan sesi belanja di perangkat ini',
+    iconColor: AppColors.danger,
+    iconBg: const Color(0xFFFEE2E2),
+    iconBorderColor: const Color(0xFFFECACA),
+    textColor: AppColors.danger,
+    onTap: _confirmLogout,
+  );
 
   String get _favoriteSubtitle {
     final favorites = FavoriteService();
@@ -487,26 +490,32 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    _ProfileHeader(
+                    _ProfileHeroCard(
                       user: _user,
                       businessName: _businessName,
                       businessStatus: _businessStatus,
-                      onEdit: _editProfile,
-                    ),
-                    const SizedBox(height: 16),
-                    _PromoBanner(
-                      businessName: _businessName,
-                      businessStatus: _businessStatus,
-                      loading: _loadingBusiness,
-                      onTap: _businessStatus == 'dihapus'
+                      loadingBusiness: _loadingBusiness,
+                      onEditProfile: _editProfile,
+                      onTapBusiness: _businessStatus == 'dihapus'
                           ? null
                           : _businessStatus == 'terverifikasi'
                           ? _switchToUmkm
                           : _openBusinessRegistration,
                     ),
                     const SizedBox(height: 22),
-                    _ProfileMenu(items: _menuItems),
-                    const SizedBox(height: 20),
+                    const _SectionTitle(title: 'Aktivitas Saya'),
+                    const SizedBox(height: 10),
+                    _ProfileMenu(items: _activityMenuItems),
+                    const SizedBox(height: 22),
+                    const _SectionTitle(
+                      title: 'Pengaturan',
+                      icon: Icons.settings_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                    _ProfileMenu(items: _settingsMenuItems),
+                    const SizedBox(height: 14),
+                    _LogoutCard(item: _logoutMenuItem),
+                    const SizedBox(height: 22),
                     const _SafetyNotice(),
                   ],
                 ),
@@ -519,183 +528,208 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Widget _buildGuestProfile(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return ColoredBox(
+      color: OC.bg,
+      child: Stack(
         children: [
-          const UmkmHeaderRow(
-            padding: EdgeInsets.zero,
-            iconBadge: UmkmSquircleIcon(
-              icon: Icons.person_rounded,
-            ),
-            title: 'Profil Saya',
-            subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
-          ),
-          const SizedBox(height: 16),
-          // Guest Header Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          const HeaderBotanicalBackdrop(height: 220),
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const UmkmHeaderRow(
+                  padding: EdgeInsets.zero,
+                  iconBadge: UmkmSquircleIcon(
+                    icon: Icons.person_rounded,
+                  ),
+                  title: 'Profil Saya',
+                  subtitle: 'Kelola akun dan preferensi belanja lokal Anda',
+                ),
+                const SizedBox(height: 16),
+                // Guest Header Card
                 Container(
-                  width: 68,
-                  height: 68,
-                  decoration: const BoxDecoration(
-                    color: OC.mint,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.person_rounded,
-                    size: 38,
-                    color: OC.primary,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'Halo, Pengunjung Desa!',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: OC.ink,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Masuk ke akun DJajan Anda untuk kemudahan memesan jajanan, menyimpan alamat, dan melacak pesanan.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: OC.muted,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () =>
-                        Navigator.pushNamed(context, AppRoutes.login),
-                    icon: const Icon(
-                      Icons.login_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    label: const Text(
-                      'Masuk / Buat Akun Baru',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: OC.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Mitra UMKM Banner
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.hijauLembut, AppColors.latar],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.garis),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
+                  padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: AppColors.hijauLembut,
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppColors.garis),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x0917251B),
+                        blurRadius: 18,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.storefront_rounded,
-                    color: AppColors.hijauTua,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Punya Usaha Kuliner di Desa?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.5,
-                          color: AppColors.hijauTua,
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: const BoxDecoration(
+                          color: OC.mint,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.person_rounded,
+                          size: 38,
+                          color: OC.primary,
                         ),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Kelola menu & pesanan lewat dashboard UMKM',
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Halo, Pengunjung Desa!',
                         style: TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.textGrey,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: OC.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Masuk ke akun DJajan Anda untuk kemudahan memesan jajanan, menyimpan alamat, dan melacak pesanan.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: OC.muted,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, AppRoutes.login),
+                          icon: const Icon(
+                            Icons.login_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          label: const Text(
+                            'Masuk / Buat Akun Baru',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: OC.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                            elevation: 0,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.login),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.hijauTua,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                const SizedBox(height: 14),
+                // Mitra UMKM Banner
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0E4D2E), Color(0xFF175D2B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('Masuk'),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: const Icon(
+                          Icons.storefront_rounded,
+                          color: AppColors.hijauTua,
+                          size: 23,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Punya Usaha Kuliner di Desa?',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Kelola menu & pesanan lewat dashboard UMKM',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.login),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white54),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: const Text(
+                          'Masuk',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 18),
+                const _SectionTitle(
+                  title: 'Pengaturan',
+                  icon: Icons.settings_rounded,
+                ),
+                const SizedBox(height: 10),
+                _ProfileMenu(
+                  items: [
+                    ProfileMenuItem(
+                      icon: Icons.info_outline_rounded,
+                      title: 'Tentang DJajan',
+                      subtitle: 'Pemberdayaan kuliner dan UMKM lokal',
+                      iconColor: AppColors.hijauTua,
+                      onTap: _openAboutDjajan,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                const _SafetyNotice(),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          // Info Menu
-          _ProfileMenu(
-            items: [
-              ProfileMenuItem(
-                icon: Icons.info_outline_rounded,
-                title: 'Tentang DJajan',
-                subtitle: 'Pemberdayaan kuliner dan UMKM lokal',
-                iconColor: AppColors.hijauTua,
-                onTap: _openAboutDjajan,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const _SafetyNotice(),
         ],
       ),
     );
@@ -1085,130 +1119,412 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, this.icon});
+
+  final String title;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 18, color: AppColors.hijauTua),
+          const SizedBox(width: 7),
+        ],
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w800,
+            color: OC.ink,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileHeroCard extends StatelessWidget {
+  const _ProfileHeroCard({
     required this.user,
     required this.businessName,
     required this.businessStatus,
-    required this.onEdit,
+    required this.loadingBusiness,
+    required this.onEditProfile,
+    required this.onTapBusiness,
   });
 
   final ProfileUser user;
   final String? businessName;
   final String? businessStatus;
-  final VoidCallback onEdit;
+  final bool loadingBusiness;
+  final VoidCallback onEditProfile;
+  final VoidCallback? onTapBusiness;
 
   @override
   Widget build(BuildContext context) {
+    final hasBusiness = businessName != null;
+    final isVerified =
+        !loadingBusiness && hasBusiness && businessStatus == 'terverifikasi';
+    final isDeleted =
+        !loadingBusiness && hasBusiness && businessStatus == 'dihapus';
+
+    final statusDotColor = loadingBusiness
+        ? const Color(0xFFD4EED8)
+        : !hasBusiness
+        ? const Color(0xFF86EFAC)
+        : switch (businessStatus) {
+            'terverifikasi' => const Color(0xFF22C55E),
+            'dihapus' => const Color(0xFF9CA3AF),
+            _ => const Color(0xFFFACC15),
+          };
+
+    final storeTitle = loadingBusiness
+        ? 'Memeriksa akun usaha...'
+        : hasBusiness
+        ? businessName!
+        : 'Punya usaha di desa?';
+
+    final storeSubtitle = loadingBusiness
+        ? 'Memuat status kemitraan Anda'
+        : !hasBusiness
+        ? 'Jangkau lebih banyak pembeli lokal'
+        : switch (businessStatus) {
+            'terverifikasi' => 'Terverifikasi • Aktif',
+            'ditolak' => 'Perlu perbaikan data usaha',
+            'dihapus' => 'Status mitra dinonaktifkan',
+            _ => 'Menunggu verifikasi admin desa',
+          };
+
+    final actionLabel = loadingBusiness
+        ? 'Memuat...'
+        : !hasBusiness
+        ? 'Daftar'
+        : isVerified
+        ? 'Kelola Toko'
+        : isDeleted
+        ? 'Nonaktif'
+        : 'Perbarui';
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.garis),
-        boxShadow: const [
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F4B28), Color(0xFF135A31), Color(0xFF1B703F)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0917251B),
-            blurRadius: 18,
-            offset: Offset(0, 6),
+            color: const Color(0xFF0F4B28).withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: AppColors.hijauLembut,
-              borderRadius: BorderRadius.circular(19),
-            ),
-            child: Center(
-              child: user.name.trim().isEmpty
-                  ? const Icon(
-                      Icons.person_rounded,
-                      color: AppConfig.primaryColor,
-                      size: 28,
-                    )
-                  : Text(
-                      _initials(user.name),
-                      style: const TextStyle(
-                        color: AppConfig.primaryColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 17,
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
+          // Baris Atas: Avatar Inisial + Info Pelanggan + Tombol Edit Profil
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  user.name.isEmpty ? 'Profil pelanggan' : user.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    height: 1.15,
-                    letterSpacing: -0.3,
-                    fontWeight: FontWeight.w800,
-                    color: OC.ink,
+                GestureDetector(
+                  onTap: onEditProfile,
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: AppColors.hijauLembut,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: user.name.trim().isEmpty
+                                ? const Icon(
+                                    Icons.person_rounded,
+                                    color: AppConfig.primaryColor,
+                                    size: 28,
+                                  )
+                                : Text(
+                                    _initials(user.name),
+                                    style: const TextStyle(
+                                      color: AppConfig.primaryColor,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: AppColors.hijauTua,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.edit_rounded,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.phone_rounded, size: 13, color: OC.muted),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        user.phoneNumber.isEmpty
-                            ? 'Nomor telepon belum tersedia'
-                            : user.phoneNumber,
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.name.isEmpty ? 'Profil pelanggan' : user.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5, color: OC.muted),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16.5,
+                          color: Colors.white,
+                          letterSpacing: -0.2,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 5),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 5,
+                        children: [
+                          _heroRoleTag(
+                            icon: Icons.person_outline_rounded,
+                            label: 'Pelanggan',
+                          ),
+                          if (hasBusiness && businessStatus != 'dihapus')
+                            _heroRoleTag(
+                              icon: Icons.storefront_outlined,
+                              label: 'Mitra UMKM',
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.phone_outlined,
+                            size: 12.5,
+                            color: Color(0xFFD4EED8),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              user.phoneNumber.isEmpty
+                                  ? 'Nomor telepon belum tersedia'
+                                  : user.phoneNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFFD4EED8),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 5,
-                  children: [
-                    _profileRoleTag(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Pelanggan',
-                      background: AppColors.hijauLembut,
-                      foreground: AppConfig.primaryColor,
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: onEditProfile,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-                    if (businessName != null && businessStatus != 'dihapus')
-                      _profileRoleTag(
-                        icon: Icons.storefront_outlined,
-                        label: 'Mitra UMKM',
-                        background: AppColors.latar,
-                        foreground: AppColors.hijauTua,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
                       ),
-                  ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Edit Profil',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Edit profil pelanggan',
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined, size: 19),
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.hijauLembut,
-              foregroundColor: AppConfig.primaryColor,
-              minimumSize: const Size(42, 42),
-              maximumSize: const Size(42, 42),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+
+          // Baris Bawah: Status Toko Saya / Mitra UMKM di dalam kartu yang sama
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      hasBusiness
+                          ? Icons.storefront_rounded
+                          : Icons.store_mall_directory_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 7.5,
+                    height: 7.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: statusDotColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                storeTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            if (isVerified) ...[
+                              const SizedBox(width: 5),
+                              const Icon(
+                                Icons.verified_rounded,
+                                size: 13.5,
+                                color: Color(0xFFFACC15),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 1.5),
+                        Text(
+                          storeSubtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFD4EED8),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: loadingBusiness || isDeleted
+                        ? null
+                        : onTapBusiness,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.white54,
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.45),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 8,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          actionLabel,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (!loadingBusiness && !isDeleted) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            isVerified
+                                ? Icons.north_east_rounded
+                                : Icons.arrow_forward_rounded,
+                            size: 13.5,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1217,27 +1533,22 @@ class _ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _profileRoleTag({
-    required IconData icon,
-    required String label,
-    required Color background,
-    required Color foreground,
-  }) {
+  Widget _heroRoleTag({required IconData icon, required String label}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: foreground),
+          Icon(icon, size: 11, color: const Color(0xFF86EFAC)),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
-              color: foreground,
+            style: const TextStyle(
+              color: Color(0xFFDCFCE7),
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -1257,177 +1568,6 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({
-    required this.businessName,
-    required this.businessStatus,
-    required this.loading,
-    required this.onTap,
-  });
-
-  final String? businessName;
-  final String? businessStatus;
-  final bool loading;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasBusiness = businessName != null;
-    final statusLabel = switch (businessStatus) {
-      'terverifikasi' => 'TERVERIFIKASI',
-      'ditolak' => 'PERLU PERBAIKAN',
-      'dihapus' => 'DINONAKTIFKAN',
-      _ => 'MENUNGGU VERIFIKASI',
-    };
-    final actionLabel = loading
-        ? 'Memuat status usaha...'
-        : !hasBusiness
-        ? 'Daftarkan Usaha'
-        : businessStatus == 'terverifikasi'
-        ? 'Buka Dashboard'
-        : businessStatus == 'dihapus'
-        ? 'Akun Dinonaktifkan'
-        : 'Perbarui Pengajuan';
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.hijauLembut,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFDCE8DE)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(
-                  hasBusiness
-                      ? Icons.storefront_rounded
-                      : Icons.store_mall_directory_outlined,
-                  color: AppConfig.primaryColor,
-                  size: 23,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loading
-                          ? 'STATUS USAHA'
-                          : hasBusiness
-                          ? 'TOKO ANDA'
-                          : 'MITRA USAHA DESA',
-                      style: const TextStyle(
-                        color: AppConfig.primaryColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.9,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      loading
-                          ? 'Memeriksa akun usaha...'
-                          : hasBusiness
-                          ? businessName!
-                          : 'Punya usaha di Kreongan Atas?',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: OC.ink,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!loading && hasBusiness)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: businessStatus == 'terverifikasi'
-                        ? AppColors.hijauLembut
-                        : AppColors.latar,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: TextStyle(
-                      color: businessStatus == 'terverifikasi'
-                          ? AppConfig.primaryColor
-                          : const Color(0xFF9A5A10),
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            loading
-                ? 'Memuat status kemitraan Anda.'
-                : hasBusiness
-                ? businessStatus == 'terverifikasi'
-                      ? 'Usaha terdaftar. Kelola produk dan pesanan melalui dashboard UMKM.'
-                      : businessStatus == 'dihapus'
-                      ? 'Status kemitraan usaha ini telah dinonaktifkan.'
-                      : 'Periksa dan lengkapi data pengajuan usaha Anda.'
-                : 'Jangkau lebih banyak pembeli lokal melalui Djajan.',
-            style: const TextStyle(
-              color: OC.muted,
-              fontSize: 12.5,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: loading || businessStatus == 'dihapus' ? null : onTap,
-              icon: Icon(
-                businessStatus == 'terverifikasi'
-                    ? Icons.arrow_outward_rounded
-                    : Icons.arrow_forward_rounded,
-                size: 17,
-              ),
-              label: Text(actionLabel),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppConfig.primaryColor,
-                disabledBackgroundColor: const Color(0xFFDCE4DD),
-                foregroundColor: Colors.white,
-                disabledForegroundColor: OC.muted,
-                minimumSize: const Size(0, 44),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ProfileMenu extends StatelessWidget {
   const _ProfileMenu({required this.items});
 
@@ -1435,13 +1575,35 @@ class _ProfileMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          _ProfileMenuTile(item: items[index]),
-          if (index < items.length - 1) const SizedBox(height: 8),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.garis),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0717251B),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
         ],
-      ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var index = 0; index < items.length; index++) ...[
+            _ProfileMenuTile(item: items[index]),
+            if (index < items.length - 1)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 66,
+                endIndent: 14,
+                color: AppColors.garis,
+              ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -1454,40 +1616,25 @@ class _ProfileMenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = item.iconBg ?? AppColors.hijauLembut;
-    final border = item.iconBorderColor ?? const Color(0xFFD8EBD8);
     final titleColor = item.textColor ?? AppColors.textDark;
 
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      color: Colors.transparent,
       child: InkWell(
         onTap: item.onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.garis),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0717251B),
-                blurRadius: 12,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           child: Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: bg,
-                  borderRadius: BorderRadius.circular(13),
-                  border: Border.all(color: border, width: 1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Icon(item.icon, size: 21, color: item.iconColor),
+                  child: Icon(item.icon, size: 20, color: item.iconColor),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1524,6 +1671,77 @@ class _ProfileMenuTile extends StatelessWidget {
                   size: 20,
                   color: AppColors.textGrey,
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutCard extends StatelessWidget {
+  const _LogoutCard({required this.item});
+
+  final ProfileMenuItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFFFF1F1),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFFECACA)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: item.iconBg ?? const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Icon(item.icon, size: 20, color: item.iconColor),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: item.textColor ?? AppColors.danger,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: item.iconColor,
+              ),
             ],
           ),
         ),
@@ -1992,11 +2210,29 @@ class _SafetyNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Djajan Kreongan Atas, Untuk Semua Tetangga',
-        style: TextStyle(fontSize: 10, color: AppConfig.secondaryTextColor),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/images/logo_djajan_mark.png',
+          height: 15,
+          width: 15,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 6),
+        const Flexible(
+          child: Text(
+            'Djajan • Bersama UMKM, lebih dekat',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: OC.muted,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
