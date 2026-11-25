@@ -220,7 +220,7 @@ class _TabBeranda extends StatelessWidget {
                                   child: Icon(
                                     Icons.storefront_rounded,
                                     size: 24,
-                                    color: Color(0xFF047857),
+                                    color: AppColors.hijauTua,
                                   ),
                                 ),
                         ),
@@ -232,7 +232,7 @@ class _TabBeranda extends StatelessWidget {
                           width: 16,
                           height: 16,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981),
+                            color: const Color(0xFF22C55E),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
@@ -288,7 +288,7 @@ class _TabBeranda extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: service.profile.tokoAktif
-                                  ? const Color(0xFF10B981)
+                                  ? const Color(0xFF22C55E)
                                   : Colors.grey.shade400,
                             ),
                           ),
@@ -304,7 +304,7 @@ class _TabBeranda extends StatelessWidget {
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 color: service.profile.tokoAktif
-                                    ? const Color(0xFF047857)
+                                    ? AppColors.hijauTua
                                     : OC.muted,
                               ),
                             ),
@@ -343,7 +343,7 @@ class _TabBeranda extends StatelessWidget {
                           Icon(
                             Icons.shopping_bag_outlined,
                             size: 14,
-                            color: Color(0xFF047857),
+                            color: AppColors.hijauTua,
                           ),
                           SizedBox(width: 5),
                           Text(
@@ -351,7 +351,7 @@ class _TabBeranda extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF047857),
+                              color: AppColors.hijauTua,
                             ),
                           ),
                         ],
@@ -363,175 +363,22 @@ class _TabBeranda extends StatelessWidget {
             ),
           ),
 
-          // 1. TOTAL PENDAPATAN
-          Container(
-            clipBehavior: Clip.antiAlias,
-            padding: const EdgeInsets.fromLTRB(19, 17, 19, 16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF064E3B),
-                  Color(0xFF047857),
-                  Color(0xFF059669),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF103D20).withValues(alpha: 0.2),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFFC857),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'TOTAL PENDAPATAN',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    PopupMenuButton<bool>(
-                      tooltip: 'Filter pendapatan',
-                      initialValue: periodeBulanan,
-                      onSelected: onPilihPeriodeBulanan,
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(value: true, child: Text('Bulan Ini')),
-                        PopupMenuItem(value: false, child: Text('Semua Waktu')),
-                      ],
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              periodeBulanan ? 'Bulan Ini' : 'Semua Waktu',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: Colors.white,
-                              size: 15,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 17),
-                Text(
-                  rupiah(totalPendapatan),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.8,
-                    height: 1.05,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.13),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.receipt_long_outlined,
-                            size: 14,
-                            color: Color(0xFFD8EBDD),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '$jumlahPesananPendapatan pesanan',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        periodeBulanan
-                            ? 'Omzet bersih periode ini'
-                            : 'Akumulasi omzet bersih',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFFD8EBDD),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          // 1. HERO CARD PENDAPATAN + GRAFIK 7 HARI + KAS/SALDO
+          _HeroPendapatanCard(
+            totalPendapatan: totalPendapatan,
+            jumlahPesananPendapatan: jumlahPesananPendapatan,
+            kasTunai: periodeBulanan ? r.omzetCodPeriode : r.omzetCodSemuaWaktu,
+            saldoDigitalSiapCair: r.saldoDigitalSiapCair,
+            periodeBulanan: periodeBulanan,
+            onPilihPeriodeBulanan: onPilihPeriodeBulanan,
+            pesananList: service.pesananList,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // BANNER PERINGATAN KEWAJIBAN COD (MODEL A)
+          // BANNER PERINGATAN KEWAJIBAN COD
           if (r.peringatanKewajibanCod) ...[
             Container(
-              margin: const EdgeInsets.only(bottom: 14),
+              margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF3C7),
@@ -591,19 +438,13 @@ class _TabBeranda extends StatelessWidget {
             ),
           ],
 
-          // 1.5 RINCIAN ARUS KAS (MODEL A: AUTO-POTONG SALDO DIGITAL)
-          _KartuArusKas(
-            kasTunai: periodeBulanan ? r.omzetCodPeriode : r.omzetCodSemuaWaktu,
-            saldoDigitalSiapCair: r.saldoDigitalSiapCair,
-            omzetDigital: periodeBulanan
-                ? r.omzetDigitalPeriode
-                : r.omzetDigitalSemuaWaktu,
+          // 1.5 STATUS KOMISI PLATFORM (AUTO-POTONG 3%)
+          _BannerStatusKomisi(
             komisiPlatform:
                 periodeBulanan ? r.komisiPeriode : r.komisiSemuaWaktu,
             sisaKewajibanCod: r.sisaKewajibanCod,
-            periodeBulanan: periodeBulanan,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // 2. RINGKASAN USAHA
           const Padding(
@@ -672,7 +513,7 @@ class _TabBeranda extends StatelessWidget {
               TextButton(
                 onPressed: () => onPindahTab(2),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF1B4332),
+                  foregroundColor: AppColors.hijauTua,
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -756,7 +597,7 @@ class _TabBeranda extends StatelessWidget {
                           child: const Icon(
                             Icons.receipt_long_outlined,
                             size: 18,
-                            color: Color(0xFF1B4332),
+                            color: AppColors.hijauTua,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -821,7 +662,7 @@ class _TabBeranda extends StatelessWidget {
                                   color: isBaru
                                       ? OC.amber
                                       : isSelesai
-                                      ? const Color(0xFF1B4332)
+                                      ? AppColors.hijauTua
                                       : OC.primary,
                                 ),
                               ),
@@ -1821,9 +1662,13 @@ class _TabProdukState extends State<_TabProduk> {
                   ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF135B38), Color(0xFF1C7A4D)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0xFF0F4B28),
+                        Color(0xFF135A31),
+                        Color(0xFF1B703F),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(22),
                   ),
@@ -1913,237 +1758,498 @@ IconData _ikonKategoriProduk(String kategori) {
   return Icons.category_outlined;
 }
 
-class _KartuArusKas extends StatelessWidget {
+class _HeroPendapatanCard extends StatelessWidget {
+  final int totalPendapatan;
+  final int jumlahPesananPendapatan;
   final int kasTunai;
   final int saldoDigitalSiapCair;
-  final int omzetDigital;
-  final int komisiPlatform;
-  final int sisaKewajibanCod;
   final bool periodeBulanan;
+  final ValueChanged<bool> onPilihPeriodeBulanan;
+  final List<Pesanan> pesananList;
 
-  const _KartuArusKas({
+  const _HeroPendapatanCard({
+    required this.totalPendapatan,
+    required this.jumlahPesananPendapatan,
     required this.kasTunai,
     required this.saldoDigitalSiapCair,
-    required this.omzetDigital,
-    required this.komisiPlatform,
-    required this.sisaKewajibanCod,
     required this.periodeBulanan,
+    required this.onPilihPeriodeBulanan,
+    required this.pesananList,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: OC.line),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF0F4B28),
+            Color(0xFF135A31),
+            Color(0xFF1B703F),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: OC.ink.withValues(alpha: 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F4B28).withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: OC.mintSoft,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.account_balance_wallet_outlined,
-                  size: 18,
-                  color: OC.primary,
-                ),
+          // Aksen lingkaran transparan lembut agar kartu lebih berdimensi
+          Positioned(
+            right: -34,
+            top: -36,
+            child: Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
               ),
-              const SizedBox(width: 10),
-              const Expanded(
+            ),
+          ),
+          Positioned(
+            right: 46,
+            top: 26,
+            child: Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Distribusi Kas & Saldo UMKM',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.bold,
-                        color: OC.ink,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFFC857),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'TOTAL PENDAPATAN',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        PopupMenuButton<bool>(
+                          tooltip: 'Filter pendapatan',
+                          initialValue: periodeBulanan,
+                          onSelected: onPilihPeriodeBulanan,
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: true,
+                              child: Text('Bulan Ini'),
+                            ),
+                            PopupMenuItem(
+                              value: false,
+                              child: Text('Semua Waktu'),
+                            ),
+                          ],
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.22),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  periodeBulanan ? 'Bulan Ini' : 'Semua Waktu',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Colors.white,
+                                  size: 15,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'Sistem Auto-Potong Komisi Platform (3%)',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: OC.muted,
-                      ),
+                    const SizedBox(height: 14),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                rupiah(totalPendapatan),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.7,
+                                  height: 1.08,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.14,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.18,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.receipt_long_outlined,
+                                          size: 13,
+                                          color: Color(0xFFD8EBDD),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          '$jumlahPesananPendapatan pesanan',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    periodeBulanan
+                                        ? 'Omzet bersih bulan ini'
+                                        : 'Akumulasi omzet bersih',
+                                    style: const TextStyle(
+                                      color: Color(0xFFD4EED8),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _MiniGrafik7Hari(pesananList: pesananList),
+                      ],
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: OC.mint,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Model A',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: OC.mintText,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              // 1. Kas Tunai COD
-              Expanded(
+
+              // Panel kaca transparan di bagian bawah kartu: Kas Tunai vs Saldo Siap Cair
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 11,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.payments_outlined, size: 14, color: Color(0xFFD97706)),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Kas Tunai (COD)',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF92400E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        rupiah(kasTunai),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF78350F),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'Fisik di laci UMKM',
-                        style: TextStyle(fontSize: 10, color: Color(0xFFB45309)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // 2. Saldo Digital Siap Cair
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: OC.mintSoft,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFC7E8CA)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.qr_code_2_rounded, size: 14, color: OC.primary),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Saldo Siap Cair',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: OC.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        rupiah(saldoDigitalSiapCair),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: OC.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'Net saldo di platform',
-                        style: TextStyle(fontSize: 10, color: OC.muted),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Info auto-potong / komisi status
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: sisaKewajibanCod > 0 ? OC.dangerSoft : const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: sisaKewajibanCod > 0
-                    ? OC.danger.withValues(alpha: 0.3)
-                    : const Color(0xFFBBF7D0),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  sisaKewajibanCod > 0 ? Icons.info_outline : Icons.check_circle_outline_rounded,
-                  size: 14,
-                  color: sisaKewajibanCod > 0 ? OC.danger : const Color(0xFF16A34A),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    sisaKewajibanCod > 0
-                        ? 'Titipan komisi COD ${rupiah(sisaKewajibanCod)} akan otomatis terpotong saat pesanan online masuk.'
-                        : 'Komisi kas platform (3%) ${rupiah(komisiPlatform)} sudah terpotong otomatis dari saldo digital.',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w500,
-                      color: sisaKewajibanCod > 0 ? OC.danger : const Color(0xFF15803D),
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.16),
                     ),
                   ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _HeroCashMetric(
+                          icon: Icons.payments_outlined,
+                          iconColor: const Color(0xFFFFC857),
+                          label: 'Kas Tunai (COD)',
+                          value: rupiah(kasTunai),
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 30,
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                      Expanded(
+                        child: _HeroCashMetric(
+                          icon: Icons.account_balance_wallet_outlined,
+                          iconColor: const Color(0xFF86EFAC),
+                          label: 'Saldo Siap Cair',
+                          value: rupiah(saldoDigitalSiapCair),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroCashMetric extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  const _HeroCashMetric({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: 16, color: iconColor),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFD4EED8),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 1.5),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Grafik batang mini 7 hari terakhir yang dihitung langsung dari daftar pesanan.
+class _MiniGrafik7Hari extends StatelessWidget {
+  final List<Pesanan> pesananList;
+
+  const _MiniGrafik7Hari({required this.pesananList});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final totals = List<int>.filled(7, 0);
+
+    for (final p in pesananList) {
+      if (p.status == StatusPesanan.ditolak) continue;
+      final d = DateTime(
+        p.tanggalPesan.year,
+        p.tanggalPesan.month,
+        p.tanggalPesan.day,
+      );
+      final diff = today.difference(d).inDays;
+      if (diff >= 0 && diff < 7) {
+        totals[6 - diff] += p.totalDiterimaMitra;
+      }
+    }
+
+    final maxVal = totals.fold<int>(0, (m, v) => v > m ? v : m);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(9, 8, 9, 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 36,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (var i = 0; i < 7; i++) ...[
+                  if (i > 0) const SizedBox(width: 4),
+                  _dayBar(
+                    fraction: maxVal > 0 ? totals[i] / maxVal : 0,
+                    isToday: i == 6,
+                  ),
+                ],
               ],
+            ),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            'Tren 7 hari',
+            style: TextStyle(
+              color: Color(0xFFD4EED8),
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayBar({required double fraction, required bool isToday}) {
+    final barHeight = fraction <= 0 ? 5.0 : (8.0 + fraction * 28.0);
+    return Container(
+      width: 6.5,
+      height: 36,
+      alignment: Alignment.bottomCenter,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Container(
+        width: 6.5,
+        height: barHeight,
+        decoration: BoxDecoration(
+          color: isToday
+              ? const Color(0xFF86EFAC)
+              : fraction > 0
+              ? Colors.white.withValues(alpha: 0.85)
+              : Colors.white.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+    );
+  }
+}
+
+class _BannerStatusKomisi extends StatelessWidget {
+  final int komisiPlatform;
+  final int sisaKewajibanCod;
+
+  const _BannerStatusKomisi({
+    required this.komisiPlatform,
+    required this.sisaKewajibanCod,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDebt = sisaKewajibanCod > 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: hasDebt ? OC.dangerSoft : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hasDebt ? OC.danger.withValues(alpha: 0.3) : OC.line,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: hasDebt
+                  ? OC.danger.withValues(alpha: 0.12)
+                  : OC.mintSoft,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              hasDebt
+                  ? Icons.info_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              size: 16,
+              color: hasDebt ? OC.danger : AppColors.hijauTua,
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              hasDebt
+                  ? 'Titipan komisi COD ${rupiah(sisaKewajibanCod)} akan otomatis terpotong saat pesanan online masuk.'
+                  : 'Komisi platform (3%) ${rupiah(komisiPlatform)} sudah terpotong otomatis dari saldo digital.',
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+                color: hasDebt ? OC.danger : OC.muted,
+              ),
             ),
           ),
         ],
