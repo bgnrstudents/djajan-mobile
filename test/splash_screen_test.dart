@@ -57,7 +57,7 @@ void main() {
     expect(find.byType(SplashScreen), findsOneWidget);
     expect(find.text('Beranda'), findsNothing);
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 4));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
 
