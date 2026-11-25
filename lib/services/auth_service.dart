@@ -58,7 +58,10 @@ class AuthService extends ChangeNotifier {
       sessionData['token'] = token;
       sessionData['role'] = roleName;
       return await _setSession(sessionData);
-    } on ApiException {
+    } on ApiException catch (error) {
+      if (error.code == 'network_error' || error.code == 'server_error') {
+        rethrow;
+      }
       await _clearSession();
       return null;
     }
@@ -103,7 +106,7 @@ class AuthService extends ChangeNotifier {
         return await _setSession(data as Map<String, dynamic>);
       } on ApiException catch (customerError) {
         if (customerError.field != null ||
-            !customerError.pesan.contains('salah')) {
+            customerError.code != 'account_not_found') {
           rethrow;
         }
         final data = await ApiService.post('login', {

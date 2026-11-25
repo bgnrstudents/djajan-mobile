@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
@@ -10,8 +11,10 @@ import '../config/api_config.dart';
 class ApiException implements Exception {
   final String pesan;
   final String? field;
+  final String? code;
+  final int? statusCode;
 
-  ApiException(this.pesan, {this.field});
+  ApiException(this.pesan, {this.field, this.code, this.statusCode});
   @override
   String toString() => pesan;
 }
@@ -20,7 +23,10 @@ class ApiException implements Exception {
 /// Semua endpoint mengembalikan JSON dengan bentuk seragam:
 ///   { "sukses": true/false, "pesan": "...", "data": ... }
 class ApiService {
-  static final http.Client _client = http.Client();
+  static http.Client _client = http.Client();
+
+  @visibleForTesting
+  static set clientForTesting(http.Client client) => _client = client;
 
   /// Token Sanctum, disimpan di memori (sama seperti sebelumnya id_umkm
   /// cuma disimpan di memori) â€” hilang saat aplikasi ditutup total, pengguna
@@ -120,25 +126,21 @@ class ApiService {
       rethrow;
     } on TimeoutException {
       throw ApiException(
-        'Koneksi lambat (Timeout).\n\n'
-        'Jika pakai HP fisik, pastikan:\n'
-        '1. IP Laptop (${ApiConfig.baseUrl}) benar.\n'
-        '2. HP & Laptop di WiFi yang SAMA.\n'
-        '3. Windows Firewall tidak memblokir port ${ApiConfig.port}.',
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba kembali.',
+        code: 'network_error',
       );
-    } catch (e) {
-      final msg = e.toString().toLowerCase();
-      if (msg.contains('socketexception') ||
-          msg.contains('connection refused')) {
-        throw ApiException(
-          'Gagal terhubung ke server.\n\n'
-          'Pastikan:\n'
-          '1. Laravel sudah jalan dengan perintah:\n'
-          '   php artisan serve --host=0.0.0.0 --port=${ApiConfig.port}\n'
-          '2. IP address yang dimasukkan benar.',
-        );
-      }
-      throw ApiException('Terjadi kesalahan koneksi: $e');
+    } on http.ClientException catch (error) {
+      debugPrint('Permintaan API gagal terhubung: $error');
+      throw ApiException(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba kembali.',
+        code: 'network_error',
+      );
+    } catch (error) {
+      debugPrint('Permintaan API mengalami kendala: $error');
+      throw ApiException(
+        'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.',
+        code: 'system_error',
+      );
     }
   }
 
@@ -161,13 +163,22 @@ class ApiService {
       onUnauthorized?.call();
     }
 
+    if (res.statusCode >= 500) {
+      throw ApiException(
+        'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.',
+        statusCode: res.statusCode,
+        code: 'server_error',
+      );
+    }
+
     Map<String, dynamic> json;
     try {
       json = jsonDecode(res.body) as Map<String, dynamic>;
     } catch (_) {
-      // Balasan bukan JSON. Terjemahkan per kode HTTP supaya jelas
-      // bagian mana yang harus diperbaiki.
-      throw ApiException(_pesanNonJson(res.statusCode));
+      throw ApiException(
+        _pesanNonJson(res.statusCode),
+        statusCode: res.statusCode,
+      );
     }
 
     if (json['sukses'] == true) return json['data'];
@@ -182,6 +193,8 @@ class ApiService {
     throw ApiException(
       (json['pesan'] ?? fallbackMessage).toString(),
       field: data is Map ? data['field']?.toString() : null,
+      code: data is Map ? data['code']?.toString() : null,
+      statusCode: res.statusCode,
     );
   }
 

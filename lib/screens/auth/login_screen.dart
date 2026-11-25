@@ -25,6 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = true;
   bool _loading = false;
+  String? _noticeMessage;
+  AuthNoticeTone _noticeTone = AuthNoticeTone.error;
 
   @override
   void dispose() {
@@ -37,7 +39,10 @@ class _LoginScreenState extends State<LoginScreen> {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _noticeMessage = null;
+    });
 
     try {
       final session = await context.read<AuthService>().login(
@@ -54,8 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.pesan)));
+        _showLoginError(error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -77,7 +81,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginWithGoogle() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _noticeMessage = null;
+    });
     try {
       final session = await context.read<AuthService>().loginWithGoogle();
       if (!mounted) return;
@@ -89,12 +96,112 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on ApiException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.pesan)));
+        _showGoogleError(error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _showLoginError(ApiException error) {
+    final message = switch (error.code) {
+      'account_not_found' =>
+        'Akun belum ditemukan. Periksa kembali email atau nomor WhatsApp Anda, atau silakan daftar akun baru.',
+      'invalid_password' =>
+        'Kata sandi yang Anda masukkan tidak sesuai. Silakan coba kembali.',
+      'account_pending' =>
+        'Pendaftaran usaha Anda sedang ditinjau. Coba masuk kembali setelah mendapat konfirmasi dari admin.',
+      'account_rejected' =>
+        'Pendaftaran usaha Anda belum disetujui. Hubungi admin Desa Kreongan Atas untuk informasi lebih lanjut.',
+      'network_error' =>
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba kembali.',
+      'server_error' || 'system_error' =>
+        'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.',
+      _ => _fallbackLoginMessage(error),
+    };
+    final tone = switch (error.code) {
+      'account_pending' || 'account_rejected' => AuthNoticeTone.warning,
+      'network_error' || 'system_error' => AuthNoticeTone.warning,
+      _ => AuthNoticeTone.error,
+    };
+    _showAuthNotice(message, tone);
+  }
+
+  String _fallbackLoginMessage(ApiException error) {
+    if (error.statusCode != null && error.statusCode! >= 500) {
+      return 'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.';
+    }
+
+    final message = error.pesan.toLowerCase();
+    if (message.contains('akun umkm') && message.contains('tidak ditemukan') ||
+        message.contains('akun pelanggan terkait')) {
+      return 'Akun belum ditemukan. Periksa kembali email atau nomor WhatsApp Anda, atau silakan daftar akun baru.';
+    }
+    if (error.statusCode == 404) {
+      return 'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.';
+    }
+    if (error.statusCode == 401 ||
+        (message.contains('kata sandi') && message.contains('salah'))) {
+      return 'Kata sandi yang Anda masukkan tidak sesuai. Silakan coba kembali.';
+    }
+    if (error.statusCode == 403) {
+      return 'Akun belum dapat digunakan. Hubungi admin Djajan untuk informasi lebih lanjut.';
+    }
+    if (error.statusCode == 400 || error.statusCode == 422) {
+      return 'Periksa kembali email atau nomor WhatsApp dan kata sandi Anda.';
+    }
+    if (error.statusCode == null) {
+      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba kembali.';
+    }
+    return 'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.';
+  }
+
+  void _showGoogleError(ApiException error) {
+    if (error.code == 'account_pending') {
+      _showAuthNotice(
+        'Pendaftaran usaha Anda sedang ditinjau. Coba masuk kembali setelah mendapat konfirmasi dari admin.',
+        AuthNoticeTone.warning,
+      );
+      return;
+    }
+    if (error.code == 'account_rejected') {
+      _showAuthNotice(
+        'Pendaftaran usaha Anda belum disetujui. Hubungi admin Desa Kreongan Atas untuk informasi lebih lanjut.',
+        AuthNoticeTone.warning,
+      );
+      return;
+    }
+    if (error.code == 'network_error') {
+      _showAuthNotice(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba kembali.',
+        AuthNoticeTone.warning,
+      );
+      return;
+    }
+    if (error.code == 'server_error' ||
+        error.code == 'system_error' ||
+        (error.statusCode != null && error.statusCode! >= 500)) {
+      _showAuthNotice(
+        'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.',
+        AuthNoticeTone.warning,
+      );
+      return;
+    }
+    if (error.pesan == 'Login Google dibatalkan.') {
+      _showAuthNotice(error.pesan, AuthNoticeTone.info);
+      return;
+    }
+    _showAuthNotice(
+      'Login Google belum berhasil. Silakan coba kembali atau gunakan email atau nomor WhatsApp.',
+      AuthNoticeTone.error,
+    );
+  }
+
+  void _showAuthNotice(String message, AuthNoticeTone tone) {
+    setState(() {
+      _noticeMessage = message;
+      _noticeTone = tone;
+    });
   }
 
   Future<void> _continueCustomerLogin() async {
@@ -192,6 +299,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 220),
+                                    switchInCurve: Curves.easeOutCubic,
+                                    switchOutCurve: Curves.easeInCubic,
+                                    transitionBuilder: (child, animation) =>
+                                        FadeTransition(
+                                          opacity: animation,
+                                          child: SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(0, -0.08),
+                                              end: Offset.zero,
+                                            ).animate(animation),
+                                            child: child,
+                                          ),
+                                        ),
+                                    child: _noticeMessage == null
+                                        ? const SizedBox.shrink(
+                                            key: ValueKey('no-login-notice'),
+                                          )
+                                        : AuthNotice(
+                                            key: ValueKey(_noticeMessage),
+                                            message: _noticeMessage!,
+                                            tone: _noticeTone,
+                                          ),
+                                  ),
+                                  const SizedBox(height: 14),
 
                                   AuthTextField(
                                     label: 'Nomor WhatsApp atau Email',

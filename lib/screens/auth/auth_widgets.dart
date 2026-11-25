@@ -204,6 +204,73 @@ class AuthCard extends StatelessWidget {
   }
 }
 
+enum AuthNoticeTone { error, warning, info }
+
+class AuthNotice extends StatelessWidget {
+  const AuthNotice({
+    super.key,
+    required this.message,
+    this.tone = AuthNoticeTone.error,
+  });
+
+  final String message;
+  final AuthNoticeTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final (background, border, foreground, icon) = switch (tone) {
+      AuthNoticeTone.error => (
+        const Color(0xFFFFF1F1),
+        const Color(0xFFFECACA),
+        const Color(0xFFB91C1C),
+        Icons.error_outline_rounded,
+      ),
+      AuthNoticeTone.warning => (
+        const Color(0xFFFFF8E8),
+        const Color(0xFFFDE68A),
+        const Color(0xFF9A6700),
+        Icons.info_outline_rounded,
+      ),
+      AuthNoticeTone.info => (
+        const Color(0xFFEEF6F0),
+        const Color(0xFFD8E9DB),
+        AuthStyle.primary,
+        Icons.check_circle_outline_rounded,
+      ),
+    };
+
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: background,
+          border: Border.all(color: border),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 19, color: foreground),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.4,
+                  color: foreground,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Satu baris field dengan label di atasnya.
 class AuthTextField extends StatelessWidget {
   const AuthTextField({
