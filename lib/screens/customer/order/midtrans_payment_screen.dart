@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../services/api_service.dart';
@@ -23,51 +25,56 @@ class MidtransPaymentScreen extends StatefulWidget {
 
 class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
   final OrderService _service = OrderService();
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _loading = true;
   bool _loadingUrl = false;
   bool _checkingStatus = false;
   bool _finishDetected = false;
   bool _completed = false;
   String? _errorMessage;
+  Uri? _paymentUri;
   Timer? _statusTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setUserAgent('DJajanMobile/1.0')
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (_) {
-            if (mounted) setState(() => _loading = true);
-          },
-          onPageFinished: (url) {
-            if (mounted) setState(() => _loading = false);
-            if (url.contains('/payment/finish')) {
-              _handleFinishRedirect();
-            }
-          },
-          onNavigationRequest: (request) {
-            if (request.url.contains('/payment/finish')) {
-              _handleFinishRedirect();
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
-          onWebResourceError: (error) {
-            if (mounted) {
-              setState(() => _loading = false);
-              showToast(
-                context,
-                'Halaman pembayaran gagal dimuat. Coba refresh atau periksa koneksi.',
-                error: true,
-              );
-            }
-          },
-        ),
-      );
+    if (!kIsWeb) {
+      _controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setUserAgent('DJajanMobile/1.0')
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageStarted: (_) {
+              if (mounted) setState(() => _loading = true);
+            },
+            onPageFinished: (url) {
+              if (mounted) setState(() => _loading = false);
+              if (url.contains('/payment/finish')) {
+                _handleFinishRedirect();
+              }
+            },
+            onNavigationRequest: (request) {
+              if (request.url.contains('/payment/finish')) {
+                _handleFinishRedirect();
+                return NavigationDecision.prevent;
+              }
+              return NavigationDecision.navigate;
+            },
+            onWebResourceError: (error) {
+              if (mounted) {
+                setState(() => _loading = false);
+                showToast(
+                  context,
+                  'Halaman pembayaran gagal dimuat. Coba refresh atau periksa koneksi.',
+                  error: true,
+                );
+              }
+            },
+          ),
+        );
+    } else {
+      _loading = false;
+    }
 
     _resolveAndLoadUrl();
   }
@@ -97,22 +104,46 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
       return;
     }
 
-    final uri = Uri.parse(url).replace(
-      queryParameters: {
-        ...Uri.parse(url).queryParameters,
-        'ngrok-skip-browser-warning': 'true',
-      },
-    );
+    final parsed = Uri.parse(url);
+    final uri = kIsWeb
+        ? parsed
+        : parsed.replace(
+            queryParameters: {
+              ...parsed.queryParameters,
+              'ngrok-skip-browser-warning': 'true',
+            },
+          );
 
-    _controller.loadRequest(
-      uri,
-      headers: const {'ngrok-skip-browser-warning': 'true'},
-    );
+    _paymentUri = uri;
 
+    if (kIsWeb) {
+      if (mounted) setState(() => _loading = false);
+      await _openPaymentInBrowser();
+    } else {
+      _controller?.loadRequest(
+        uri,
+        headers: const {'ngrok-skip-browser-warning': 'true'},
+      );
+    }
+
+    _statusTimer?.cancel();
     _statusTimer = Timer.periodic(
       const Duration(seconds: 5),
       (_) => _pollPaymentStatus(),
     );
+  }
+
+  Future<void> _openPaymentInBrowser() async {
+    final uri = _paymentUri;
+    if (uri == null) return;
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      showToast(
+        context,
+        'Gagal membuka tab pembayaran. Izinkan pop-up browser atau coba lagi.',
+        error: true,
+      );
+    }
   }
 
   @override
@@ -122,8 +153,8 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
   }
 
   Future<void> _handleBackPress() async {
-    if (await _controller.canGoBack()) {
-      await _controller.goBack();
+    if (!kIsWeb && _controller != null && await _controller!.canGoBack()) {
+      await _controller!.goBack();
       return;
     }
 
@@ -219,9 +250,11 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                   ),
                 ),
               )
+            : kIsWeb
+            ? _buildWebPaymentBody()
             : Stack(
                 children: [
-                  WebViewWidget(controller: _controller),
+                  WebViewWidget(controller: _controller!),
                   if (_loading || _loadingUrl)
                     Container(
                       color: Colors.white,
@@ -249,9 +282,161 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     );
   }
 
-  Future<void> _checkPaymentStatus() async {
+  Widget _buildWebPaymentBody() {
+    if (_loadingUrl) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: OC.primary),
+            SizedBox(height: 16),
+            Text(
+              'Menyiapkan metode pembayaran online...',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: OC.muted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: OC.line),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: OC.primarySoft,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.open_in_browser_rounded,
+                    color: OC.primary,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Pembayaran Dibuka di Tab Baru',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: OC.ink,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Selesaikan pembayaran di tab browser Midtrans. Setelah selesai, kembali ke halaman ini — status pesanan akan diperbarui otomatis.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    color: OC.muted,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _openPaymentInBrowser,
+                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                    label: const Text('Buka Halaman Pembayaran'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: OC.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _checkingStatus
+                        ? null
+                        : () => _checkPaymentStatus(popIfPending: false),
+                    icon: _checkingStatus
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: OC.primary,
+                            ),
+                          )
+                        : const Icon(Icons.sync_rounded, size: 18),
+                    label: Text(
+                      _checkingStatus
+                          ? 'Memeriksa status...'
+                          : 'Cek Status Pembayaran',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: OC.primary,
+                      side: const BorderSide(color: OC.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: OC.primary,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Menunggu konfirmasi otomatis...',
+                      style: TextStyle(fontSize: 12, color: OC.muted),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _checkPaymentStatus({bool popIfPending = true}) async {
     if (_checkingStatus) return;
-    _checkingStatus = true;
+    setState(() => _checkingStatus = true);
     try {
       final status = await _service.refreshPaymentStatusUntilSettled(
         widget.orderId,
@@ -261,6 +446,15 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
       final paid =
           status == 'paid' || status == 'settlement' || status == 'capture';
       if (paid) _completed = true;
+
+      if (!paid && !popIfPending) {
+        showToast(
+          context,
+          'Pembayaran masih menunggu konfirmasi. Silakan selesaikan di tab Midtrans.',
+        );
+        return;
+      }
+
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -284,7 +478,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
     } on ApiException catch (error) {
       if (mounted) showToast(context, error.pesan, error: true);
     } finally {
-      _checkingStatus = false;
+      if (mounted) setState(() => _checkingStatus = false);
     }
   }
 
