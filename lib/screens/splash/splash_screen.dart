@@ -184,7 +184,14 @@ class _SplashScreenState extends State<SplashScreen>
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            if (constraints.maxHeight <= 0 || constraints.maxWidth <= 0) {
+              return const SizedBox.shrink();
+            }
             final compact = constraints.maxHeight < 700;
+            final minContentHeight = math.max(
+              0.0,
+              constraints.maxHeight - (compact ? 22.0 : 38.0),
+            );
             return Stack(
               fit: StackFit.expand,
               children: [
@@ -238,8 +245,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight -
-                          (compact ? 22 : 38),
+                      minHeight: minContentHeight,
                     ),
                     child: Column(
                       children: [

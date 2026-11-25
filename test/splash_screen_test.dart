@@ -123,4 +123,46 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('Splash does not throw negative BoxConstraints on zero-height frame', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(360, 0);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final auth = AuthService();
+    addTearDown(auth.dispose);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AuthService>.value(value: auth),
+          ChangeNotifierProvider(create: (_) => UmkmDataService()),
+          ChangeNotifierProvider(create: (_) => OrderService()),
+        ],
+        child: MaterialApp(
+          routes: {
+            AppRoutes.customerHome: (_) =>
+                const Scaffold(body: Text('Beranda')),
+          },
+          home: const SplashScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    // Pulihkan tinggi layar normal lalu pastikan splash tetap selesai normal.
+    tester.view.physicalSize = const Size(360, 740);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.text('Beranda'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
