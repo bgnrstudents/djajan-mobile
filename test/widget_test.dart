@@ -1,7 +1,9 @@
+import 'package:djajan_mobile/data/sample_catalog.dart';
 import 'package:djajan_mobile/models/order.dart';
 import 'package:djajan_mobile/screens/customer/cart/cart.dart';
 import 'package:djajan_mobile/screens/customer/home/customer_home_screen.dart';
 import 'package:djajan_mobile/screens/customer/order/qris_payment_screen.dart';
+import 'package:djajan_mobile/screens/customer/umkm/umkm_storefront_screen.dart';
 import 'package:djajan_mobile/services/auth_service.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/widgets/app_bottom_navigation.dart';
@@ -196,6 +198,59 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Keluar dari Pembayaran?'), findsNothing);
   });
+
+  testWidgets(
+    'SnackBar Lihat action navigates safely after UmkmStorefrontScreen is popped',
+    (WidgetTester tester) async {
+      CartService().clear();
+      final umkm = SampleCatalog.umkms.first;
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => AuthService(),
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => UmkmStorefrontScreen(umkm: umkm),
+                      ),
+                    ),
+                    child: const Text('Buka Toko'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Buka Toko'));
+      await tester.pumpAndSettle();
+
+      final addButton = find.byIcon(Icons.add).first;
+      await tester.ensureVisible(addButton);
+      await tester.pumpAndSettle();
+      await tester.tap(addButton);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Keluar dari UmkmStorefrontScreen saat SnackBar "Lihat" masih tampil
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Buka Toko'), findsOneWidget);
+
+      // Tekan "Lihat" pada SnackBar harus tetap aman membuka CartScreen
+      await tester.tap(find.text('Lihat'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Keranjang Belanja'), findsOneWidget);
+    },
+  );
 }
 
 class _BottomNavigationHarness extends StatefulWidget {

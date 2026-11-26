@@ -190,8 +190,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _addToCart() {
     _cartService.addProduct(p, quantity: _quantity, type: _selectedType);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(
           '$_quantity x ${p.name} (${isPoActive ? 'Pre-Order' : 'Ready Stock'}) ditambahkan ke keranjang',
@@ -201,7 +203,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           label: 'Lihat',
           textColor: Colors.white,
           onPressed: () {
-            Navigator.of(context).push(
+            if (!navigator.mounted) return;
+            navigator.push(
               MaterialPageRoute(builder: (_) => const CartScreen()),
             );
           },

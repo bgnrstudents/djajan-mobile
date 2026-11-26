@@ -102,8 +102,10 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   void _addToCart(Product product) {
     _cartService.addProduct(product);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text('${product.name} ditambahkan ke keranjang'),
         backgroundColor: primaryGreen,
@@ -111,9 +113,12 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
         action: SnackBarAction(
           label: 'Lihat',
           textColor: Colors.white,
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CartScreen()),
-          ),
+          onPressed: () {
+            if (!navigator.mounted) return;
+            navigator.push(
+              MaterialPageRoute(builder: (_) => const CartScreen()),
+            );
+          },
         ),
       ),
     );
