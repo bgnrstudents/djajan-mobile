@@ -185,7 +185,7 @@ void main() {
 
     expect(find.text('Pembayaran QRIS'), findsOneWidget);
     expect(find.text('Download QRIS'), findsOneWidget);
-    expect(find.text('Salin Link QRIS'), findsOneWidget);
+    expect(find.text('Salin QRIS'), findsOneWidget);
     expect(find.text('Cek Status Pembayaran'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('qris-close-button')));

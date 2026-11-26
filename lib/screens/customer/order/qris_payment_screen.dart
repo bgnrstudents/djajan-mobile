@@ -685,7 +685,7 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
               child: Text(
                 '1. Buka aplikasi e-Wallet atau Mobile Banking Anda.\n'
                 '2. Pilih Scan QRIS, lalu scan kode di atas (atau Download Gambar QRIS untuk unggah dari galeri).\n'
-                '3. Untuk uji coba Midtrans Sandbox Simulator, tekan "Salin Link QRIS" lalu tempel di simulator.\n'
+                '3. Untuk uji coba Midtrans Sandbox Simulator, tekan "Salin QRIS" lalu tempel QR String di kolom simulator.\n'
                 '4. Setelah membayar, tekan "Cek Status Pembayaran" atau tunggu verifikasi otomatis.',
                 style: TextStyle(fontSize: 12, color: OC.muted, height: 1.5),
               ),
@@ -699,6 +699,10 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
   Widget _buildActionButtons() {
     final hasUrl = _qrCodeUrl != null && _qrCodeUrl!.isNotEmpty;
     final hasQrString = _qrString != null && _qrString!.isNotEmpty;
+    // Untuk Midtrans Sandbox Simulator, yang dibutuhkan adalah qr_string
+    // (payload EMV), BUKAN qr_code_url (URL gambar PNG).
+    final simulatorText = hasQrString ? _qrString! : (hasUrl ? _qrCodeUrl! : '');
+    final canCopyForSimulator = simulatorText.isNotEmpty;
 
     return Column(
       children: [
@@ -739,15 +743,17 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
             Expanded(
               child: OutlinedButton.icon(
                 key: const ValueKey('qris-copy-link-button'),
-                onPressed: hasUrl
+                onPressed: canCopyForSimulator
                     ? () => _copyText(
-                          _qrCodeUrl!,
-                          'Link QRIS disalin, siap ditempel di Sandbox Simulator',
+                          simulatorText,
+                          hasQrString
+                              ? 'QR String (EMV) disalin, tempel di Sandbox QRIS Simulator'
+                              : 'Link QRIS disalin',
                         )
                     : null,
                 icon: const Icon(Icons.copy_rounded, size: 18),
                 label: const Text(
-                  'Salin Link QRIS',
+                  'Salin QRIS',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -762,18 +768,18 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
             ),
           ],
         ),
-        if (hasQrString) ...[
+        if (hasUrl) ...[
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: TextButton.icon(
               onPressed: () => _copyText(
-                _qrString!,
-                'String payload QRIS berhasil disalin',
+                _qrCodeUrl!,
+                'URL gambar QRIS berhasil disalin',
               ),
-              icon: const Icon(Icons.qr_code_rounded, size: 16),
+              icon: const Icon(Icons.link_rounded, size: 16),
               label: const Text(
-                'Salin Payload QR String (EMV)',
+                'Salin URL Gambar QRIS',
                 style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
               ),
               style: TextButton.styleFrom(foregroundColor: OC.muted),
