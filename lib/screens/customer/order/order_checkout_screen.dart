@@ -217,7 +217,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   double get _shipping => _vendors.fold(0.0, (s, v) => s + v.fee);
   double get _serviceFee => _vendors.fold(
       0.0,
-      (s, v) => s + (v.subtotal >= 10000 ? (v.subtotal * 0.03).round() : 0),
+      (s, v) => s + (v.subtotal * 0.03).round(),
     );
   double get _total => _subtotal + _shipping + _serviceFee;
   int get _qty => widget.cartLines.fold(0, (s, l) => s + l.quantity);
@@ -336,7 +336,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     if (_method == PaymentMethod.cod && _hasPreOrder) {
       showToast(
         context,
-        'Pesanan Pre-Order/Katering wajib menggunakan pembayaran online (QRIS/E-Wallet/Transfer).',
+        'Pesanan Pre-Order/Katering wajib menggunakan pembayaran QRIS.',
         error: true,
       );
       return;
@@ -1018,8 +1018,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           _methodRow(
             method: PaymentMethod.midtrans,
             icon: Icons.bolt_rounded,
-            title: 'Bayar Sekarang',
-            subtitle: 'QRIS, GoPay, ShopeePay, VA',
+            title: 'QRIS',
+            subtitle: 'Bayar dengan memindai kode QRIS',
           ),
         ],
       ),
@@ -1141,8 +1141,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             value: _shipping == 0 ? 'Gratis' : rupiah(_shipping),
           ),
           MoneyRow(
-            label: 'Biaya layanan (3%)',
-            value: _serviceFee == 0 ? 'Gratis (Subsidi Mikro)' : rupiah(_serviceFee),
+            label: 'Biaya platform (3%)',
+            value: _serviceFee == 0 ? 'Gratis' : rupiah(_serviceFee),
             color: _serviceFee == 0 ? OC.primary : OC.ink,
           ),
         ],

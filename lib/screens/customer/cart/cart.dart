@@ -250,7 +250,9 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   helperText: isPo
                       ? 'Minimal pemesanan Pre-Order: $minAllowed pcs'
-                      : 'Ketik 0 jika ingin menghapus dari keranjang',
+                      : item.stock == null
+                      ? 'Ketik 0 jika ingin menghapus dari keranjang'
+                      : 'Stok tersedia: ${item.stock} • Ketik 0 untuk menghapus',
                 ),
               ),
             ],
@@ -299,7 +301,19 @@ class _CartScreenState extends State<CartScreen> {
           ),
         );
       }
-      _cartService.updateQuantity(item.productId, finalQty, type: item.type);
+      final appliedQty = _cartService.updateQuantity(
+        item.productId,
+        finalQty,
+        type: item.type,
+      );
+      if (appliedQty < finalQty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Jumlah dibatasi sesuai stok: $appliedQty'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -678,7 +692,7 @@ class _CartScreenState extends State<CartScreen> {
                   const SizedBox(height: 18),
                   Text(
                     paymentMethod == PaymentMethod.midtrans
-                        ? 'Menyiapkan pembayaran online...'
+                        ? 'Menyiapkan pembayaran QRIS...'
                         : 'Membuat pesanan...',
                     style: const TextStyle(
                       fontSize: 15,
@@ -716,7 +730,7 @@ class _CartScreenState extends State<CartScreen> {
       if (!mounted) return;
 
       if (paymentMethod == PaymentMethod.midtrans) {
-        // Langsung buka layar pembayaran Midtrans tanpa jeda
+        // Buka halaman pembayaran QRIS tanpa jeda.
         await Navigator.of(context).push<bool>(
           MaterialPageRoute(
             builder: (_) => MidtransPaymentScreen(
@@ -728,7 +742,7 @@ class _CartScreenState extends State<CartScreen> {
 
         if (!mounted) return;
 
-        // Setelah selesai dari Midtrans (baik dibayar maupun kembali), arahkan langsung ke Detail Pesanan.
+        // Setelah selesai, arahkan langsung ke Detail Pesanan.
         // Menjamin user tidak pernah stuck di halaman keranjang lagi!
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -816,7 +830,7 @@ class _CartScreenState extends State<CartScreen> {
             disabledCodUmkms.isEmpty &&
             (!hasPoSelected || isTanpaDp);
 
-        // Jika opsi COD dinonaktifkan oleh UMKM yang dipilih, otomatis pindahkan ke Midtrans
+        // Jika opsi COD dinonaktifkan oleh UMKM yang dipilih, otomatis pilih QRIS.
         if (!isCodAvailable && _selectedPayment == 0 && selected.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && _selectedPayment == 0) {
@@ -1803,13 +1817,17 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                           InkWell(
-                            onTap: () {
-                              _cartService.updateQuantity(
-                                item.productId,
-                                item.quantity + 1,
-                                type: item.type,
-                              );
-                            },
+                            onTap: item.type != OrderType.preOrder &&
+                                    item.stock != null &&
+                                    item.quantity >= item.stock!
+                                ? null
+                                : () {
+                                    _cartService.updateQuantity(
+                                      item.productId,
+                                      item.quantity + 1,
+                                      type: item.type,
+                                    );
+                                  },
                             borderRadius: const BorderRadius.horizontal(
                               right: Radius.circular(8),
                             ),
@@ -1818,7 +1836,11 @@ class _CartScreenState extends State<CartScreen> {
                                 horizontal: 7,
                                 vertical: 3,
                               ),
-                              child: Icon(Icons.add, size: 16, color: OC.ink),
+                              child: Icon(
+                                Icons.add,
+                                size: 16,
+                                color: OC.ink,
+                              ),
                             ),
                           ),
                         ],
@@ -2027,7 +2049,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(width: 8),
 
-              // Midtrans / Pembayaran Instan
+              // QRIS
               Expanded(
                 child: _paymentTile(
                   selected: _selectedPayment == 1,
@@ -2038,8 +2060,8 @@ class _CartScreenState extends State<CartScreen> {
                     });
                   },
                   icon: Icons.bolt,
-                  title: 'Bayar Sekarang',
-                  subtitle: 'QRIS, GoPay, ShopeePay, VA',
+                  title: 'QRIS',
+                  subtitle: 'Bayar dengan memindai kode QRIS',
                 ),
               ),
             ],

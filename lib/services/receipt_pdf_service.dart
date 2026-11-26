@@ -118,7 +118,7 @@ class ReceiptData {
           : 'Ambil Sendiri (Pickup)',
       paymentMethod: order.paymentMethod == PaymentMethod.cod
           ? 'COD (Bayar di Tempat)'
-          : 'Pembayaran Online (QRIS / Transfer)',
+          : 'QRIS',
       paymentStatus: payStatus,
       items: items,
       subtotal: order.subtotal,
@@ -159,7 +159,7 @@ class ReceiptData {
       deliveryMethod: pesanan.metodePengiriman == 'kurir'
           ? 'Diantar Kurir Warga'
           : 'Ambil Sendiri (Pickup)',
-      paymentMethod: pesanan.metodePembayaran.toUpperCase(),
+      paymentMethod: _paymentLabel(pesanan.metodePembayaran),
       paymentStatus: pesanan.statusPembayaran == 'lunas'
           ? 'LUNAS'
           : pesanan.statusPembayaran.toUpperCase(),
@@ -170,6 +170,15 @@ class ReceiptData {
       discount: 0,
       total: pesanan.totalHarga.toDouble(),
     );
+  }
+
+  static String _paymentLabel(String method) {
+    return switch (method.trim().toLowerCase()) {
+      'cod' => 'COD',
+      'qris' => 'QRIS',
+      'midtrans' => 'Online (data lama, metode tidak tercatat)',
+      _ => 'Metode pembayaran tidak dikenali',
+    };
   }
 }
 
@@ -519,7 +528,7 @@ class ReceiptPdfService {
                       children: [
                         _summaryRow('Subtotal Produk', _rupiah(data.subtotal)),
                         _summaryRow('Biaya Pengantaran', data.deliveryFee == 0 ? 'Gratis' : _rupiah(data.deliveryFee)),
-                        _summaryRow('Biaya Layanan', data.serviceFee == 0 ? 'Gratis' : _rupiah(data.serviceFee)),
+                        _summaryRow('Biaya platform (3%)', data.serviceFee == 0 ? 'Gratis' : _rupiah(data.serviceFee)),
                         if (data.discount > 0)
                           _summaryRow('Diskon Promo', '-${_rupiah(data.discount)}', isDiscount: true),
                         pw.Divider(color: borderLine),

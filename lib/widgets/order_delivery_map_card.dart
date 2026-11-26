@@ -41,11 +41,57 @@ class OrderDeliveryMapCard extends StatefulWidget {
 
 class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
   late final MapController _mapController;
+  DrivingRoute? _route;
+  bool _routeLoading = true;
+  String? _routeError;
 
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
+    _loadRoute();
+  }
+
+  @override
+  void didUpdateWidget(covariant OrderDeliveryMapCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.origin != widget.origin ||
+        oldWidget.destination != widget.destination) {
+      _loadRoute();
+    }
+  }
+
+  Future<void> _loadRoute() async {
+    setState(() {
+      _routeLoading = true;
+      _routeError = null;
+    });
+    try {
+      final route = await MapNavigationService.fetchDrivingRoute(
+        origin: widget.origin,
+        destination: widget.destination,
+      );
+      if (!mounted) return;
+      setState(() {
+        _route = route;
+        _routeLoading = false;
+      });
+    } on FormatException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _route = null;
+        _routeError = error.message;
+        _routeLoading = false;
+      });
+    } on Exception {
+      if (!mounted) return;
+      setState(() {
+        _route = null;
+        _routeError =
+            'Rute jalan gagal dimuat. Buka Google Maps untuk navigasi.';
+        _routeLoading = false;
+      });
+    }
   }
 
   @override
@@ -62,6 +108,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
   }
 
   double get _effectiveDistance {
+    if (_route != null) return _route!.distanceKm;
     if (widget.distanceKm != null && widget.distanceKm! > 0) {
       return widget.distanceKm!;
     }
@@ -153,11 +200,12 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: widget.isDelivering
-                        ? OC.mintSoft
-                        : OC.peachSoft,
+                    color: widget.isDelivering ? OC.mintSoft : OC.peachSoft,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -168,9 +216,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                         height: 7,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: widget.isDelivering
-                              ? OC.primary
-                              : OC.amber,
+                          color: widget.isDelivering ? OC.primary : OC.amber,
                         ),
                       ),
                       const SizedBox(width: 5),
@@ -179,9 +225,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: widget.isDelivering
-                              ? OC.primary
-                              : OC.amber,
+                          color: widget.isDelivering ? OC.primary : OC.amber,
                         ),
                       ),
                     ],
@@ -220,20 +264,20 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                     ),
                     // Garis rute pengantaran
                     PolylineLayer(
-                      polylines: [
-                        // Casing garis
-                        Polyline(
-                          points: [widget.origin, widget.destination],
-                          strokeWidth: 6.0,
-                          color: Colors.black26,
-                        ),
-                        // Garis utama rute
-                        Polyline(
-                          points: [widget.origin, widget.destination],
-                          strokeWidth: 4.0,
-                          color: OC.primary,
-                        ),
-                      ],
+                      polylines: _route == null
+                          ? <Polyline<Object>>[]
+                          : <Polyline<Object>>[
+                              Polyline<Object>(
+                                points: _route!.points,
+                                strokeWidth: 6.0,
+                                color: Colors.black26,
+                              ),
+                              Polyline<Object>(
+                                points: _route!.points,
+                                strokeWidth: 4.0,
+                                color: OC.primary,
+                              ),
+                            ],
                     ),
                     // Marker UMKM & Pembeli
                     MarkerLayer(
@@ -264,14 +308,35 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                     ),
                     const RichAttributionWidget(
                       attributions: [
-                        TextSourceAttribution(
-                          '© OpenStreetMap',
-                          onTap: null,
-                        ),
+                        TextSourceAttribution('© OpenStreetMap', onTap: null),
                       ],
                     ),
                   ],
                 ),
+                if (_routeLoading || _routeError != null)
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    top: 8,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.94),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _routeLoading ? 'Memuat rute jalan...' : _routeError!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 10.5, color: OC.ink),
+                        ),
+                      ),
+                    ),
+                  ),
 
                 // Tombol reset view / center
                 Positioned(
@@ -393,10 +458,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                         destinationLabel: widget.destinationLabel,
                       );
                     },
-                    icon: const Icon(
-                      Icons.near_me_rounded,
-                      size: 18,
-                    ),
+                    icon: const Icon(Icons.near_me_rounded, size: 18),
                     label: Text(
                       widget.isUmkmView
                           ? 'Mulai Navigasi Google Maps'
@@ -433,10 +495,7 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
                         message: pesan,
                       );
                     },
-                    child: const Icon(
-                      Icons.chat_bubble_outline,
-                      size: 18,
-                    ),
+                    child: const Icon(Icons.chat_bubble_outline, size: 18),
                   ),
                 ],
               ],
@@ -476,4 +535,3 @@ class _OrderDeliveryMapCardState extends State<OrderDeliveryMapCard> {
     );
   }
 }
-
