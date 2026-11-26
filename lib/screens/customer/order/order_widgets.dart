@@ -142,39 +142,27 @@ class DjajanPageHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Leading (back button)
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 8),
-          ],
+          if (leading != null) ...[leading!, const SizedBox(width: 8)],
           // Left side: title+subtitle atau custom widget
           Expanded(
-            child: leftWidget ??
+            child:
+                leftWidget ??
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (title != null)
-                      Text(
-                        title!,
-                        style: OT.pageTitle,
-                      ),
+                    if (title != null) Text(title!, style: OT.pageTitle),
                     if (subtitle != null) ...[
                       const SizedBox(height: 4),
                       Text(
                         subtitle!,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: OC.muted,
-                        ),
+                        style: const TextStyle(fontSize: 12.5, color: OC.muted),
                       ),
                     ],
                   ],
                 ),
           ),
           // Right action
-          if (rightAction != null) ...[
-            const SizedBox(width: 12),
-            rightAction!,
-          ],
+          if (rightAction != null) ...[const SizedBox(width: 12), rightAction!],
         ],
       ),
     );
@@ -269,7 +257,9 @@ Future<void> openWhatsApp(
   }
 
   final encodedMessage = Uri.encodeComponent(message);
-  final directUri = Uri.parse('whatsapp://send?phone=$cleanNumber&text=$encodedMessage');
+  final directUri = Uri.parse(
+    'whatsapp://send?phone=$cleanNumber&text=$encodedMessage',
+  );
   final webUri = Uri.parse('https://wa.me/$cleanNumber?text=$encodedMessage');
 
   bool ok = false;
@@ -314,23 +304,27 @@ String generateOrderWhatsAppMessage(Order order, {String? umkmName}) {
   final main = order.mainVendor;
   final targetName = umkmName ?? main.umkmName;
 
-  final itemsSummary = main.items.map((i) {
-    return '• ${i.quantity}x ${i.productName} (${rupiah(i.subtotal)})';
-  }).join('\n');
+  final itemsSummary = main.items
+      .map((i) {
+        return '• ${i.quantity}x ${i.productName} (${rupiah(i.subtotal)})';
+      })
+      .join('\n');
 
   final isCod = order.paymentMethod == PaymentMethod.cod;
   final payText = isCod
       ? 'Bayar di Tempat (COD)'
       : (order.status == OrderStatus.waitingPayment
-          ? 'Menunggu Pembayaran Online'
-          : 'Lunas (Pembayaran Online)');
+            ? 'Menunggu Pembayaran QRIS'
+            : 'Lunas (QRIS)');
 
   final deliveryText = main.delivery == DeliveryMethod.courier
       ? 'Diantar Kurir Warga'
       : 'Ambil Sendiri (Pickup)';
 
   final buffer = StringBuffer()
-    ..writeln('Halo *$targetName*, saya ingin konfirmasi pesanan saya di *DJajan*:')
+    ..writeln(
+      'Halo *$targetName*, saya ingin konfirmasi pesanan saya di *DJajan*:',
+    )
     ..writeln()
     ..writeln('📋 *No. Pesanan:* ${order.refId}')
     ..writeln('👤 *Pemesan:* ${order.recipient.name}')
@@ -341,7 +335,8 @@ String generateOrderWhatsAppMessage(Order order, {String? umkmName}) {
     ..writeln('💳 *Pembayaran:* $payText')
     ..writeln('📍 *Pengiriman:* $deliveryText');
 
-  if (main.delivery == DeliveryMethod.courier && order.recipient.address.isNotEmpty) {
+  if (main.delivery == DeliveryMethod.courier &&
+      order.recipient.address.isNotEmpty) {
     buffer.writeln('🏠 *Alamat Antar:* ${order.recipient.address}');
   }
 
@@ -351,7 +346,9 @@ String generateOrderWhatsAppMessage(Order order, {String? umkmName}) {
 
   buffer
     ..writeln()
-    ..writeln('Mohon bantuannya untuk memproses pesanan saya ya. Terima kasih! 🙏');
+    ..writeln(
+      'Mohon bantuannya untuk memproses pesanan saya ya. Terima kasih! 🙏',
+    );
 
   return buffer.toString();
 }
@@ -442,9 +439,9 @@ class TitledCard extends StatelessWidget {
   final Widget? trailing;
 
   const TitledCard({
-    super.key, 
-    required this.title, 
-    this.icon, 
+    super.key,
+    required this.title,
+    this.icon,
     required this.child,
     this.trailing,
   });
@@ -457,7 +454,13 @@ class TitledCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: OC.line),
-        boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -472,15 +475,20 @@ class TitledCard extends StatelessWidget {
                   Icon(icon, size: 16, color: OC.primary),
                   const SizedBox(width: 8),
                 ],
-                Expanded(child: Text(title.toUpperCase(), style: OT.label.copyWith(color: OC.primary, fontWeight: FontWeight.bold))),
+                Expanded(
+                  child: Text(
+                    title.toUpperCase(),
+                    style: OT.label.copyWith(
+                      color: OC.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
                 ?trailing,
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(14), child: child),
         ],
       ),
     );
@@ -818,121 +826,121 @@ Future<Recipient?> showRecipientSheet(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            20,
-            20,
-            MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Ubah Kontak & Alamat',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: OC.ink,
-                    ),
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ubah Kontak & Alamat',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: OC.ink,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: name,
-                    inputFormatters: OrderInput.name,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration: deco(
-                      'Nama penerima',
-                      Icons.person_outline,
-                      hint: 'Contoh: Muhammad Rizki',
-                    ),
-                    validator: OrderValidator.name,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: name,
+                  inputFormatters: OrderInput.name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: deco(
+                    'Nama penerima',
+                    Icons.person_outline,
+                    hint: 'Contoh: Muhammad Rizki',
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: phone,
-                    inputFormatters: OrderInput.phone,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
-                    decoration: deco(
-                      'Nomor WhatsApp',
-                      Icons.phone_outlined,
-                      hint: '0812-3456-7890 atau +62 812...',
-                    ),
-                    validator: OrderValidator.phone,
+                  validator: OrderValidator.name,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: phone,
+                  inputFormatters: OrderInput.phone,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  decoration: deco(
+                    'Nomor WhatsApp',
+                    Icons.phone_outlined,
+                    hint: '0812-3456-7890 atau +62 812...',
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: address,
-                    inputFormatters: OrderInput.address,
-                    keyboardType: TextInputType.streetAddress,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: 3,
-                    minLines: 2,
-                    decoration: deco(
-                      'Alamat lengkap',
-                      Icons.location_on_outlined,
-                      hint: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa ...',
-                    ),
-                    validator: OrderValidator.address,
+                  validator: OrderValidator.phone,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: address,
+                  inputFormatters: OrderInput.address,
+                  keyboardType: TextInputType.streetAddress,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 3,
+                  minLines: 2,
+                  decoration: deco(
+                    'Alamat lengkap',
+                    Icons.location_on_outlined,
+                    hint: 'Jl. Merpati No. 14, RT 02 / RW 01, Desa ...',
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: note,
-                    inputFormatters: OrderInput.landmark,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: deco(
-                      'Patokan (opsional)',
-                      Icons.home_outlined,
-                      hint: 'Rumah pagar hijau samping pos ronda',
-                    ),
-                    validator: OrderValidator.landmark,
+                  validator: OrderValidator.address,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: note,
+                  inputFormatters: OrderInput.landmark,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: deco(
+                    'Patokan (opsional)',
+                    Icons.home_outlined,
+                    hint: 'Rumah pagar hijau samping pos ronda',
                   ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: OC.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                  validator: OrderValidator.landmark,
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: OC.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      onPressed: () {
-                        if (!formKey.currentState!.validate()) return;
-                        Navigator.pop(
-                          ctx,
-                          OrderValidator.normalizeRecipient(
-                            Recipient(
-                              addressId: initial.addressId,
-                              name: name.text,
-                              phone: phone.text,
-                              address: address.text,
-                              addressNote: note.text,
-                              latitude: initial.latitude,
-                              longitude: initial.longitude,
-                            ),
+                    ),
+                    onPressed: () {
+                      if (!formKey.currentState!.validate()) return;
+                      Navigator.pop(
+                        ctx,
+                        OrderValidator.normalizeRecipient(
+                          Recipient(
+                            addressId: initial.addressId,
+                            name: name.text,
+                            phone: phone.text,
+                            address: address.text,
+                            addressNote: note.text,
+                            latitude: initial.latitude,
+                            longitude: initial.longitude,
                           ),
-                        );
-                      },
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Simpan',
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        );
+        ),
+      );
     },
   );
 }

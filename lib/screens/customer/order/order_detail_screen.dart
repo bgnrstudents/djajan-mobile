@@ -304,7 +304,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       ..writeln('RINGKASAN PEMBAYARAN')
       ..writeln('Subtotal : ${rupiah(o.subtotal).padLeft(19)}')
       ..writeln('Ongkir   : ${rupiah(o.shippingTotal).padLeft(19)}')
-      ..writeln('Layanan  : ${rupiah(o.serviceFee).padLeft(19)}');
+      ..writeln('Platform : ${rupiah(o.serviceFee).padLeft(19)}');
 
     if (o.discount > 0) {
       b.writeln('Diskon   : -${rupiah(o.discount).padLeft(18)}');
@@ -1042,7 +1042,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           ),
           const SizedBox(height: 10),
           const Text(
-            'Pesanan dibatalkan setelah pembayaran tercatat. Karena Anda menggunakan metode pembayaran non-otomatis (Virtual Account/Transfer), silakan hubungi Admin DJajan via WhatsApp untuk memverifikasi nomor rekening atau e-wallet tujuan pengembalian dana Anda.',
+            'Pesanan dibatalkan setelah pembayaran tercatat. Jika pembayaran QRIS Anda sudah berhasil, hubungi Admin DJajan untuk membantu proses pengembalian dana.',
             style: TextStyle(fontSize: 11.5, color: OC.muted, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -1105,7 +1105,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     if (o.paymentMethod == PaymentMethod.midtrans) {
       switch (o.status) {
         case OrderStatus.waitingPayment:
-          // Tahap 1 (Pesanan Dibuat) selesai, Tahap 2 (Pembayaran Midtrans) aktif
+          // Tahap 1 (Pesanan Dibuat) selesai, Tahap 2 (Pembayaran QRIS) aktif
           return (done: 1, active: 2);
         case OrderStatus.reviewing:
           // Tahap 1 & 2 selesai, Tahap 3 (Ditinjau & Dikonfirmasi UMKM) aktif
@@ -1191,10 +1191,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           trailing: fmtTime(o.createdAt),
         ),
         _Step(
-          'Pembayaran Online',
+          'Pembayaran QRIS',
           isPaid
               ? 'Pembayaran online telah terverifikasi otomatis.'
-              : 'Selesaikan pembayaran online via QRIS, e-wallet, atau Virtual Account.',
+              : 'Selesaikan pembayaran QRIS.',
           Icons.account_balance_wallet_outlined,
         ),
         _Step(
@@ -1933,7 +1933,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             value: o.shippingTotal == 0 ? 'Gratis' : rupiah(o.shippingTotal),
           ),
           MoneyRow(
-            label: 'Biaya layanan',
+            label: 'Biaya platform (3%)',
             value: o.serviceFee == 0 ? 'Gratis' : rupiah(o.serviceFee),
           ),
           if (o.discount > 0)

@@ -195,7 +195,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Pembayaran Online'),
+          title: const Text('Pembayaran QRIS'),
           backgroundColor: OC.primary,
           foregroundColor: Colors.white,
           leading: IconButton(
@@ -350,7 +350,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Selesaikan pembayaran di tab browser Midtrans. Setelah selesai, kembali ke halaman ini — status pesanan akan diperbarui otomatis.',
+                  'Selesaikan pembayaran QRIS di tab browser. Setelah selesai, kembali ke halaman ini — status pesanan akan diperbarui otomatis.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13.5,
@@ -450,7 +450,7 @@ class _MidtransPaymentScreenState extends State<MidtransPaymentScreen> {
       if (!paid && !popIfPending) {
         showToast(
           context,
-          'Pembayaran masih menunggu konfirmasi. Silakan selesaikan di tab Midtrans.',
+          'Pembayaran masih menunggu konfirmasi. Silakan selesaikan pembayaran QRIS.',
         );
         return;
       }

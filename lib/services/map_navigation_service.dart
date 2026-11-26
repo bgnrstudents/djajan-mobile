@@ -1,8 +1,17 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+class DrivingRoute {
+  final List<LatLng> points;
+  final double distanceKm;
+
+  const DrivingRoute({required this.points, required this.distanceKm});
+}
 
 /// Service untuk menangani navigasi peta eksternal (Google Maps / Waze)
 /// dan kalkulasi rute hyperlocal untuk kurir warga dan pelanggan DJajan.
@@ -14,6 +23,69 @@ class MapNavigationService {
 
   /// Titik estimasi pemukiman pelanggan di sekitar Desa Kreyongan Atas
   static const LatLng defaultCustomerLocation = LatLng(-8.1630, 113.7100);
+
+  static Future<DrivingRoute> fetchDrivingRoute({
+    required LatLng origin,
+    required LatLng destination,
+  }) async {
+    final coordinates =
+        '${origin.longitude},${origin.latitude};'
+        '${destination.longitude},${destination.latitude}';
+    final uri = Uri.https(
+      'router.project-osrm.org',
+      '/route/v1/driving/$coordinates',
+      const {
+        'overview': 'full',
+        'geometries': 'geojson',
+        'steps': 'false',
+      },
+    );
+    final response = await http.get(uri).timeout(const Duration(seconds: 12));
+    if (response.statusCode != 200) {
+      throw const FormatException('Layanan rute jalan sedang tidak tersedia.');
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Data rute jalan tidak valid.');
+    }
+    return parseDrivingRoute(decoded);
+  }
+
+  static DrivingRoute parseDrivingRoute(Map<String, dynamic> response) {
+    final routes = response['routes'];
+    if (response['code'] != 'Ok' || routes is! List || routes.isEmpty) {
+      throw const FormatException('Rute jalan tidak ditemukan.');
+    }
+    final route = routes.first;
+    if (route is! Map) {
+      throw const FormatException('Data rute jalan tidak valid.');
+    }
+    final geometry = route['geometry'];
+    final coordinates = geometry is Map ? geometry['coordinates'] : null;
+    if (coordinates is! List || coordinates.length < 2) {
+      throw const FormatException('Rute jalan tidak memiliki titik yang cukup.');
+    }
+
+    final points = <LatLng>[];
+    for (final coordinate in coordinates) {
+      if (coordinate is! List || coordinate.length < 2) {
+        throw const FormatException('Koordinat rute jalan tidak valid.');
+      }
+      final longitude = (coordinate[0] as num?)?.toDouble();
+      final latitude = (coordinate[1] as num?)?.toDouble();
+      if (latitude == null || longitude == null) {
+        throw const FormatException('Koordinat rute jalan tidak valid.');
+      }
+      points.add(LatLng(latitude, longitude));
+    }
+
+    final distanceMeters = (route['distance'] as num?)?.toDouble();
+    if (distanceMeters == null || distanceMeters <= 0) {
+      throw const FormatException('Jarak rute jalan tidak valid.');
+    }
+    return DrivingRoute(points: points, distanceKm: distanceMeters / 1000);
+  }
 
   /// Menghasilkan URL navigasi Google Maps turn-by-turn.
   /// Jika [origin] tidak diisi, Google Maps akan menggunakan lokasi GPS kurir saat ini.

@@ -163,33 +163,37 @@ class ApiService {
       onUnauthorized?.call();
     }
 
-    if (res.statusCode >= 500) {
-      throw ApiException(
-        'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.',
-        statusCode: res.statusCode,
-        code: 'server_error',
-      );
-    }
-
     Map<String, dynamic> json;
     try {
       json = jsonDecode(res.body) as Map<String, dynamic>;
     } catch (_) {
       throw ApiException(
-        _pesanNonJson(res.statusCode),
+        res.statusCode >= 500
+            ? 'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.'
+            : _pesanNonJson(res.statusCode),
         statusCode: res.statusCode,
+        code: res.statusCode >= 500 ? 'server_error' : null,
       );
     }
 
     if (json['sukses'] == true) return json['data'];
 
     final data = json['data'];
-    final fallbackMessage = res.statusCode >= 500
-        ? 'Server mengalami kesalahan (HTTP ${res.statusCode}). '
-              'Periksa log Laravel di storage/logs/laravel.log.'
-        : (json['message']?.toString().isNotEmpty == true
-              ? json['message'].toString()
-              : 'Permintaan gagal (HTTP ${res.statusCode}).');
+    if (res.statusCode >= 500) {
+      final serverMessage = json['pesan']?.toString().trim();
+      throw ApiException(
+        serverMessage != null && serverMessage.isNotEmpty
+            ? serverMessage
+            : 'Terjadi kendala pada sistem. Silakan coba beberapa saat lagi.',
+        field: data is Map ? data['field']?.toString() : null,
+        code: data is Map ? data['code']?.toString() : 'server_error',
+        statusCode: res.statusCode,
+      );
+    }
+
+    final fallbackMessage = json['message']?.toString().isNotEmpty == true
+        ? json['message'].toString()
+        : 'Permintaan gagal (HTTP ${res.statusCode}).';
     throw ApiException(
       (json['pesan'] ?? fallbackMessage).toString(),
       field: data is Map ? data['field']?.toString() : null,

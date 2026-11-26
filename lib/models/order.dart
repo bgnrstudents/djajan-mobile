@@ -98,6 +98,7 @@ class CartLine {
   final bool pickupAvailable;
   final int minOrderPo;
   final String modePenjualan;
+  final int? stock;
 
   const CartLine({
     required this.productId,
@@ -117,6 +118,7 @@ class CartLine {
     this.pickupAvailable = true,
     this.minOrderPo = 0,
     this.modePenjualan = 'ready',
+    this.stock,
   });
 
   double get subtotal => quantity * price;
@@ -140,6 +142,8 @@ class CartLine {
     bool? pickupAvailable,
     int? minOrderPo,
     String? modePenjualan,
+    int? stock,
+    bool clearStock = false,
   }) {
     return CartLine(
       productId: productId ?? this.productId,
@@ -159,6 +163,7 @@ class CartLine {
       pickupAvailable: pickupAvailable ?? this.pickupAvailable,
       minOrderPo: minOrderPo ?? this.minOrderPo,
       modePenjualan: modePenjualan ?? this.modePenjualan,
+      stock: clearStock ? null : stock ?? this.stock,
     );
   }
 }
