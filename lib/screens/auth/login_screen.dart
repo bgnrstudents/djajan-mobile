@@ -109,14 +109,50 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await context.read<AuthService>().register(
-        nama: _fullNameController.text,
-        noTelp: _phoneController.text,
-        email: _emailController.text,
-        password: _regPasswordController.text,
-        passwordConfirmation: _regConfirmPasswordController.text,
+      final auth = context.read<AuthService>();
+      final nama = _fullNameController.text;
+      final noTelp = _phoneController.text;
+      final email = _emailController.text;
+      final password = _regPasswordController.text;
+      final passwordConfirm = _regConfirmPasswordController.text;
+
+      final result = await auth.registerStep(
+        nama: nama,
+        noTelp: noTelp,
+        email: email,
+        password: password,
+        passwordConfirmation: passwordConfirm,
       );
       if (!mounted) return;
+
+      AuthSession? session = result.session;
+      if (result.requiresOtp) {
+        setState(() => _loading = false);
+        session = await showDialog<AuthSession?>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => _EmailOtpDialog(
+            title: 'Verifikasi Email Pendaftaran',
+            subtitle:
+                'Masukkan 6 digit kode OTP yang dikirim ke ${result.email ?? email.trim()} untuk menyelesaikan pendaftaran akun.',
+            onVerify: (otp) => auth.verifyRegisterOtp(
+              email: result.email ?? email.trim(),
+              otp: otp,
+            ),
+            onResend: () => auth.resendRegisterOtp(
+              nama: nama,
+              noTelp: noTelp,
+              email: email,
+              password: password,
+              passwordConfirmation: passwordConfirm,
+            ),
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 220));
+        if (!mounted || session == null) return;
+      }
+
+      if (session == null) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Pendaftaran berhasil! Selamat datang di DJajan.'),
@@ -149,8 +185,25 @@ class _LoginScreenState extends State<LoginScreen> {
       _noticeMessage = null;
     });
     try {
-      final session = await context.read<AuthService>().loginWithGoogle();
+      final auth = context.read<AuthService>();
+      final result = await auth.loginWithGoogleStep();
       if (!mounted) return;
+
+      AuthSession? session = result.session;
+      if (result.requiresOtp) {
+        final token = result.idToken;
+        if (token == null || token.isEmpty) {
+          throw ApiException('Token Google tidak valid.');
+        }
+        setState(() => _loading = false);
+        session = await _showGoogleOtpDialog(
+          idToken: token,
+          email: result.email ?? 'email Google Anda',
+        );
+        if (!mounted || session == null) return;
+      }
+
+      if (session == null) return;
       if (session.role == AuthRole.umkm) {
         context.read<UmkmDataService>().loadProfileFromLogin(session.data);
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
@@ -164,6 +217,26 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<AuthSession?> _showGoogleOtpDialog({
+    required String idToken,
+    required String email,
+  }) async {
+    final auth = context.read<AuthService>();
+    final session = await showDialog<AuthSession?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _EmailOtpDialog(
+        title: 'Verifikasi Email Google',
+        subtitle:
+            'Pendaftaran pertama dengan Google memerlukan verifikasi. Masukkan 6 digit kode OTP yang dikirim ke $email.',
+        onVerify: (otp) => auth.verifyGoogleOtp(idToken: idToken, otp: otp),
+        onResend: () => auth.resendGoogleOtp(idToken),
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    return session;
   }
 
   void _showLoginError(ApiException error) {
@@ -516,7 +589,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 14),
           AuthTextField(
-            label: 'Email (Opsional)',
+            label: 'Email',
             hint: 'nama@email.com',
             icon: Icons.email_outlined,
             controller: _emailController,
@@ -526,7 +599,7 @@ class _LoginScreenState extends State<LoginScreen> {
             inputFormatters: [
               FilteringTextInputFormatter.deny(RegExp(r'\s')),
             ],
-            validator: AuthValidators.emailOpsional,
+            validator: AuthValidators.emailWajib,
             autofillHints: const [AutofillHints.email],
           ),
           const SizedBox(height: 14),
@@ -594,6 +667,189 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EmailOtpDialog extends StatefulWidget {
+  const _EmailOtpDialog({
+    required this.title,
+    required this.subtitle,
+    required this.onVerify,
+    required this.onResend,
+  });
+
+  final String title;
+  final String subtitle;
+  final Future<AuthSession> Function(String otp) onVerify;
+  final Future<void> Function() onResend;
+
+  @override
+  State<_EmailOtpDialog> createState() => _EmailOtpDialogState();
+}
+
+class _EmailOtpDialogState extends State<_EmailOtpDialog> {
+  final TextEditingController _otpCtrl = TextEditingController();
+  bool _verifying = false;
+  bool _resending = false;
+  String? _errorMsg;
+  String? _infoMsg;
+
+  @override
+  void dispose() {
+    _otpCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleResend() async {
+    setState(() {
+      _resending = true;
+      _errorMsg = null;
+      _infoMsg = null;
+    });
+    try {
+      await widget.onResend();
+      if (!mounted) return;
+      setState(() => _infoMsg = 'Kode OTP baru telah dikirim ke email Anda.');
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _errorMsg = e.pesan);
+    } catch (_) {
+      if (mounted) setState(() => _errorMsg = 'Gagal mengirim ulang kode OTP.');
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
+  }
+
+  Future<void> _handleVerify() async {
+    final otp = _otpCtrl.text.trim();
+    if (otp.length != 6) {
+      setState(() => _errorMsg = 'Kode OTP harus 6 digit.');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _verifying = true;
+      _errorMsg = null;
+      _infoMsg = null;
+    });
+    try {
+      final session = await widget.onVerify(otp);
+      if (mounted) Navigator.of(context).pop(session);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+          _errorMsg = e.pesan;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+          _errorMsg = 'Gagal memverifikasi kode OTP.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Row(
+        children: [
+          const Icon(Icons.mark_email_read_outlined, color: AuthStyle.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.title,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.subtitle,
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _otpCtrl,
+            enabled: !_verifying,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 6,
+            ),
+            decoration: InputDecoration(
+              hintText: '000000',
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          if (_errorMsg != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _errorMsg!,
+              style: const TextStyle(
+                color: Color(0xFFDC2626),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ] else if (_infoMsg != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _infoMsg!,
+              style: const TextStyle(
+                color: AuthStyle.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _verifying || _resending ? null : _handleResend,
+              child: Text(
+                _resending ? 'Mengirim...' : 'Kirim Ulang OTP',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _verifying ? null : () => Navigator.of(context).pop(null),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AuthStyle.primary),
+          onPressed: _verifying ? null : _handleVerify,
+          child: _verifying
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Verifikasi'),
+        ),
+      ],
     );
   }
 }

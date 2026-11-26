@@ -12,6 +12,7 @@ import '../../../services/order_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/customer_settings_service.dart';
 import '../../../services/api_service.dart';
+import '../../../services/category_service.dart';
 import '../../../services/umkm_data_service.dart';
 import '../../../models/customer_settings_models.dart';
 import '../../../theme/app_theme.dart';
@@ -47,6 +48,9 @@ class ProfileFormField {
   final bool isLocationPicker;
   final double? initialLatitude;
   final double? initialLongitude;
+  final List<TextInputFormatter>? inputFormatters;
+  final bool isPhone;
+  final bool isSpecialtyChecklist;
 
   const ProfileFormField({
     required this.label,
@@ -60,6 +64,9 @@ class ProfileFormField {
     this.isLocationPicker = false,
     this.initialLatitude,
     this.initialLongitude,
+    this.inputFormatters,
+    this.isPhone = false,
+    this.isSpecialtyChecklist = false,
   });
 }
 
@@ -270,6 +277,12 @@ class _ProfilScreenState extends State<ProfilScreen> {
       initialValue: _user.phoneNumber,
       keyboardType: TextInputType.phone,
       prefixIcon: Icons.phone_outlined,
+      helperText: 'Hanya angka (contoh: 081234567890)',
+      isPhone: true,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s]')),
+        LengthLimitingTextInputFormatter(16),
+      ],
     ),
     ProfileFormField(
       label: 'Email',
@@ -294,12 +307,19 @@ class _ProfilScreenState extends State<ProfilScreen> {
       label: 'Spesialisasi Usaha',
       initialValue: _businessSpecialty ?? '',
       prefixIcon: Icons.category_outlined,
+      isSpecialtyChecklist: true,
     ),
     ProfileFormField(
       label: 'Nomor Handphone',
       initialValue: _user.phoneNumber,
       keyboardType: TextInputType.phone,
       prefixIcon: Icons.phone_outlined,
+      helperText: 'Hanya angka (contoh: 081234567890)',
+      isPhone: true,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s]')),
+        LengthLimitingTextInputFormatter(16),
+      ],
     ),
     ProfileFormField(
       label: 'Alamat Usaha',
@@ -1844,8 +1864,17 @@ class _ProfileFormPage extends StatefulWidget {
 }
 
 class _ProfileFormPageState extends State<_ProfileFormPage> {
+  static const List<String> _defaultCategories = [
+    'Makanan',
+    'Minuman',
+    'Kue',
+    'Cemilan',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   late final List<TextEditingController> _controllers;
+  final Map<int, Set<String>> _specialtySelections = {};
+  final List<String> _categoryOptions = List<String>.from(_defaultCategories);
   double? _selectedLatitude;
   double? _selectedLongitude;
 
@@ -1863,13 +1892,78 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
       for (final field in widget.fields)
         TextEditingController(text: field.initialValue),
     ];
-    for (final field in widget.fields) {
+    var hasChecklist = false;
+    for (var i = 0; i < widget.fields.length; i++) {
+      final field = widget.fields[i];
       if (field.isLocationPicker) {
         _selectedLatitude = field.initialLatitude;
         _selectedLongitude = field.initialLongitude;
-        break;
+      }
+      if (field.isSpecialtyChecklist) {
+        hasChecklist = true;
+        final parsed = _parseSpecialty(field.initialValue, _categoryOptions);
+        _specialtySelections[i] = parsed;
+        _controllers[i].text = _orderedSelection(i).join(', ');
       }
     }
+    if (hasChecklist) {
+      _loadCategories();
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categoryService = CategoryService();
+      await categoryService.load();
+      final fetched = categoryService.categories;
+      final names = fetched
+          .map((c) => c.name.trim())
+          .where((name) => name.isNotEmpty && name.toLowerCase() != 'sembako')
+          .toList();
+      if (!mounted || names.isEmpty) return;
+      setState(() {
+        _categoryOptions
+          ..clear()
+          ..addAll(names);
+        for (var i = 0; i < widget.fields.length; i++) {
+          if (widget.fields[i].isSpecialtyChecklist) {
+            final current = _specialtySelections[i] ?? <String>{};
+            if (current.isEmpty) {
+              _specialtySelections[i] = _parseSpecialty(
+                widget.fields[i].initialValue,
+                _categoryOptions,
+              );
+            }
+            _controllers[i].text = _orderedSelection(i).join(', ');
+          }
+        }
+      });
+    } catch (_) {
+      // Gunakan fallback 4 kategori default saat gagal memuat kategori server.
+    }
+  }
+
+  Set<String> _parseSpecialty(String raw, List<String> options) {
+    final result = <String>{};
+    for (final token in raw.split(RegExp(r'[,&/]+'))) {
+      var trimmed = token.trim();
+      if (trimmed.isEmpty) continue;
+      if (trimmed.toLowerCase() == 'camilan') {
+        trimmed = 'Cemilan';
+      }
+      for (final opt in options) {
+        if (opt.toLowerCase() == trimmed.toLowerCase()) {
+          result.add(opt);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  List<String> _orderedSelection(int index) {
+    final selected = _specialtySelections[index] ?? const <String>{};
+    return _categoryOptions.where(selected.contains).toList();
   }
 
   @override
@@ -2045,74 +2139,190 @@ class _ProfileFormPageState extends State<_ProfileFormPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _controllers[index],
-                      keyboardType: widget.fields[index].keyboardType,
-                      maxLines: widget.fields[index].maxLines,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Masukkan ${widget.fields[index].label.toLowerCase()}',
-                        hintStyle: const TextStyle(
-                          fontSize: 13.5,
-                          color: faintColor,
-                        ),
-                        helperText: widget.fields[index].helperText,
-                        helperStyle: const TextStyle(
-                          fontSize: 11.5,
-                          color: mutedColor,
-                        ),
-                        prefixIcon: widget.fields[index].prefixIcon != null
-                            ? Icon(
-                                widget.fields[index].prefixIcon,
-                                size: 20,
-                                color: mutedColor,
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: AppColors.latar,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 16,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: lineColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: lineColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: primaryColor,
-                            width: 2,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.danger,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (widget.fields[index].requiredField &&
-                            (value == null || value.trim().isEmpty)) {
-                          return '${widget.fields[index].label} wajib diisi';
-                        }
-                        if (widget.fields[index].requiresKreongan) {
-                          final isMapPicked = _selectedLatitude != null &&
-                              _selectedLongitude != null;
-                          final containsKeyword = value != null &&
-                              value.toLowerCase().contains(kreonganKeyword);
-                          if (!isMapPicked && !containsKeyword) {
-                            return 'Alamat usaha harus berada di wilayah Kreongan (pilih dari peta)';
+                    if (widget.fields[index].isSpecialtyChecklist)
+                      FormField<Set<String>>(
+                        initialValue:
+                            _specialtySelections[index] ?? <String>{},
+                        validator: (_) {
+                          final selected = _specialtySelections[index] ?? {};
+                          if (widget.fields[index].requiredField &&
+                              selected.isEmpty) {
+                            return 'Pilih minimal 1 kategori spesialisasi usaha';
                           }
-                        }
-                        return null;
-                      },
-                    ),
+                          return null;
+                        },
+                        builder: (fieldState) {
+                          final selected = _specialtySelections[index] ?? {};
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.latar,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: fieldState.hasError
+                                        ? AppColors.danger
+                                        : lineColor,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    for (
+                                      var optIdx = 0;
+                                      optIdx < _categoryOptions.length;
+                                      optIdx++
+                                    ) ...[
+                                      CheckboxListTile(
+                                        value: selected.contains(
+                                          _categoryOptions[optIdx],
+                                        ),
+                                        onChanged: (checked) {
+                                          setState(() {
+                                            final set = _specialtySelections
+                                                .putIfAbsent(index, () => {});
+                                            if (checked == true) {
+                                              set.add(_categoryOptions[optIdx]);
+                                            } else {
+                                              set.remove(
+                                                _categoryOptions[optIdx],
+                                              );
+                                            }
+                                            _controllers[index].text =
+                                                _orderedSelection(
+                                                  index,
+                                                ).join(', ');
+                                          });
+                                          fieldState.didChange(
+                                            Set<String>.from(
+                                              _specialtySelections[index] ??
+                                                  {},
+                                            ),
+                                          );
+                                        },
+                                        title: Text(
+                                          _categoryOptions[optIdx],
+                                          style: const TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: inkColor,
+                                          ),
+                                        ),
+                                        activeColor: primaryColor,
+                                        controlAffinity:
+                                            ListTileControlAffinity.leading,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                            ),
+                                        dense: true,
+                                      ),
+                                      if (optIdx < _categoryOptions.length - 1)
+                                        const Divider(
+                                          height: 1,
+                                          color: lineColor,
+                                        ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (fieldState.hasError) ...[
+                                const SizedBox(height: 6),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: Text(
+                                    fieldState.errorText!,
+                                    style: const TextStyle(
+                                      color: AppColors.danger,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      )
+                    else
+                      TextFormField(
+                        controller: _controllers[index],
+                        keyboardType: widget.fields[index].keyboardType,
+                        maxLines: widget.fields[index].maxLines,
+                        inputFormatters: widget.fields[index].inputFormatters,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Masukkan ${widget.fields[index].label.toLowerCase()}',
+                          hintStyle: const TextStyle(
+                            fontSize: 13.5,
+                            color: faintColor,
+                          ),
+                          helperText: widget.fields[index].helperText,
+                          helperStyle: const TextStyle(
+                            fontSize: 11.5,
+                            color: mutedColor,
+                          ),
+                          prefixIcon: widget.fields[index].prefixIcon != null
+                              ? Icon(
+                                  widget.fields[index].prefixIcon,
+                                  size: 20,
+                                  color: mutedColor,
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: AppColors.latar,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: lineColor),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: lineColor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (widget.fields[index].requiredField &&
+                              (value == null || value.trim().isEmpty)) {
+                            return '${widget.fields[index].label} wajib diisi';
+                          }
+                          if (widget.fields[index].isPhone) {
+                            final cleaned = (value ?? '')
+                                .trim()
+                                .replaceAll(RegExp(r'[\s\-]'), '');
+                            if (cleaned.isNotEmpty &&
+                                !RegExp(r'^(\+?62|0)8[1-9][0-9]{6,12}$')
+                                    .hasMatch(cleaned)) {
+                              return 'Nomor handphone harus berupa angka valid (contoh: 081234567890)';
+                            }
+                          }
+                          if (widget.fields[index].requiresKreongan) {
+                            final isMapPicked = _selectedLatitude != null &&
+                                _selectedLongitude != null;
+                            final containsKeyword = value != null &&
+                                value.toLowerCase().contains(kreonganKeyword);
+                            if (!isMapPicked && !containsKeyword) {
+                              return 'Alamat usaha harus berada di wilayah Kreongan (pilih dari peta)';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
                     if (widget.fields[index].isLocationPicker &&
                         _selectedLatitude != null &&
                         _selectedLongitude != null) ...[

@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../config/app_config.dart';
-import '../../../models/product.dart';
 import '../../../models/umkm.dart';
 import '../../../widgets/favorite_button.dart';
 import '../../../widgets/umkm_app_bar.dart';
 import '../../../widgets/product_card.dart';
-import '../cart/cart.dart';
-import '../../../services/cart_service.dart';
 import '../product/product_detail_screen.dart';
 import '../umkm/umkm_storefront_screen.dart';
 import '../../../services/favorite_service.dart';
@@ -29,31 +26,16 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   static const Color background = Color(0xFFF3F7F3);
 
   final FavoriteService _favorites = FavoriteService();
-  final CartService _cartService = CartService();
 
-  void _addToCart(Product product) {
-    _cartService.addProduct(product);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${product.name} ditambahkan ke keranjang'),
-        backgroundColor: primaryGreen,
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'Lihat',
-          textColor: Colors.white,
-          onPressed: () =>
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const CartScreen())),
+  void _openStorefront(Umkm umkm, {String? highlightedProductId}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UmkmStorefrontScreen(
+          umkm: umkm,
+          highlightedProductId: highlightedProductId,
         ),
       ),
     );
-  }
-
-  void _openStorefront(Umkm umkm) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)));
   }
 
   @override
@@ -134,20 +116,25 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        mainAxisExtent: 260,
+        mainAxisExtent: 268,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
         final umkm = catalog.umkmById(product.umkmId);
         return ProductCard(
           product: product,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ProductDetailScreen(product: product),
-            ),
-          ),
+          onTap: () {
+            if (umkm != null) {
+              _openStorefront(umkm, highlightedProductId: product.id);
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailScreen(product: product),
+                ),
+              );
+            }
+          },
           onUmkmTap: umkm == null ? null : () => _openStorefront(umkm),
-          onAddToCart: () => _addToCart(product),
         );
       },
     );

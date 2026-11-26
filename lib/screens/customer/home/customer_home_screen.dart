@@ -80,10 +80,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     });
   }
 
-  void _openStorefront(Umkm umkm) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => UmkmStorefrontScreen(umkm: umkm)));
+  void _openStorefront(Umkm umkm, {String? highlightedProductId}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UmkmStorefrontScreen(
+          umkm: umkm,
+          highlightedProductId: highlightedProductId,
+        ),
+      ),
+    );
   }
 
   void _openCatalog({String category = 'Semua', String query = ''}) {
@@ -815,6 +820,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           return Icons.local_drink;
         case 'jajanan':
         case 'camilan':
+        case 'cemilan':
           return Icons.bakery_dining;
         case 'kue':
           return Icons.cake_rounded;
@@ -1054,19 +1060,23 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             product: product,
                             featured: true,
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ProductDetailScreen(product: product),
-                                ),
-                              );
+                              if (umkm != null) {
+                                _openStorefront(
+                                  umkm,
+                                  highlightedProductId: product.id,
+                                );
+                              } else {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ProductDetailScreen(product: product),
+                                  ),
+                                );
+                              }
                             },
                             onUmkmTap: umkm == null
                                 ? null
                                 : () => _openStorefront(umkm),
-                            onAddToCart: () {
-                              CartService().addProduct(product);
-                            },
                           ),
                         );
                       }).toList(),

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
-import 'midtrans_payment_screen.dart';
 import '../../../models/order.dart';
-import 'order_payment_screen.dart';
-import '../../../services/order_service.dart';
+import '../../../services/cart_service.dart';
+import '../../../services/catalog_service.dart';
 import '../../../services/customer_settings_service.dart';
+import '../../../services/order_service.dart';
 import 'address_picker_sheet.dart';
+import 'order_payment_screen.dart';
 import 'order_widgets.dart';
+import 'qris_payment_screen.dart';
 
 /// Tahap 1 alur pesanan: Checkout.
 ///
@@ -215,16 +218,37 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   double get _subtotal => _vendors.fold(0.0, (s, v) => s + v.subtotal);
   double get _shipping => _vendors.fold(0.0, (s, v) => s + v.fee);
-  double get _serviceFee => _vendors.fold(
-      0.0,
-      (s, v) => s + (v.subtotal * 0.03).round(),
-    );
+  double get _serviceFee => _vendors.isNotEmpty ? 1500.0 : 0.0;
   double get _total => _subtotal + _shipping + _serviceFee;
   int get _qty => widget.cartLines.fold(0, (s, l) => s + l.quantity);
 
   bool get _hasPreOrder => _vendors.any((v) => v.isPreOrder);
   bool get _isCodAllowed =>
       _vendors.every((v) => v.codAvailable) && !_hasPreOrder;
+
+  String get _skemaPo {
+    if (!_hasPreOrder || _vendors.isEmpty) {
+      return 'Lunas di Awal (Full Payment)';
+    }
+    try {
+      final umkm = context.read<CatalogService>().umkmById(
+            _vendors.first.umkmId,
+          );
+      if (umkm != null && umkm.skemaPo.trim().isNotEmpty) {
+        return umkm.skemaPo;
+      }
+    } catch (_) {}
+    return 'Lunas di Awal (Full Payment)';
+  }
+
+  bool get _isDp30 => _skemaPo.contains('30%');
+  bool get _isDp50 => _skemaPo.contains('50%');
+  bool get _hasDpScheme => _hasPreOrder && (_isDp30 || _isDp50);
+  double get _dpRatio => _isDp30 ? 0.30 : (_isDp50 ? 0.50 : 1.0);
+  double get _amountDueNow =>
+      _hasDpScheme ? (_total * _dpRatio).roundToDouble() : _total;
+  double get _sisaBayar =>
+      _hasDpScheme ? (_total - _amountDueNow).clamp(0.0, _total) : 0.0;
 
   Future<void> _pickDateTime(_VendorDraft v) async {
     final now = DateTime.now();
@@ -367,13 +391,27 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         },
       );
       if (!mounted) return;
+      for (final v in _vendors) {
+        CartService().clearGroup(
+          v.umkmId,
+          v.isPreOrder ? OrderType.preOrder : OrderType.instant,
+        );
+      }
       // Selalu 3 halaman: Checkout -> Proses Checkout -> Status Pesanan.
+      final double qrisAmount =
+          (order.nominalDp > 0 && order.sisaBayar > 0)
+              ? order.nominalDp.toDouble()
+              : (_hasDpScheme ? _amountDueNow : order.total);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => _method == PaymentMethod.midtrans
-              ? MidtransPaymentScreen(
+              ? QrisPaymentScreen(
                   orderId: order.id,
-                  paymentUrl: order.paymentUrl,
+                  qrCodeUrl: order.qrCodeUrl ?? order.paymentUrl,
+                  qrString: order.qrString ?? order.snapToken,
+                  totalAmount: qrisAmount,
+                  expiryTime: order.expiryTime ?? order.paymentDeadline,
+                  openOrderDetailOnExit: true,
                 )
               : OrderPaymentScreen(orderId: order.id),
         ),
@@ -1017,9 +1055,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           const SizedBox(height: 8),
           _methodRow(
             method: PaymentMethod.midtrans,
-            icon: Icons.bolt_rounded,
-            title: 'QRIS',
-            subtitle: 'Bayar dengan memindai kode QRIS',
+            icon: Icons.qr_code_2_rounded,
+            title: 'Bayar via QRIS',
+            subtitle: 'QRIS — Scan / Download QR di aplikasi',
           ),
         ],
       ),
@@ -1141,10 +1179,91 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             value: _shipping == 0 ? 'Gratis' : rupiah(_shipping),
           ),
           MoneyRow(
-            label: 'Biaya platform (3%)',
-            value: _serviceFee == 0 ? 'Gratis' : rupiah(_serviceFee),
-            color: _serviceFee == 0 ? OC.primary : OC.ink,
+            label: 'Biaya layanan aplikasi (Flat)',
+            value: rupiah(_serviceFee),
+            color: OC.ink,
           ),
+          const SizedBox(height: 2),
+          const Text(
+            'Flat Rp 1.500/checkout meski pesan banyak produk.',
+            style: TextStyle(fontSize: 11, color: OC.muted),
+          ),
+          if (_hasDpScheme) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(height: 1, color: OC.line),
+            ),
+            MoneyRow(
+              label: 'Total Nilai Pesanan PO',
+              value: rupiah(_total),
+              color: OC.ink,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SKEMA PO: $_skemaPo',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Bayar Sekarang (${_isDp30 ? 'DP 30%' : 'DP 50%'})',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                      Text(
+                        rupiah(_amountDueNow),
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Sisa Pelunasan Nanti',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: OC.muted,
+                        ),
+                      ),
+                      Text(
+                        rupiah(_sisaBayar),
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: OC.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1188,9 +1307,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'TOTAL BAYAR',
-                  style: TextStyle(
+                Text(
+                  _hasDpScheme
+                      ? 'BAYAR SEKARANG (${_isDp30 ? 'DP 30%' : 'DP 50%'})'
+                      : 'TOTAL BAYAR',
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1,
@@ -1198,7 +1319,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   ),
                 ),
                 Text(
-                  rupiah(_total),
+                  rupiah(_hasDpScheme ? _amountDueNow : _total),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,

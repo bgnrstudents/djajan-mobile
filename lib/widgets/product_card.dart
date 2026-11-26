@@ -9,7 +9,7 @@ import '../theme/app_theme.dart'; // includes AppColors + formatRupiah
 
 class ProductCard extends StatelessWidget {
   final Product product;
-  final VoidCallback onAddToCart;
+  final VoidCallback? onAddToCart;
   final VoidCallback? onTap;
 
   /// Dipanggil saat nama UMKM pada kartu ditekan (membuka storefront).
@@ -19,7 +19,7 @@ class ProductCard extends StatelessWidget {
   const ProductCard({
     super.key,
     required this.product,
-    required this.onAddToCart,
+    this.onAddToCart,
     this.onTap,
     this.onUmkmTap,
     this.featured = false,
@@ -255,7 +255,57 @@ class ProductCard extends StatelessWidget {
 
                         ConstrainedBox(
                           constraints: const BoxConstraints(minHeight: 44),
-                          child: AnimatedSwitcher(
+                          child: onAddToCart == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (featured) ...[
+                                      const Text(
+                                        'HARGA',
+                                        style: TextStyle(
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.45,
+                                          color: AppColors.textGrey,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                    ],
+                                    price,
+                                    if (!isPreOrder && product.stock != null) ...[
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        product.stock! <= 0
+                                            ? 'Stok habis'
+                                            : 'Stok: ${product.stock}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: product.stock! <= 0
+                                              ? const Color(0xFFDC2626)
+                                              : const Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ] else if (isPreOrder &&
+                                        product.minOrderPo > 1) ...[
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        'Min. ${product.minOrderPo} ${product.unit.toLowerCase()}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFFD97706),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                )
+                              : AnimatedSwitcher(
                             duration: const Duration(milliseconds: 180),
                             switchInCurve: Curves.easeInOut,
                             switchOutCurve: Curves.easeInOut,
@@ -289,7 +339,25 @@ class ProductCard extends StatelessWidget {
                                               const SizedBox(height: 1),
                                             ],
                                             price,
-                                            if (isPreOrder && product.minOrderPo > 1) ...[
+                                            if (!isPreOrder &&
+                                                product.stock != null) ...[
+                                              const SizedBox(height: 1),
+                                              Text(
+                                                product.stock! <= 0
+                                                    ? 'Stok habis'
+                                                    : 'Stok: ${product.stock}',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: product.stock! <= 0
+                                                      ? const Color(0xFFDC2626)
+                                                      : const Color(0xFF15803D),
+                                                ),
+                                              ),
+                                            ] else if (isPreOrder &&
+                                                product.minOrderPo > 1) ...[
                                               const SizedBox(height: 1),
                                               Text(
                                                 'Min. ${product.minOrderPo} ${product.unit.toLowerCase()}',
@@ -319,7 +387,7 @@ class ProductCard extends StatelessWidget {
                                                     product: product,
                                                   );
                                                 } else {
-                                                  onAddToCart();
+                                                  onAddToCart?.call();
                                                 }
                                               },
                                         borderRadius: BorderRadius.circular(
@@ -435,7 +503,7 @@ class ProductCard extends StatelessWidget {
                                               onTap: product.isOutOfStock ||
                                                       atStockLimit
                                                   ? () {}
-                                                  : onAddToCart,
+                                                  : () => onAddToCart?.call(),
                                               enabled: !product.isOutOfStock &&
                                                   !atStockLimit,
                                             ),

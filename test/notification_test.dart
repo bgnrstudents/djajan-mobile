@@ -23,13 +23,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final badge = find.descendant(
-      of: find.widgetWithIcon(IconButton, Icons.notifications_none),
+      of: find.widgetWithIcon(IconButton, Icons.notifications_none_rounded),
       matching: find.text('1'),
     );
     expect(badge, findsOneWidget);
 
     await tester.tap(
-      find.widgetWithIcon(IconButton, Icons.notifications_none),
+      find.widgetWithIcon(IconButton, Icons.notifications_none_rounded),
       warnIfMissed: false,
     );
     await tester.pumpAndSettle();

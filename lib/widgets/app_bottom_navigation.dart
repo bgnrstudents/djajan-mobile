@@ -87,21 +87,21 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
       animation: cartService,
       builder: (context, _) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           child: SafeArea(
             top: false,
             child: Container(
-              height: 68,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              height: 66,
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(26),
                 border: Border.all(color: AppColors.garis, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
@@ -115,8 +115,8 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                         animation: _indicatorController,
                         builder: (context, child) => Positioned(
                           left: _indicatorController.value * itemWidth + 2,
-                          top: 2,
-                          bottom: 2,
+                          top: 0,
+                          bottom: 0,
                           width: itemWidth - 4,
                           child: child!,
                         ),
@@ -124,106 +124,114 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                           key: const ValueKey('bottom-nav-indicator'),
                           decoration: BoxDecoration(
                             color: AppBottomNavigation.activeBackground,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(21),
                           ),
                         ),
                       ),
-                      Row(
-                        children: List.generate(_items.length, (index) {
-                          final selected = widget.currentIndex == index;
-                          final item = _items[index];
+                      Positioned.fill(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: List.generate(_items.length, (index) {
+                            final selected = widget.currentIndex == index;
+                            final item = _items[index];
 
-                          return Expanded(
-                            child: GestureDetector(
-                              key: ValueKey('bottom-nav-item-$index'),
-                              onTap: () => widget.onDestinationSelected(index),
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        AnimatedScale(
-                                          scale: selected ? 1.06 : 1,
-                                          duration: const Duration(
-                                            milliseconds: 220,
-                                          ),
-                                          curve: Curves.easeOutCubic,
-                                          child: AnimatedSwitcher(
+                            return Expanded(
+                              child: GestureDetector(
+                                key: ValueKey('bottom-nav-item-$index'),
+                                onTap: () => widget.onDestinationSelected(index),
+                                behavior: HitTestBehavior.opaque,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          AnimatedScale(
+                                            scale: selected ? 1.06 : 1,
                                             duration: const Duration(
-                                              milliseconds: 180,
+                                              milliseconds: 220,
                                             ),
-                                            switchInCurve: Curves.easeOutCubic,
-                                            switchOutCurve: Curves.easeInCubic,
-                                            transitionBuilder:
-                                                (child, animation) =>
-                                                    FadeTransition(
-                                                      opacity: animation,
-                                                      child: ScaleTransition(
-                                                        scale: Tween<double>(
-                                                          begin: 0.88,
-                                                          end: 1,
-                                                        ).animate(animation),
-                                                        child: child,
-                                                      ),
-                                                    ),
-                                            child: Icon(
-                                              (selected
-                                                      ? item['activeIcon']
-                                                      : item['icon'])
-                                                  as IconData,
-                                              key: ValueKey(
-                                                'nav-icon-$index-$selected',
+                                            curve: Curves.easeOutCubic,
+                                            child: AnimatedSwitcher(
+                                              duration: const Duration(
+                                                milliseconds: 180,
                                               ),
-                                              size: 23,
-                                              color: selected
-                                                  ? AppBottomNavigation
-                                                        .primaryColor
-                                                  : AppBottomNavigation
-                                                        .inactiveColor,
+                                              switchInCurve: Curves.easeOutCubic,
+                                              switchOutCurve: Curves.easeInCubic,
+                                              transitionBuilder:
+                                                  (child, animation) =>
+                                                      FadeTransition(
+                                                        opacity: animation,
+                                                        child: ScaleTransition(
+                                                          scale: Tween<double>(
+                                                            begin: 0.88,
+                                                            end: 1,
+                                                          ).animate(animation),
+                                                          child: child,
+                                                        ),
+                                                      ),
+                                              child: Icon(
+                                                (selected
+                                                        ? item['activeIcon']
+                                                        : item['icon'])
+                                                    as IconData,
+                                                key: ValueKey(
+                                                  'nav-icon-$index-$selected',
+                                                ),
+                                                size: 22,
+                                                color: selected
+                                                    ? AppBottomNavigation
+                                                          .primaryColor
+                                                    : AppBottomNavigation
+                                                          .inactiveColor,
+                                              ),
                                             ),
                                           ),
+                                          if (index == 2 &&
+                                              cartService.totalQuantity > 0)
+                                            Positioned(
+                                              top: -4,
+                                              right: -8,
+                                              child: _CartBadge(
+                                                count:
+                                                    cartService.totalQuantity,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      AnimatedDefaultTextStyle(
+                                        duration: const Duration(
+                                          milliseconds: 220,
                                         ),
-                                        if (index == 2 &&
-                                            cartService.totalQuantity > 0)
-                                          Positioned(
-                                            top: -4,
-                                            right: -8,
-                                            child: _CartBadge(
-                                              count: cartService.totalQuantity,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    AnimatedDefaultTextStyle(
-                                      duration: const Duration(
-                                        milliseconds: 220,
+                                        curve: Curves.easeOutCubic,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          height: 1.1,
+                                          fontWeight: selected
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color: selected
+                                              ? AppBottomNavigation
+                                                    .primaryColor
+                                              : AppBottomNavigation
+                                                    .inactiveColor,
+                                        ),
+                                        child: Text(
+                                          item['label'] as String,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                      curve: Curves.easeOutCubic,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        height: 1.1,
-                                        fontWeight: selected
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                        color: selected
-                                            ? AppBottomNavigation.primaryColor
-                                            : AppBottomNavigation.inactiveColor,
-                                      ),
-                                      child: Text(item['label'] as String),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }),
+                            );
+                          }),
+                        ),
                       ),
                     ],
                   );

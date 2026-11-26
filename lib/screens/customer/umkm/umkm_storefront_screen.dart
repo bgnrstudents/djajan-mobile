@@ -8,6 +8,7 @@ import '../../../models/umkm.dart';
 import '../../../services/api_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../widgets/favorite_button.dart';
+import '../../../widgets/floating_cart_button.dart';
 import '../../../widgets/app_network_image.dart';
 import '../../../widgets/product_card.dart';
 import '../cart/cart.dart';
@@ -20,8 +21,13 @@ import '../product/product_detail_screen.dart';
 /// produknya dengan filter Ready / Pre-Order.
 class UmkmStorefrontScreen extends StatefulWidget {
   final Umkm umkm;
+  final String? highlightedProductId;
 
-  const UmkmStorefrontScreen({super.key, required this.umkm});
+  const UmkmStorefrontScreen({
+    super.key,
+    required this.umkm,
+    this.highlightedProductId,
+  });
 
   @override
   State<UmkmStorefrontScreen> createState() => _UmkmStorefrontScreenState();
@@ -97,26 +103,11 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   void _addToCart(Product product) {
     _cartService.addProduct(product);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${product.name} ditambahkan ke keranjang'),
-        backgroundColor: primaryGreen,
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'Lihat',
-          textColor: Colors.white,
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CartScreen()),
-          ),
-        ),
-      ),
-    );
   }
 
   List<Product> get _filtered {
     final q = _searchController.text.trim().toLowerCase();
-    return _storeProducts.where((p) {
+    final list = _storeProducts.where((p) {
       final typeMatch =
           _orderTypeFilter == 'Semua' || p.orderType == _orderTypeFilter;
       final searchMatch = q.isEmpty ||
@@ -124,6 +115,15 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
           p.variant.toLowerCase().contains(q);
       return typeMatch && searchMatch;
     }).toList();
+    final highlightedId = widget.highlightedProductId;
+    if (highlightedId != null && highlightedId.isNotEmpty) {
+      final idx = list.indexWhere((p) => p.id == highlightedId);
+      if (idx > 0) {
+        final chosen = list.removeAt(idx);
+        list.insert(0, chosen);
+      }
+    }
+    return list;
   }
 
   @override
@@ -134,76 +134,94 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
     return Scaffold(
       backgroundColor: background,
-      body: CustomScrollView(
-        slivers: [
-          _buildHeader(),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatsRow(products.length),
-                  if (umkm.description.trim().isNotEmpty) ...[
-                    const SizedBox(height: 26),
-                    _buildStoreProfile(),
-                  ],
-                  const SizedBox(height: 24),
-                  _buildServiceCard(),
-                  const SizedBox(height: 26),
-
-                  _buildStoreSearch(),
-                  const SizedBox(height: 18),
-
-                  if (hasPreOrder && hasInstant) ...[
-                    _buildOrderTypeFilter(),
-                    const SizedBox(height: 20),
-                  ],
-
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              _buildHeader(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Jelajahi menu',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                                color: textDark,
-                              ),
+                      _buildStatsRow(products.length),
+                      if (umkm.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 26),
+                        _buildStoreProfile(),
+                      ],
+                      const SizedBox(height: 24),
+                      _buildServiceCard(),
+                      const SizedBox(height: 26),
+
+                      _buildStoreSearch(),
+                      const SizedBox(height: 18),
+
+                      if (hasPreOrder && hasInstant) ...[
+                        _buildOrderTypeFilter(),
+                        const SizedBox(height: 20),
+                      ],
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Jelajahi menu',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                    color: textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${_filtered.length} produk dari ${umkm.name}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: textMuted,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${_filtered.length} produk dari ${umkm.name}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
-                              ),
+                          ),
+                          Text(
+                            '${_filtered.length} item',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: primaryGreen,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${_filtered.length} item',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: primaryGreen,
-                        ),
-                      ),
+                      const SizedBox(height: 14),
+                      _buildProductGrid(),
+                      const SizedBox(height: 30),
+                      _buildReviewsSection(),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  _buildProductGrid(),
-                  const SizedBox(height: 30),
-                  _buildReviewsSection(),
-                ],
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            right: 18,
+            bottom: 16,
+            child: SafeArea(
+              top: false,
+              child: FloatingCartButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CartScreen()),
+                  );
+                },
               ),
             ),
           ),
@@ -905,11 +923,13 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        mainAxisExtent: 260,
+        mainAxisExtent: 268,
       ),
       itemBuilder: (context, index) {
         final product = items[index];
-        return ProductCard(
+        final isHighlighted = widget.highlightedProductId != null &&
+            product.id == widget.highlightedProductId;
+        final card = ProductCard(
           product: product,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -917,6 +937,14 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
             ),
           ),
           onAddToCart: () => _addToCart(product),
+        );
+        if (!isHighlighted) return card;
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primaryGreen, width: 2),
+          ),
+          child: card,
         );
       },
     );

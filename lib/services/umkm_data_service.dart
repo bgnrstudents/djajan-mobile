@@ -383,15 +383,22 @@ class UmkmDataService extends ChangeNotifier {
   }
 
   Future<String> ubahPassword({
-    required String passwordLama,
+    String? passwordLama,
     required String passwordBaru,
     required String konfirmasi,
   }) async {
-    await ApiService.post('profil_password', {
-      'password_lama': passwordLama,
+    final body = <String, dynamic>{
       'password_baru': passwordBaru,
       'password_baru_confirmation': konfirmasi,
-    });
+    };
+    if (passwordLama != null && passwordLama.isNotEmpty) {
+      body['password_lama'] = passwordLama;
+    }
+    await ApiService.post('profil_password', body);
+    if (_profile != null) {
+      _profile!.hasPassword = true;
+      notifyListeners();
+    }
     return 'Kata sandi berhasil diperbarui.';
   }
 

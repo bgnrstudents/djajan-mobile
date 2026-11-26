@@ -15,6 +15,7 @@ class UmkmProfile {
   String? fotoProfilUrl;
   String statusVerifikasi;
   bool tokoAktif;
+  bool hasPassword;
 
   // Kebijakan pembayaran
   String bankKode;
@@ -47,6 +48,7 @@ class UmkmProfile {
     required this.fotoProfilUrl,
     required this.statusVerifikasi,
     required this.tokoAktif,
+    this.hasPassword = true,
     required this.bankKode,
     required this.bankNama,
     required this.noRekening,
@@ -83,6 +85,7 @@ class UmkmProfile {
             : 'file_gambar/profil/${_strOrNull(j['foto_profil'])}'),
     statusVerifikasi: _str(j['status_verifikasi'], 'terverifikasi'),
     tokoAktif: _bool(j['toko_aktif']),
+    hasPassword: j['has_password'] == null ? true : _bool(j['has_password']),
     bankKode: _str(j['bank_kode'], 'BRI'),
     bankNama: _str(j['bank_nama']),
     noRekening: _str(j['no_rekening']),
@@ -270,6 +273,10 @@ extension StatusPesananX on StatusPesanan {
   /// Validasi bahwa transisi status adalah valid
   static bool isValidTransition(StatusPesanan from, StatusPesanan to) {
     if (from == to) return true;
+    if (to == StatusPesanan.ditolak &&
+        (from == StatusPesanan.poBaru || from == StatusPesanan.diterima)) {
+      return true;
+    }
     final fromIndex = statusSequence.indexOf(from);
     final toIndex = statusSequence.indexOf(to);
     return fromIndex >= 0 && toIndex >= 0 && toIndex == fromIndex + 1;

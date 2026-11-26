@@ -110,8 +110,8 @@ void main() {
               )
               .first,
         );
-        expect(featuredUmkmCard.width, 250);
-        expect(featuredUmkmCard.height, 320);
+        expect(featuredUmkmCard.width, 230);
+        expect(featuredUmkmCard.height, 250);
         final nextUmkmCard = tester.getRect(
           find
               .byWidgetPredicate(
