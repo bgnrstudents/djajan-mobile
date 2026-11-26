@@ -26,6 +26,10 @@ void main() {
 
     final indicator = find.byKey(const ValueKey('bottom-nav-indicator'));
     final initialLeft = tester.getRect(indicator).left;
+    final indicatorCenterY = tester.getCenter(indicator).dy;
+    final firstItemCenterY = tester.getCenter(find.text('Beranda')).dy;
+    final firstIconCenterY = tester.getCenter(find.byIcon(Icons.home_rounded)).dy;
+    expect(((firstItemCenterY + firstIconCenterY) / 2 - indicatorCenterY).abs(), lessThan(4.0));
     final selectedDestinations = <int>[];
 
     for (final index in [1, 2, 3, 0]) {
