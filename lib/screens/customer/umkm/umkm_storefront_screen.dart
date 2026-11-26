@@ -8,6 +8,7 @@ import '../../../models/umkm.dart';
 import '../../../services/api_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../widgets/favorite_button.dart';
+import '../../../widgets/floating_cart_button.dart';
 import '../../../widgets/app_network_image.dart';
 import '../../../widgets/product_card.dart';
 import '../cart/cart.dart';
@@ -102,26 +103,6 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   void _addToCart(Product product) {
     _cartService.addProduct(product);
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('${product.name} ditambahkan ke keranjang'),
-        backgroundColor: primaryGreen,
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'Lihat',
-          textColor: Colors.white,
-          onPressed: () {
-            if (!navigator.mounted) return;
-            navigator.push(
-              MaterialPageRoute(builder: (_) => const CartScreen()),
-            );
-          },
-        ),
-      ),
-    );
   }
 
   List<Product> get _filtered {
@@ -153,76 +134,94 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
     return Scaffold(
       backgroundColor: background,
-      body: CustomScrollView(
-        slivers: [
-          _buildHeader(),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatsRow(products.length),
-                  if (umkm.description.trim().isNotEmpty) ...[
-                    const SizedBox(height: 26),
-                    _buildStoreProfile(),
-                  ],
-                  const SizedBox(height: 24),
-                  _buildServiceCard(),
-                  const SizedBox(height: 26),
-
-                  _buildStoreSearch(),
-                  const SizedBox(height: 18),
-
-                  if (hasPreOrder && hasInstant) ...[
-                    _buildOrderTypeFilter(),
-                    const SizedBox(height: 20),
-                  ],
-
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              _buildHeader(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Jelajahi menu',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                                color: textDark,
-                              ),
+                      _buildStatsRow(products.length),
+                      if (umkm.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 26),
+                        _buildStoreProfile(),
+                      ],
+                      const SizedBox(height: 24),
+                      _buildServiceCard(),
+                      const SizedBox(height: 26),
+
+                      _buildStoreSearch(),
+                      const SizedBox(height: 18),
+
+                      if (hasPreOrder && hasInstant) ...[
+                        _buildOrderTypeFilter(),
+                        const SizedBox(height: 20),
+                      ],
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Jelajahi menu',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                    color: textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${_filtered.length} produk dari ${umkm.name}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: textMuted,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${_filtered.length} produk dari ${umkm.name}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
-                              ),
+                          ),
+                          Text(
+                            '${_filtered.length} item',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: primaryGreen,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${_filtered.length} item',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: primaryGreen,
-                        ),
-                      ),
+                      const SizedBox(height: 14),
+                      _buildProductGrid(),
+                      const SizedBox(height: 30),
+                      _buildReviewsSection(),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  _buildProductGrid(),
-                  const SizedBox(height: 30),
-                  _buildReviewsSection(),
-                ],
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            right: 18,
+            bottom: 16,
+            child: SafeArea(
+              top: false,
+              child: FloatingCartButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CartScreen()),
+                  );
+                },
               ),
             ),
           ),

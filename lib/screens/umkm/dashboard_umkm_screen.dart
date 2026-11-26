@@ -66,8 +66,10 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
       context.read<UmkmDataService>().clearState();
-      Navigator.of(context, rootNavigator: true)
-          .pushNamedAndRemoveUntil(AppRoutes.customerHome, (_) => false);
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil(AppRoutes.customerHome, (_) => false);
     } on ApiException catch (error) {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
@@ -78,9 +80,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal beralih ke mode pelanggan.'),
-          ),
+          const SnackBar(content: Text('Gagal beralih ke mode pelanggan.')),
         );
       }
     }
@@ -103,7 +103,8 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
 
           // 2. Main Content (Scrollable dengan Header di dalam masing-masing tab)
           SafeArea(
-            child: service.memuat &&
+            child:
+                service.memuat &&
                     service.produkList.isEmpty &&
                     service.pesananList.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -217,7 +218,8 @@ class _TabBeranda extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(13),
-                          child: service.profile.fotoProfilUrl != null &&
+                          child:
+                              service.profile.fotoProfilUrl != null &&
                                   service.profile.fotoProfilUrl!.isNotEmpty
                               ? GambarJaringan(
                                   url: service.profile.fotoProfilUrl,
@@ -259,7 +261,11 @@ class _TabBeranda extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Container(width: 1.2, height: 26, color: const Color(0xFFD6E2D6)),
+                Container(
+                  width: 1.2,
+                  height: 26,
+                  color: const Color(0xFFD6E2D6),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -341,7 +347,8 @@ class _TabBeranda extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFD3E7D3)),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0F2E1B).withValues(alpha: 0.04),
+                            color: const Color(0xFF0F2E1B)
+                                .withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -450,8 +457,9 @@ class _TabBeranda extends StatelessWidget {
 
           // 1.5 INFO BIAYA LAYANAN PLATFORM (DITANGGUNG PEMBELI)
           _BannerStatusKomisi(
-            komisiPlatform:
-                periodeBulanan ? r.komisiPeriode : r.komisiSemuaWaktu,
+            komisiPlatform: periodeBulanan
+                ? r.komisiPeriode
+                : r.komisiSemuaWaktu,
             sisaKewajibanCod: r.sisaKewajibanCod,
           ),
           const SizedBox(height: 18),
@@ -1274,11 +1282,7 @@ class _TabProdukState extends State<_TabProduk> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFE2EBE2)),
                       ),
-                      child: Icon(
-                        item.ikon,
-                        color: item.warna,
-                        size: 20,
-                      ),
+                      child: Icon(item.ikon, color: item.warna, size: 20),
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -1330,9 +1334,7 @@ class _TabProdukState extends State<_TabProduk> {
               // 0. HEADER SCROLLABLE KATALOG PRODUK ALA MOCKUP (Seamless Edge-to-Edge)
               const UmkmHeaderRow(
                 padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
-                iconBadge: UmkmSquircleIcon(
-                  icon: Icons.inventory_2_rounded,
-                ),
+                iconBadge: UmkmSquircleIcon(icon: Icons.inventory_2_rounded),
                 title: 'Katalog Produk',
                 subtitle: 'Kelola produk dan stok jualanmu',
               ),
@@ -1348,9 +1350,17 @@ class _TabProdukState extends State<_TabProduk> {
                 child: Row(
                   children: [
                     buatStatistik(0),
-                    Container(width: 1, height: 36, color: const Color(0xFFD6E2D6)),
+                    Container(
+                      width: 1,
+                      height: 36,
+                      color: const Color(0xFFD6E2D6),
+                    ),
                     buatStatistik(1),
-                    Container(width: 1, height: 36, color: const Color(0xFFD6E2D6)),
+                    Container(
+                      width: 1,
+                      height: 36,
+                      color: const Color(0xFFD6E2D6),
+                    ),
                     buatStatistik(2),
                   ],
                 ),
@@ -1418,9 +1428,7 @@ class _TabProdukState extends State<_TabProduk> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: jumlahFilterAktif > 0
-                              ? OC.primary
-                              : OC.line,
+                          color: jumlahFilterAktif > 0 ? OC.primary : OC.line,
                           width: jumlahFilterAktif > 0 ? 1.5 : 1,
                         ),
                       ),
@@ -1430,9 +1438,7 @@ class _TabProdukState extends State<_TabProduk> {
                           Icon(
                             Icons.tune_rounded,
                             size: 18,
-                            color: jumlahFilterAktif > 0
-                                ? OC.primary
-                                : OC.ink,
+                            color: jumlahFilterAktif > 0 ? OC.primary : OC.ink,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -1522,8 +1528,9 @@ class _TabProdukState extends State<_TabProduk> {
                       child: InkWell(
                         onTap: () {
                           setState(() {
-                            _statusDipilih =
-                                _statusDipilih == 'Draft' ? 'Semua' : 'Draft';
+                            _statusDipilih = _statusDipilih == 'Draft'
+                                ? 'Semua'
+                                : 'Draft';
                           });
                         },
                         borderRadius: BorderRadius.circular(14),
@@ -1795,16 +1802,13 @@ IconData _ikonKategoriProduk(String kategori) {
   if (kategori == 'Semua') return Icons.grid_view_rounded;
   if (nilai.contains('makanan')) return Icons.restaurant_menu_rounded;
   if (nilai.contains('minuman')) return Icons.local_cafe_outlined;
-  if (nilai.contains('camilan') || nilai.contains('snack')) {
+  if (nilai.contains('camilan') ||
+      nilai.contains('cemilan') ||
+      nilai.contains('snack')) {
     return Icons.cookie_outlined;
   }
   if (nilai.contains('kue') || nilai.contains('roti')) {
     return Icons.cake_outlined;
-  }
-  if (nilai.contains('sembako') ||
-      nilai.contains('bahan pokok') ||
-      nilai.contains('kelontong')) {
-    return Icons.shopping_basket_outlined;
   }
   return Icons.category_outlined;
 }
@@ -1834,11 +1838,7 @@ class _HeroPendapatanCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F4B28),
-            Color(0xFF135A31),
-            Color(0xFF1B703F),
-          ],
+          colors: [Color(0xFF0F4B28), Color(0xFF135A31), Color(0xFF1B703F)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -2276,9 +2276,7 @@ class _BannerStatusKomisi extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: hasDebt
-                  ? OC.danger.withValues(alpha: 0.12)
-                  : OC.mintSoft,
+              color: hasDebt ? OC.danger.withValues(alpha: 0.12) : OC.mintSoft,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -2568,8 +2566,8 @@ class _KartuProdukState extends State<_KartuProduk> {
                       height: 104,
                       radius: 16,
                       ikonKosong: _ikonKategoriProduk(p.kategori),
-                      cacheBuster:
-                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      cacheBuster: DateTime.now().millisecondsSinceEpoch
+                          .toString(),
                     ),
                   ),
                   Positioned(
@@ -2841,9 +2839,7 @@ class _KartuProdukState extends State<_KartuProduk> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: p.stok == 0
-                                    ? OC.danger
-                                    : OC.muted,
+                                color: p.stok == 0 ? OC.danger : OC.muted,
                               ),
                             ),
                           ],
@@ -2902,8 +2898,10 @@ class _KartuProdukState extends State<_KartuProduk> {
                                 onChanged: _sibuk
                                     ? null
                                     : (v) => _jalankan(
-                                        () => widget.service
-                                            .ubahStatusTayang(p, v),
+                                        () => widget.service.ubahStatusTayang(
+                                          p,
+                                          v,
+                                        ),
                                       ),
                               ),
                             ),
@@ -3170,16 +3168,20 @@ class _TabPesananState extends State<_TabPesanan> {
         status.kodeDb: semua.where((p) => p.status == status).length,
     };
 
-    final jumlahPerluTindakan =
-        semua.where((p) => p.status == StatusPesanan.poBaru).length;
+    final jumlahPerluTindakan = semua
+        .where((p) => p.status == StatusPesanan.poBaru)
+        .length;
 
     // Filter berdasarkan kata kunci, status tab/filter, dan jenis
     final pesananTersaring = semua.where((p) {
-      final cocokKunci = _kataKunci.isEmpty ||
+      final cocokKunci =
+          _kataKunci.isEmpty ||
           p.idPesanan.toString().contains(_kataKunci) ||
           p.namaPembeli.toLowerCase().contains(_kataKunci.toLowerCase()) ||
-          p.items.any((it) =>
-              it.namaProduk.toLowerCase().contains(_kataKunci.toLowerCase()));
+          p.items.any(
+            (it) =>
+                it.namaProduk.toLowerCase().contains(_kataKunci.toLowerCase()),
+          );
 
       final cocokStatus =
           _statusDipilih == 'semua' || p.status.kodeDb == _statusDipilih;
@@ -3196,7 +3198,10 @@ class _TabPesananState extends State<_TabPesanan> {
     // Grouping pesanan berdasarkan Tanggal (Hari)
     final Map<String, List<Pesanan>> pesananPerTanggal = {};
     for (final p in pesananTersaring) {
-      final kunciTanggal = DateFormat('d MMMM yyyy', 'id_ID').format(p.tanggalPesan);
+      final kunciTanggal = DateFormat(
+        'd MMMM yyyy',
+        'id_ID',
+      ).format(p.tanggalPesan);
       pesananPerTanggal.putIfAbsent(kunciTanggal, () => []).add(p);
     }
     final listTanggal = pesananPerTanggal.keys.toList();
@@ -3248,9 +3253,7 @@ class _TabPesananState extends State<_TabPesanan> {
           // 0. HEADER SCROLLABLE PESANAN ALA MOCKUP (Seamless Edge-to-Edge)
           const UmkmHeaderRow(
             padding: EdgeInsets.fromLTRB(0, 4, 0, 16),
-            iconBadge: UmkmSquircleIcon(
-              icon: Icons.shopping_bag_rounded,
-            ),
+            iconBadge: UmkmSquircleIcon(icon: Icons.shopping_bag_rounded),
             title: 'Pesanan',
             subtitle: 'Kelola pesanan dan transaksi',
           ),
@@ -3541,10 +3544,7 @@ class _TabPesananState extends State<_TabPesanan> {
                     textAlignVertical: TextAlignVertical.center,
                     decoration: InputDecoration(
                       hintText: 'Cari pesanan...',
-                      hintStyle: const TextStyle(
-                        color: OC.faint,
-                        fontSize: 13,
-                      ),
+                      hintStyle: const TextStyle(color: OC.faint, fontSize: 13),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
                         color: OC.muted,
@@ -3558,10 +3558,7 @@ class _TabPesananState extends State<_TabPesanan> {
                                 _searchCtrl.clear();
                                 setState(() => _kataKunci = '');
                               },
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                size: 19,
-                              ),
+                              icon: const Icon(Icons.close_rounded, size: 19),
                               color: OC.muted,
                             ),
                       isDense: true,
@@ -3688,14 +3685,16 @@ class _TabPesananState extends State<_TabPesanan> {
                   ),
 
                   // Cards Pesanan Hari Ini
-                  ...pesananHariIni.map((p) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _KartuPesananBaru(
-                          pesanan: p,
-                          onRefresh: widget.onRefresh,
-                          tanggalFmt: tanggalFmt,
-                        ),
-                      )),
+                  ...pesananHariIni.map(
+                    (p) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _KartuPesananBaru(
+                        pesanan: p,
+                        onRefresh: widget.onRefresh,
+                        tanggalFmt: tanggalFmt,
+                      ),
+                    ),
+                  ),
                 ],
               );
             }),
@@ -3717,13 +3716,19 @@ class _KartuPesananBaru extends StatelessWidget {
   });
 
   (Color, Color) _warnaStatus(StatusPesanan s) => switch (s) {
-        StatusPesanan.poBaru => (const Color(0xFFFFFBEB), const Color(0xFFD97706)),
-        StatusPesanan.diterima => (const Color(0xFFF0FDF4), const Color(0xFF16A34A)),
-        StatusPesanan.diproses => (const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
-        StatusPesanan.diantar => (const Color(0xFFFAF5FF), const Color(0xFF9333EA)),
-        StatusPesanan.selesai => (const Color(0xFFF0FDF4), const Color(0xFF16A34A)),
-        StatusPesanan.ditolak => (const Color(0xFFFEF2F2), const Color(0xFFDC2626)),
-      };
+    StatusPesanan.poBaru => (const Color(0xFFFFFBEB), const Color(0xFFD97706)),
+    StatusPesanan.diterima => (
+      const Color(0xFFF0FDF4),
+      const Color(0xFF16A34A),
+    ),
+    StatusPesanan.diproses => (
+      const Color(0xFFEFF6FF),
+      const Color(0xFF2563EB),
+    ),
+    StatusPesanan.diantar => (const Color(0xFFFAF5FF), const Color(0xFF9333EA)),
+    StatusPesanan.selesai => (const Color(0xFFF0FDF4), const Color(0xFF16A34A)),
+    StatusPesanan.ditolak => (const Color(0xFFFEF2F2), const Color(0xFFDC2626)),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -3861,11 +3866,7 @@ class _KartuPesananBaru extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
 
-                const Icon(
-                  Icons.more_vert_rounded,
-                  size: 18,
-                  color: OC.muted,
-                ),
+                const Icon(Icons.more_vert_rounded, size: 18, color: OC.muted),
               ],
             ),
             const SizedBox(height: 12),
@@ -3876,7 +3877,8 @@ class _KartuPesananBaru extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: p.items.isNotEmpty &&
+                  child:
+                      p.items.isNotEmpty &&
                           p.items.first.gambarUrl != null &&
                           p.items.first.gambarUrl!.isNotEmpty
                       ? GambarJaringan(
@@ -3884,8 +3886,8 @@ class _KartuPesananBaru extends StatelessWidget {
                           width: 80,
                           height: 80,
                           radius: 14,
-                          cacheBuster:
-                              DateTime.now().millisecondsSinceEpoch.toString(),
+                          cacheBuster: DateTime.now().millisecondsSinceEpoch
+                              .toString(),
                         )
                       : Container(
                           width: 80,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,7 @@ import '../../models/umkm_seller_models.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/category_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/osm_map_picker.dart';
@@ -28,7 +30,7 @@ class _ZonaBaris {
   }
 }
 
-/// "1.0" -> "1", "3.5" tetap "3.5" — supaya enak dibaca di form.
+/// "1.0" -> "1", "3.5" tetap "3.5" â€” supaya enak dibaca di form.
 String _fmtKm(double v) =>
     v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 
@@ -523,388 +525,30 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   Future<void> _editIdentitas() async {
     final service = context.read<UmkmDataService>();
     final p = service.profile;
-    final namaCtrl = TextEditingController(text: p.namaUsaha);
-    final spesialisCtrl = TextEditingController(text: p.spesialis);
-    final telpCtrl = TextEditingController(text: p.noTelpUsaha);
-    String? hasil;
-    var namaUsaha = '';
-    var spesialisasi = '';
-    var noTelpUsaha = '';
-    try {
-      hasil = await showModalBottomSheet<String>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (ctx) {
-          var namaDisentuh = false;
-          var teleponDisentuh = false;
+    final result = await showModalBottomSheet<({String namaUsaha, String spesialisasi, String noTelpUsaha})>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditIdentitasSheet(
+        initialNama: p.namaUsaha,
+        initialSpesialis: p.spesialis,
+        initialTelp: p.noTelpUsaha,
+        onChangePhoto: _gantiFoto,
+      ),
+    );
+    if (result == null) return;
 
-          String? errorNama() => namaDisentuh && namaCtrl.text.trim().isEmpty
-              ? 'Nama usaha wajib diisi.'
-              : null;
-
-          String? errorTelepon() {
-            final nomor = telpCtrl.text.trim();
-            if (!teleponDisentuh || nomor.isEmpty) return null;
-            final digit = nomor.replaceAll(RegExp(r'[\s()+-]'), '');
-            return RegExp(r'^\d{10,15}$').hasMatch(digit)
-                ? null
-                : 'Masukkan nomor WhatsApp dengan 10–15 digit.';
-          }
-
-          bool nomorTeleponValid() {
-            final nomor = telpCtrl.text.trim();
-            if (nomor.isEmpty) return true;
-            final digit = nomor.replaceAll(RegExp(r'[\s()+-]'), '');
-            return RegExp(r'^\d{10,15}$').hasMatch(digit);
-          }
-
-          return StatefulBuilder(
-            builder: (context, setSheetState) {
-              final namaValid = namaCtrl.text.trim().isNotEmpty;
-              final teleponValid = nomorTeleponValid();
-              final berubah =
-                  namaCtrl.text.trim() != p.namaUsaha ||
-                  spesialisCtrl.text.trim() != p.spesialis ||
-                  telpCtrl.text.trim() != p.noTelpUsaha;
-
-              final viewInsetsBottom = MediaQuery.viewInsetsOf(ctx).bottom;
-              final screenHeight = MediaQuery.sizeOf(ctx).height;
-              final maxAllowedHeight = screenHeight - viewInsetsBottom;
-              final targetHeight = (screenHeight * 0.88).clamp(
-                120.0,
-                maxAllowedHeight > 120.0 ? maxAllowedHeight : 120.0,
-              );
-
-              return AnimatedPadding(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                padding: EdgeInsets.only(
-                  bottom: viewInsetsBottom,
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: SizedBox(
-                    height: targetHeight,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: OC.bg,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(28),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Center(
-                            child: Container(
-                              margin: const EdgeInsets.only(top: 11, bottom: 7),
-                              width: 38,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD4DAD5),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 14, 15),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFE7F2E9), Colors.white],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(color: OC.line),
-                                  ),
-                                  child: const Icon(
-                                    Icons.storefront_rounded,
-                                    color: OC.primary,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Informasi usaha',
-                                        style: TextStyle(
-                                          color: OC.ink,
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                      SizedBox(height: 3),
-                                      Text(
-                                        'Atur identitas yang dilihat pelanggan',
-                                        style: TextStyle(
-                                          color: OC.muted,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: OC.muted,
-                                  ),
-                                  icon: const Icon(Icons.close_rounded),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Divider(height: 1, color: OC.line),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior.onDrag,
-                              padding: const EdgeInsets.fromLTRB(
-                                20,
-                                22,
-                                20,
-                                24,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Center(
-                                    child: Column(
-                                      children: [
-                                        Stack(
-                                          alignment: Alignment.bottomRight,
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(3),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withValues(alpha: 0.08),
-                                                    blurRadius: 10,
-                                                    offset: const Offset(0, 3),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: GambarJaringan(
-                                                url: service.profile.fotoProfilUrl,
-                                                width: 76,
-                                                height: 76,
-                                                radius: 38,
-                                                ikonKosong: Icons.storefront_rounded,
-                                                cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              right: 0,
-                                              bottom: 0,
-                                              child: Material(
-                                                color: AppColors.hijauTua,
-                                                shape: const CircleBorder(),
-                                                child: InkWell(
-                                                  onTap: () async {
-                                                    await _gantiFoto();
-                                                    setSheetState(() {});
-                                                  },
-                                                  customBorder: const CircleBorder(),
-                                                  child: Container(
-                                                    padding: const EdgeInsets.all(6),
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(color: Colors.white, width: 2),
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.camera_alt_rounded,
-                                                      size: 14,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        TextButton.icon(
-                                          onPressed: () async {
-                                            await _gantiFoto();
-                                            setSheetState(() {});
-                                          },
-                                          icon: const Icon(Icons.photo_camera_outlined, size: 16, color: OC.primary),
-                                          label: const Text(
-                                            'Ubah Foto Profil Usaha',
-                                            style: TextStyle(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: OC.primary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  const Text(
-                                    'DETAIL PROFIL',
-                                    style: TextStyle(
-                                      color: OC.muted,
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.9,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _sheetField(
-                                    controller: namaCtrl,
-                                    label: 'Nama usaha',
-                                    hint: 'Contoh: Dapur Ibu Sari',
-                                    helper: 'Gunakan nama yang mudah dikenali.',
-                                    icon: Icons.storefront_outlined,
-                                    capitalization: TextCapitalization.words,
-                                    errorText: errorNama(),
-                                    onChanged: (_) {
-                                      namaDisentuh = true;
-                                      setSheetState(() {});
-                                    },
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _sheetField(
-                                    controller: spesialisCtrl,
-                                    label: 'Spesialisasi',
-                                    hint: 'Contoh: Jajanan pasar & kue',
-                                    helper: 'Ceritakan jenis produk andalan usaha Anda.',
-                                    icon: Icons.restaurant_menu_outlined,
-                                    capitalization:
-                                        TextCapitalization.sentences,
-                                    onChanged: (_) => setSheetState(() {}),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _sheetField(
-                                    controller: telpCtrl,
-                                    label: 'WhatsApp usaha',
-                                    hint: '08xxxxxxxxxx',
-                                    helper: 'Gunakan nomor aktif, 10–15 digit. Boleh dikosongkan.',
-                                    icon: Icons.phone_iphone_outlined,
-                                    inputType: TextInputType.phone,
-                                    errorText: errorTelepon(),
-                                    onChanged: (_) {
-                                      teleponDisentuh = true;
-                                      setSheetState(() {});
-                                    },
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Container(
-                                    padding: const EdgeInsets.all(13),
-                                    decoration: BoxDecoration(
-                                      color: OC.mintSoft,
-                                      borderRadius: BorderRadius.circular(15),
-                                      border: Border.all(
-                                        color: OC.mint.withValues(alpha: 0.8),
-                                      ),
-                                    ),
-                                    child: const Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.info_outline_rounded,
-                                          size: 18,
-                                          color: OC.primary,
-                                        ),
-                                        SizedBox(width: 9),
-                                        Expanded(
-                                          child: Text(
-                                            'Alamat dan titik lokasi usaha dikelola melalui pengaturan lokasi dapur.',
-                                            style: TextStyle(
-                                              color: OC.ink,
-                                              fontSize: 11.5,
-                                              height: 1.4,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              border: Border(top: BorderSide(color: OC.line)),
-                            ),
-                            child: SafeArea(
-                              top: false,
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: FilledButton.icon(
-                                  onPressed:
-                                      berubah && namaValid && teleponValid
-                                      ? () => Navigator.pop(ctx, 'save')
-                                      : null,
-                                  icon: const Icon(Icons.check_rounded),
-                                  label: const Text(
-                                    'Simpan perubahan',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: OC.primary,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor: OC.primary
-                                        .withValues(alpha: 0.35),
-                                    disabledForegroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      );
-      namaUsaha = namaCtrl.text.trim();
-      spesialisasi = spesialisCtrl.text.trim();
-      noTelpUsaha = telpCtrl.text.trim();
-    } finally {
-      namaCtrl.dispose();
-      spesialisCtrl.dispose();
-      telpCtrl.dispose();
-    }
-
-    if (hasil != 'save') return;
+    // Beri jeda singkat agar animasi tutup bottom sheet selesai sebelum
+    // menampilkan snackbar/dialog sehingga dependensi widget sheet tidak bentrok.
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    if (!mounted) return;
 
     try {
       final pesan = await service.simpanIdentitasUsaha(
-        namaUsaha: namaUsaha,
-        spesialis: spesialisasi,
+        namaUsaha: result.namaUsaha,
+        spesialis: result.spesialisasi,
         alamat: p.alamat,
-        noTelpUsaha: noTelpUsaha,
+        noTelpUsaha: result.noTelpUsaha,
       );
       if (mounted) pesanSukses(context, pesan);
     } on ApiException catch (e) {
@@ -961,62 +605,13 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
   // ------------------------------------------------ Ubah Kata Sandi
   Future<void> _ubahPassword() async {
-    final lama = TextEditingController();
-    final baru = TextEditingController();
-    final konfirmasi = TextEditingController();
     final service = context.read<UmkmDataService>();
-    final simpan = await showDialog<bool>(
+    final pesan = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ubah Kata Sandi'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: lama,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Kata sandi lama'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: baru,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Kata sandi baru (min. 8 karakter)',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: konfirmasi,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Konfirmasi kata sandi baru',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
+      builder: (_) => _UbahPasswordDialog(service: service),
     );
-    if (simpan != true) return;
-    try {
-      final pesan = await service.ubahPassword(
-        passwordLama: lama.text,
-        passwordBaru: baru.text,
-        konfirmasi: konfirmasi.text,
-      );
-      if (mounted) pesanSukses(context, pesan);
-    } on ApiException catch (e) {
-      if (mounted) pesanGagal(context, e.pesan);
+    if (pesan != null && mounted) {
+      pesanSukses(context, pesan);
     }
   }
 
@@ -1233,90 +828,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   }
 
   // ================================================= UI COMPONENTS
-
-  /// TextField bergaya modern DJajan untuk dipakai di bottom sheet form.
-  static Widget _sheetField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required String helper,
-    required IconData icon,
-    TextInputType inputType = TextInputType.text,
-    TextCapitalization capitalization = TextCapitalization.none,
-    String? errorText,
-    ValueChanged<String>? onChanged,
-  }) {
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(15),
-      borderSide: const BorderSide(color: OC.line),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: OC.ink,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: inputType,
-          textCapitalization: capitalization,
-          onChanged: onChanged,
-          style: const TextStyle(
-            color: OC.ink,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: OC.faint, fontSize: 13),
-            prefixIcon: Icon(icon, size: 19, color: OC.muted),
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 48,
-              minHeight: 48,
-            ),
-            errorText: errorText,
-            errorStyle: const TextStyle(fontSize: 11.5),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 15,
-            ),
-            border: border,
-            enabledBorder: border,
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: OC.primary, width: 1.4),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: OC.danger),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: const BorderSide(color: OC.danger, width: 1.4),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          helper,
-          style: TextStyle(
-            color: errorText == null ? OC.muted : OC.danger,
-            fontSize: 11.5,
-            height: 1.35,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _sectionCardHeader({
     required IconData icon,
@@ -2239,7 +1750,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Text('💡', style: TextStyle(fontSize: 14)),
+                    Text('ðŸ’¡', style: TextStyle(fontSize: 14)),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -2374,6 +1885,740 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         ],
       ),
       bottomNavigationBar: _buildSaveBar(compact: false),
+    );
+  }
+}
+
+/// TextField bergaya modern DJajan untuk dipakai di bottom sheet form.
+Widget _sheetField({
+  required TextEditingController controller,
+  required String label,
+  required String hint,
+  required String helper,
+  required IconData icon,
+  TextInputType inputType = TextInputType.text,
+  TextCapitalization capitalization = TextCapitalization.none,
+  List<TextInputFormatter>? inputFormatters,
+  String? errorText,
+  ValueChanged<String>? onChanged,
+}) {
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(15),
+    borderSide: const BorderSide(color: OC.line),
+  );
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          color: OC.ink,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        controller: controller,
+        keyboardType: inputType,
+        textCapitalization: capitalization,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
+        style: const TextStyle(
+          color: OC.ink,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: OC.faint, fontSize: 13),
+          prefixIcon: Icon(icon, size: 19, color: OC.muted),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 48,
+            minHeight: 48,
+          ),
+          errorText: errorText,
+          errorStyle: const TextStyle(fontSize: 11.5),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 15,
+          ),
+          border: border,
+          enabledBorder: border,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: OC.primary, width: 1.4),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: OC.danger),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: OC.danger, width: 1.4),
+          ),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        helper,
+        style: TextStyle(
+          color: errorText == null ? OC.muted : OC.danger,
+          fontSize: 11.5,
+          height: 1.35,
+        ),
+      ),
+    ],
+  );
+}
+
+class _EditIdentitasSheet extends StatefulWidget {
+  final String initialNama;
+  final String initialSpesialis;
+  final String initialTelp;
+  final Future<void> Function() onChangePhoto;
+
+  const _EditIdentitasSheet({
+    required this.initialNama,
+    required this.initialSpesialis,
+    required this.initialTelp,
+    required this.onChangePhoto,
+  });
+
+  @override
+  State<_EditIdentitasSheet> createState() => _EditIdentitasSheetState();
+}
+
+class _EditIdentitasSheetState extends State<_EditIdentitasSheet> {
+  static const List<String> _defaultCategories = [
+    'Makanan',
+    'Minuman',
+    'Kue',
+    'Cemilan',
+  ];
+
+  late final TextEditingController _namaCtrl;
+  late final TextEditingController _telpCtrl;
+  late final List<String> _categoryOptions;
+  late final Set<String> _selectedCategories;
+  late final String _initialSpesialisNormalized;
+
+  bool _namaDisentuh = false;
+  bool _teleponDisentuh = false;
+  bool _loadingCategories = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _namaCtrl = TextEditingController(text: widget.initialNama);
+    _telpCtrl = TextEditingController(text: widget.initialTelp);
+    _categoryOptions = List<String>.from(_defaultCategories);
+    _selectedCategories = _parseSpesialis(widget.initialSpesialis, _categoryOptions);
+    _initialSpesialisNormalized = _orderedSelection(_selectedCategories, _categoryOptions).join(', ');
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categoryService = CategoryService();
+      await categoryService.load();
+      final fetched = categoryService.categories;
+      final names = fetched
+          .map((c) => c.name.trim())
+          .where((name) => name.isNotEmpty && name.toLowerCase() != 'sembako')
+          .toList();
+      if (!mounted) return;
+      if (names.isNotEmpty) {
+        setState(() {
+          _categoryOptions
+            ..clear()
+            ..addAll(names);
+          final parsed = _parseSpesialis(widget.initialSpesialis, _categoryOptions);
+          if (_selectedCategories.isEmpty && parsed.isNotEmpty) {
+            _selectedCategories.addAll(parsed);
+          }
+          _loadingCategories = false;
+        });
+      } else {
+        setState(() => _loadingCategories = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadingCategories = false);
+      }
+    }
+  }
+
+  Set<String> _parseSpesialis(String raw, List<String> options) {
+    final result = <String>{};
+    for (final token in raw.split(RegExp(r'[,&/]+'))) {
+      var trimmed = token.trim();
+      if (trimmed.isEmpty) continue;
+      if (trimmed.toLowerCase() == 'camilan') {
+        trimmed = 'Cemilan';
+      }
+      for (final opt in options) {
+        if (opt.toLowerCase() == trimmed.toLowerCase()) {
+          result.add(opt);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  List<String> _orderedSelection(Set<String> selected, List<String> options) {
+    return options.where(selected.contains).toList();
+  }
+
+  @override
+  void dispose() {
+    _namaCtrl.dispose();
+    _telpCtrl.dispose();
+    super.dispose();
+  }
+
+  String? _errorNama() => _namaDisentuh && _namaCtrl.text.trim().isEmpty
+      ? 'Nama usaha wajib diisi.'
+      : null;
+
+  bool _nomorTeleponValid() {
+    final nomor = _telpCtrl.text.trim();
+    if (nomor.isEmpty) return true;
+    final clean = nomor.replaceAll(RegExp(r'[\s\-]'), '');
+    return RegExp(r'^(\+?62|0)8[1-9][0-9]{6,12}$').hasMatch(clean);
+  }
+
+  String? _errorTelepon() {
+    final nomor = _telpCtrl.text.trim();
+    if (!_teleponDisentuh || nomor.isEmpty) return null;
+    return _nomorTeleponValid()
+        ? null
+        : 'Masukkan nomor WhatsApp valid (contoh: 081234567890).';
+  }
+
+  String get _joinedSpesialis =>
+      _orderedSelection(_selectedCategories, _categoryOptions).join(', ');
+
+  void _toggleCategory(String category, bool? checked) {
+    setState(() {
+      if (checked == true) {
+        _selectedCategories.add(category);
+      } else {
+        _selectedCategories.remove(category);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<UmkmDataService>();
+    final namaValid = _namaCtrl.text.trim().isNotEmpty;
+    final spesialisValid = _selectedCategories.isNotEmpty;
+    final teleponValid = _nomorTeleponValid();
+    final spesialisChanged =
+        _joinedSpesialis != widget.initialSpesialis.trim() &&
+        (_joinedSpesialis != _initialSpesialisNormalized ||
+            widget.initialSpesialis.trim().isEmpty);
+    final berubah =
+        _namaCtrl.text.trim() != widget.initialNama ||
+        spesialisChanged ||
+        _telpCtrl.text.trim() != widget.initialTelp;
+
+    final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final maxAllowedHeight = screenHeight - viewInsetsBottom;
+    final targetHeight = (screenHeight * 0.88).clamp(
+      120.0,
+      maxAllowedHeight > 120.0 ? maxAllowedHeight : 120.0,
+    );
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: viewInsetsBottom),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: targetHeight,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: OC.bg,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              children: [
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 11, bottom: 7),
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD4DAD5),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 14, 15),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE7F2E9), Colors.white],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: OC.line),
+                        ),
+                        child: const Icon(
+                          Icons.storefront_rounded,
+                          color: OC.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Informasi usaha',
+                              style: TextStyle(
+                                color: OC.ink,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              'Atur identitas yang dilihat pelanggan',
+                              style: TextStyle(color: OC.muted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: OC.muted,
+                        ),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: OC.line),
+                Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Column(
+                            children: [
+                              Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.08),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: GambarJaringan(
+                                      url: service.profile.fotoProfilUrl,
+                                      width: 76,
+                                      height: 76,
+                                      radius: 38,
+                                      ikonKosong: Icons.storefront_rounded,
+                                      cacheBuster: DateTime.now().millisecondsSinceEpoch.toString(),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Material(
+                                      color: AppColors.hijauTua,
+                                      shape: const CircleBorder(),
+                                      child: InkWell(
+                                        onTap: widget.onChangePhoto,
+                                        customBorder: const CircleBorder(),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white, width: 2),
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 14,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton.icon(
+                                onPressed: widget.onChangePhoto,
+                                icon: const Icon(Icons.photo_camera_outlined, size: 16, color: OC.primary),
+                                label: const Text(
+                                  'Ubah Foto Profil Usaha',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: OC.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'DETAIL PROFIL',
+                          style: TextStyle(
+                            color: OC.muted,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.9,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _sheetField(
+                          controller: _namaCtrl,
+                          label: 'Nama usaha',
+                          hint: 'Contoh: Dapur Ibu Sari',
+                          helper: 'Gunakan nama yang mudah dikenali.',
+                          icon: Icons.storefront_outlined,
+                          capitalization: TextCapitalization.words,
+                          errorText: _errorNama(),
+                          onChanged: (_) => setState(() => _namaDisentuh = true),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Spesialisasi',
+                          style: TextStyle(
+                            color: OC.ink,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: spesialisValid ? OC.line : OC.danger,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              if (_loadingCategories)
+                                const Padding(
+                                  padding: EdgeInsets.all(14),
+                                  child: LinearProgressIndicator(minHeight: 2),
+                                ),
+                              for (var i = 0; i < _categoryOptions.length; i++) ...[
+                                CheckboxListTile(
+                                  value: _selectedCategories.contains(_categoryOptions[i]),
+                                  onChanged: (v) => _toggleCategory(_categoryOptions[i], v),
+                                  title: Text(
+                                    _categoryOptions[i],
+                                    style: const TextStyle(
+                                      color: OC.ink,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  activeColor: OC.primary,
+                                  controlAffinity: ListTileControlAffinity.leading,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                                  dense: true,
+                                ),
+                                if (i < _categoryOptions.length - 1)
+                                  const Divider(height: 1, color: OC.line),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          spesialisValid
+                              ? 'Pilih satu atau lebih kategori produk yang Anda jual.'
+                              : 'Pilih minimal 1 spesialisasi kategori produk.',
+                          style: TextStyle(
+                            color: spesialisValid ? OC.muted : OC.danger,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _sheetField(
+                          controller: _telpCtrl,
+                          label: 'WhatsApp usaha',
+                          hint: '08xxxxxxxxxx',
+                          helper: 'Hanya angka (10â€“15 digit, diawali 08). Boleh dikosongkan.',
+                          icon: Icons.phone_iphone_outlined,
+                          inputType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s]')),
+                            LengthLimitingTextInputFormatter(16),
+                          ],
+                          errorText: _errorTelepon(),
+                          onChanged: (_) => setState(() => _teleponDisentuh = true),
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          padding: const EdgeInsets.all(13),
+                          decoration: BoxDecoration(
+                            color: OC.mintSoft,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: OC.mint.withValues(alpha: 0.8),
+                            ),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.info_outline_rounded, size: 18, color: OC.primary),
+                              SizedBox(width: 9),
+                              Expanded(
+                                child: Text(
+                                  'Alamat dan titik lokasi usaha dikelola melalui pengaturan lokasi dapur.',
+                                  style: TextStyle(color: OC.ink, fontSize: 11.5, height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: OC.line)),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: FilledButton.icon(
+                        onPressed: berubah && namaValid && spesialisValid && teleponValid
+                            ? () {
+                                Navigator.pop(context, (
+                                  namaUsaha: _namaCtrl.text.trim(),
+                                  spesialisasi: _joinedSpesialis,
+                                  noTelpUsaha: _telpCtrl.text.trim(),
+                                ));
+                              }
+                            : null,
+                        icon: const Icon(Icons.check_rounded),
+                        label: const Text(
+                          'Simpan perubahan',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: OC.primary,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: OC.primary.withValues(alpha: 0.35),
+                          disabledForegroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UbahPasswordDialog extends StatefulWidget {
+  final UmkmDataService service;
+
+  const _UbahPasswordDialog({required this.service});
+
+  @override
+  State<_UbahPasswordDialog> createState() => _UbahPasswordDialogState();
+}
+
+class _UbahPasswordDialogState extends State<_UbahPasswordDialog> {
+  final _lamaCtrl = TextEditingController();
+  final _baruCtrl = TextEditingController();
+  final _konfirmasiCtrl = TextEditingController();
+  bool _obscureLama = true;
+  bool _obscureBaru = true;
+  bool _obscureKonfirmasi = true;
+  bool _submitting = false;
+  String? _errorMessage;
+
+  bool get _hasExistingPassword => widget.service.profile.hasPassword;
+
+  @override
+  void dispose() {
+    _lamaCtrl.dispose();
+    _baruCtrl.dispose();
+    _konfirmasiCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final lama = _lamaCtrl.text;
+    final baru = _baruCtrl.text;
+    final konfirmasi = _konfirmasiCtrl.text;
+
+    if (_hasExistingPassword && lama.isEmpty) {
+      setState(() => _errorMessage = 'Kata sandi lama wajib diisi.');
+      return;
+    }
+    if (baru.length < 8) {
+      setState(() => _errorMessage = 'Kata sandi baru minimal 8 karakter.');
+      return;
+    }
+    if (baru != konfirmasi) {
+      setState(() => _errorMessage = 'Konfirmasi kata sandi baru tidak cocok.');
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final pesan = await widget.service.ubahPassword(
+        passwordLama: _hasExistingPassword ? lama : null,
+        passwordBaru: baru,
+        konfirmasi: konfirmasi,
+      );
+      if (mounted) {
+        Navigator.pop(context, pesan);
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _errorMessage = e.pesan;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _errorMessage = 'Gagal memperbarui kata sandi. Coba lagi.';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_hasExistingPassword ? 'Ubah Kata Sandi' : 'Atur Kata Sandi'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!_hasExistingPassword) ...[
+              const Text(
+                'Akun Anda terhubung dengan Google. Buat kata sandi baru agar dapat masuk memakai nomor/email usaha.',
+                style: TextStyle(fontSize: 12.5, color: OC.muted, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_hasExistingPassword) ...[
+              TextField(
+                controller: _lamaCtrl,
+                obscureText: _obscureLama,
+                decoration: InputDecoration(
+                  labelText: 'Kata sandi lama',
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscureLama ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                    onPressed: () => setState(() => _obscureLama = !_obscureLama),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            TextField(
+              controller: _baruCtrl,
+              obscureText: _obscureBaru,
+              decoration: InputDecoration(
+                labelText: 'Kata sandi baru (min. 8 karakter)',
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureBaru ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  onPressed: () => setState(() => _obscureBaru = !_obscureBaru),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _konfirmasiCtrl,
+              obscureText: _obscureKonfirmasi,
+              decoration: InputDecoration(
+                labelText: 'Konfirmasi kata sandi baru',
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureKonfirmasi ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  onPressed: () => setState(() => _obscureKonfirmasi = !_obscureKonfirmasi),
+                ),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: OC.danger, fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: _submitting ? null : _submit,
+          child: _submitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('Simpan'),
+        ),
+      ],
     );
   }
 }

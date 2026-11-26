@@ -820,6 +820,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           return Icons.local_drink;
         case 'jajanan':
         case 'camilan':
+        case 'cemilan':
           return Icons.bakery_dining;
         case 'kue':
           return Icons.cake_rounded;

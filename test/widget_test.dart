@@ -209,7 +209,7 @@ void main() {
   });
 
   testWidgets(
-    'SnackBar Lihat action navigates safely after UmkmStorefrontScreen is popped',
+    'UmkmStorefrontScreen adds item silently without SnackBar and shows FloatingCartButton',
     (WidgetTester tester) async {
       CartService().clear();
       final umkm = SampleCatalog.umkms.first;
@@ -218,27 +218,13 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => AuthService(),
           child: MaterialApp(
-            home: Builder(
-              builder: (context) => Scaffold(
-                body: Center(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => UmkmStorefrontScreen(umkm: umkm),
-                      ),
-                    ),
-                    child: const Text('Buka Toko'),
-                  ),
-                ),
-              ),
-            ),
+            home: UmkmStorefrontScreen(umkm: umkm),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Buka Toko'));
-      await tester.pumpAndSettle();
+      expect(find.text('1 item di keranjang'), findsNothing);
 
       final addButton = find.byIcon(Icons.add).first;
       await tester.ensureVisible(addButton);
@@ -246,14 +232,10 @@ void main() {
       await tester.tap(addButton);
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Keluar dari UmkmStorefrontScreen saat SnackBar "Lihat" masih tampil
-      await tester.tap(find.byIcon(Icons.arrow_back));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text('Buka Toko'), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.text('1 item di keranjang'), findsOneWidget);
 
-      // Tekan "Lihat" pada SnackBar harus tetap aman membuka CartScreen
-      await tester.tap(find.text('Lihat'));
+      await tester.tap(find.text('1 item di keranjang'));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);

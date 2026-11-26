@@ -15,6 +15,7 @@ class UmkmProfile {
   String? fotoProfilUrl;
   String statusVerifikasi;
   bool tokoAktif;
+  bool hasPassword;
 
   // Kebijakan pembayaran
   String bankKode;
@@ -47,6 +48,7 @@ class UmkmProfile {
     required this.fotoProfilUrl,
     required this.statusVerifikasi,
     required this.tokoAktif,
+    this.hasPassword = true,
     required this.bankKode,
     required this.bankNama,
     required this.noRekening,
@@ -83,6 +85,7 @@ class UmkmProfile {
             : 'file_gambar/profil/${_strOrNull(j['foto_profil'])}'),
     statusVerifikasi: _str(j['status_verifikasi'], 'terverifikasi'),
     tokoAktif: _bool(j['toko_aktif']),
+    hasPassword: j['has_password'] == null ? true : _bool(j['has_password']),
     bankKode: _str(j['bank_kode'], 'BRI'),
     bankNama: _str(j['bank_nama']),
     noRekening: _str(j['no_rekening']),
