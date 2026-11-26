@@ -20,8 +20,13 @@ import '../product/product_detail_screen.dart';
 /// produknya dengan filter Ready / Pre-Order.
 class UmkmStorefrontScreen extends StatefulWidget {
   final Umkm umkm;
+  final String? highlightedProductId;
 
-  const UmkmStorefrontScreen({super.key, required this.umkm});
+  const UmkmStorefrontScreen({
+    super.key,
+    required this.umkm,
+    this.highlightedProductId,
+  });
 
   @override
   State<UmkmStorefrontScreen> createState() => _UmkmStorefrontScreenState();
@@ -116,7 +121,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
 
   List<Product> get _filtered {
     final q = _searchController.text.trim().toLowerCase();
-    return _storeProducts.where((p) {
+    final list = _storeProducts.where((p) {
       final typeMatch =
           _orderTypeFilter == 'Semua' || p.orderType == _orderTypeFilter;
       final searchMatch = q.isEmpty ||
@@ -124,6 +129,15 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
           p.variant.toLowerCase().contains(q);
       return typeMatch && searchMatch;
     }).toList();
+    final highlightedId = widget.highlightedProductId;
+    if (highlightedId != null && highlightedId.isNotEmpty) {
+      final idx = list.indexWhere((p) => p.id == highlightedId);
+      if (idx > 0) {
+        final chosen = list.removeAt(idx);
+        list.insert(0, chosen);
+      }
+    }
+    return list;
   }
 
   @override
@@ -909,7 +923,9 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
       ),
       itemBuilder: (context, index) {
         final product = items[index];
-        return ProductCard(
+        final isHighlighted = widget.highlightedProductId != null &&
+            product.id == widget.highlightedProductId;
+        final card = ProductCard(
           product: product,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -917,6 +933,14 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
             ),
           ),
           onAddToCart: () => _addToCart(product),
+        );
+        if (!isHighlighted) return card;
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primaryGreen, width: 2),
+          ),
+          child: card,
         );
       },
     );

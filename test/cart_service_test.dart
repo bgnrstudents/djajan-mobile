@@ -1,3 +1,4 @@
+import 'package:djajan_mobile/models/order.dart';
 import 'package:djajan_mobile/models/product.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/widgets/floating_cart_button.dart';
@@ -124,6 +125,70 @@ void main() {
     cart.updateQuantity('101', 0);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('floating-cart-button')), findsNothing);
+  });
+
+  test('groupedByStoreAndMode splits Ready Stock and Pre-Order per UMKM and clearGroup clears only target group', () {
+    cart.addCartLine(
+      const CartLine(
+        productId: '1',
+        productName: 'Es Teh',
+        variant: 'Manis',
+        unit: 'gelas',
+        imageUrl: '',
+        quantity: 2,
+        price: 5000,
+        type: OrderType.instant,
+        umkmId: 'u1',
+        umkmName: 'Dapur Bu Minten',
+        umkmType: 'Minuman',
+        pickupLocation: 'Kreyongan',
+      ),
+    );
+    cart.addCartLine(
+      const CartLine(
+        productId: '2',
+        productName: 'Nasi Kotak',
+        variant: 'Komplit',
+        unit: 'kotak',
+        imageUrl: '',
+        quantity: 10,
+        price: 20000,
+        type: OrderType.preOrder,
+        umkmId: 'u1',
+        umkmName: 'Dapur Bu Minten',
+        umkmType: 'Katering',
+        pickupLocation: 'Kreyongan',
+      ),
+    );
+    cart.addCartLine(
+      const CartLine(
+        productId: '3',
+        productName: 'Kue Basah',
+        variant: 'Campur',
+        unit: 'pcs',
+        imageUrl: '',
+        quantity: 3,
+        price: 3000,
+        type: OrderType.instant,
+        umkmId: 'u2',
+        umkmName: 'Warung Mba Rina',
+        umkmType: 'Jajanan',
+        pickupLocation: 'Kreyongan',
+      ),
+    );
+
+    final groups = cart.groupedByStoreAndMode;
+    expect(groups.length, 3);
+    expect(groups[0].key, 'u1_instant');
+    expect(groups[1].key, 'u1_preOrder');
+    expect(groups[2].key, 'u2_instant');
+
+    cart.clearGroup('u1', OrderType.instant);
+    final remaining = cart.groupedByStoreAndMode;
+    expect(remaining.length, 2);
+    expect(remaining.any((g) => g.key == 'u1_instant'), isFalse);
+    expect(remaining.any((g) => g.key == 'u1_preOrder'), isTrue);
+    expect(remaining.any((g) => g.key == 'u2_instant'), isTrue);
   });
 }
 

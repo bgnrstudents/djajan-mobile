@@ -438,7 +438,7 @@ class _TabBeranda extends StatelessWidget {
             ),
           ],
 
-          // 1.5 STATUS KOMISI PLATFORM (AUTO-POTONG 3%)
+          // 1.5 INFO BIAYA LAYANAN PLATFORM (DITANGGUNG PEMBELI)
           _BannerStatusKomisi(
             komisiPlatform:
                 periodeBulanan ? r.komisiPeriode : r.komisiSemuaWaktu,
@@ -2242,8 +2242,8 @@ class _BannerStatusKomisi extends StatelessWidget {
           Expanded(
             child: Text(
               hasDebt
-                  ? 'Titipan komisi COD ${rupiah(sisaKewajibanCod)} akan otomatis terpotong saat pesanan online masuk.'
-                  : 'Komisi platform (3%) ${rupiah(komisiPlatform)} sudah terpotong otomatis dari saldo digital.',
+                  ? 'Sisa kewajiban COD historis ${rupiah(sisaKewajibanCod)}.'
+                  : 'Biaya layanan aplikasi (Rp 1.500/checkout) ditanggung pembeli. Saldo & hasil penjualan diterima 100% utuh oleh mitra.',
               style: TextStyle(
                 fontSize: 11,
                 height: 1.35,

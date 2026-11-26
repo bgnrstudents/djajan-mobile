@@ -8,8 +8,8 @@ import '../../../services/receipt_pdf_service.dart';
 import '../../../widgets/order_delivery_map_card.dart';
 import '../product/product_review_screen.dart';
 import 'order_payment_screen.dart';
-import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
+import 'qris_payment_screen.dart';
 
 /// Tahap 3 alur pesanan: Status Pesanan.
 ///
@@ -701,9 +701,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MidtransPaymentScreen(
+                  builder: (_) => QrisPaymentScreen(
                     orderId: o.id,
-                    paymentUrl: o.paymentUrl,
+                    qrCodeUrl: o.qrCodeUrl ?? o.paymentUrl,
+                    qrString: o.qrString ?? o.snapToken,
+                    totalAmount: o.nominalDp > 0 ? o.nominalDp.toDouble() : o.total,
+                    expiryTime: o.expiryTime ?? o.paymentDeadline,
                   ),
                 ),
               );

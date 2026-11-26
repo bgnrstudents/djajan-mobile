@@ -672,5 +672,39 @@ void main() {
       expect(orderRefundSukses.isRefundPending, isFalse);
       expect(orderRefundSukses.isRefundSuccess, isTrue);
     });
+
+    test('Order parses QRIS Core API fields and flat customer fee from JSON', () {
+      final order = Order.fromJson({
+        'id_pesanan': 'PO-QRIS-01',
+        'id_checkout': 'CHK-QRIS-01',
+        'nama_pembeli': 'Riki',
+        'no_telp': '081234567890',
+        'alamat_tujuan': 'Jl. Kreyongan 1',
+        'metode_pembayaran': 'midtrans',
+        'status_pembayaran': 'pending',
+        'biaya_layanan': 1500,
+        'qr_code_url': 'https://api.sandbox.midtrans.com/v2/qris/tx-123/qr-code',
+        'qr_string': '000201010212',
+        'expiry_time': '2026-12-01 12:00:00',
+        'items': [
+          {
+            'id_produk': '1',
+            'nama_produk': 'Ayam Geprek',
+            'satuan': 'porsi',
+            'jumlah': 2,
+            'harga_satuan': 15000,
+          }
+        ],
+      });
+
+      expect(order.serviceFee, 1500.0);
+      expect(order.total, 31500.0);
+      expect(
+        order.qrCodeUrl,
+        'https://api.sandbox.midtrans.com/v2/qris/tx-123/qr-code',
+      );
+      expect(order.qrString, '000201010212');
+      expect(order.expiryTime, DateTime(2026, 12, 1, 12, 0, 0));
+    });
   });
 }

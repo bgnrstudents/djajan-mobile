@@ -1,6 +1,9 @@
+import 'package:djajan_mobile/models/order.dart';
 import 'package:djajan_mobile/screens/customer/cart/cart.dart';
 import 'package:djajan_mobile/screens/customer/home/customer_home_screen.dart';
+import 'package:djajan_mobile/screens/customer/order/qris_payment_screen.dart';
 import 'package:djajan_mobile/services/auth_service.dart';
+import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/widgets/app_bottom_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,7 +77,7 @@ void main() {
   );
 
   testWidgets(
-    'Tapping product card opens ProductDetailScreen and displays full details',
+    'Tapping product card on Home opens UmkmStorefrontScreen and then ProductDetailScreen',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         ChangeNotifierProvider(
@@ -83,7 +86,6 @@ void main() {
         ),
       );
 
-      // Find and scroll to the product card 'Nasi Kotak Ayam Geprek'
       final productFinder = find.text('Nasi Kotak Ayam Geprek');
       await tester.scrollUntilVisible(
         productFinder,
@@ -95,13 +97,105 @@ void main() {
       await tester.tap(productFinder);
       await tester.pumpAndSettle();
 
-      // Verify ProductDetailScreen is shown
+      // Storefront UMKM terbuka lebih dulu
+      expect(find.text('Jelajahi menu'), findsOneWidget);
+
+      // Tap produk di dalam toko -> buka ProductDetailScreen
+      final innerProductFinder = find.text('Nasi Kotak Ayam Geprek');
+      await tester.ensureVisible(innerProductFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(innerProductFinder);
+      await tester.pumpAndSettle();
+
       expect(find.text('Deskripsi Produk'), findsOneWidget);
       expect(find.text('Informasi UMKM & Dapur'), findsOneWidget);
       expect(find.text('+ Keranjang'), findsOneWidget);
       expect(find.text('Pesan Sekarang'), findsOneWidget);
     },
   );
+
+  testWidgets('CartScreen separates store and order mode groups with individual checkout', (
+    WidgetTester tester,
+  ) async {
+    final cart = CartService()..clear();
+    addTearDown(cart.clear);
+
+    cart.addCartLine(
+      const CartLine(
+        productId: '1',
+        productName: 'Nasi Goreng Desa',
+        variant: 'Pedas',
+        unit: 'porsi',
+        imageUrl: '',
+        quantity: 1,
+        price: 15000,
+        type: OrderType.instant,
+        umkmId: 'u1',
+        umkmName: 'Warung Bu Minten',
+        umkmType: 'Makanan',
+        pickupLocation: 'Desa Kreyongan',
+      ),
+    );
+    cart.addCartLine(
+      const CartLine(
+        productId: '2',
+        productName: 'Tumpeng Mini',
+        variant: 'Original',
+        unit: 'paket',
+        imageUrl: '',
+        quantity: 10,
+        price: 25000,
+        type: OrderType.preOrder,
+        umkmId: 'u1',
+        umkmName: 'Warung Bu Minten',
+        umkmType: 'Katering',
+        pickupLocation: 'Desa Kreyongan',
+        minOrderPo: 10,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => AuthService(),
+        child: const MaterialApp(home: CartScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 Keranjang Toko & Layanan'), findsOneWidget);
+    expect(find.text('Checkout Pesanan Ini'), findsOneWidget);
+    expect(find.text('Checkout PO Ini'), findsOneWidget);
+  });
+
+  testWidgets('QrisPaymentScreen displays actions and close confirmation dialog', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: QrisPaymentScreen(
+          orderId: 'CHK-QRIS-UI-1',
+          qrCodeUrl: 'https://api.sandbox.midtrans.com/v2/qris/tx-123/qr-code',
+          qrString: '000201010212',
+          totalAmount: 26500,
+          expiryTime: DateTime.now().add(const Duration(minutes: 15)),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Pembayaran QRIS'), findsOneWidget);
+    expect(find.text('Download QRIS'), findsOneWidget);
+    expect(find.text('Salin Link QRIS'), findsOneWidget);
+    expect(find.text('Cek Status Pembayaran'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('qris-close-button')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Keluar dari Pembayaran?'), findsOneWidget);
+    await tester.tap(find.text('Lanjutkan Bayar'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Keluar dari Pembayaran?'), findsNothing);
+  });
 }
 
 class _BottomNavigationHarness extends StatefulWidget {

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'midtrans_payment_screen.dart';
 import '../../../models/order.dart';
-import 'order_payment_screen.dart';
-import '../../../services/order_service.dart';
+import '../../../services/cart_service.dart';
 import '../../../services/customer_settings_service.dart';
+import '../../../services/order_service.dart';
 import 'address_picker_sheet.dart';
+import 'order_payment_screen.dart';
 import 'order_widgets.dart';
+import 'qris_payment_screen.dart';
 
 /// Tahap 1 alur pesanan: Checkout.
 ///
@@ -215,10 +216,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   double get _subtotal => _vendors.fold(0.0, (s, v) => s + v.subtotal);
   double get _shipping => _vendors.fold(0.0, (s, v) => s + v.fee);
-  double get _serviceFee => _vendors.fold(
-      0.0,
-      (s, v) => s + (v.subtotal >= 10000 ? (v.subtotal * 0.03).round() : 0),
-    );
+  double get _serviceFee => _vendors.isNotEmpty ? 1500.0 : 0.0;
   double get _total => _subtotal + _shipping + _serviceFee;
   int get _qty => widget.cartLines.fold(0, (s, l) => s + l.quantity);
 
@@ -367,13 +365,22 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         },
       );
       if (!mounted) return;
+      for (final v in _vendors) {
+        CartService().clearGroup(
+          v.umkmId,
+          v.isPreOrder ? OrderType.preOrder : OrderType.instant,
+        );
+      }
       // Selalu 3 halaman: Checkout -> Proses Checkout -> Status Pesanan.
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => _method == PaymentMethod.midtrans
-              ? MidtransPaymentScreen(
+              ? QrisPaymentScreen(
                   orderId: order.id,
-                  paymentUrl: order.paymentUrl,
+                  qrCodeUrl: order.qrCodeUrl ?? order.paymentUrl,
+                  qrString: order.qrString ?? order.snapToken,
+                  totalAmount: order.total,
+                  expiryTime: order.expiryTime ?? order.paymentDeadline,
                 )
               : OrderPaymentScreen(orderId: order.id),
         ),
@@ -1017,9 +1024,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           const SizedBox(height: 8),
           _methodRow(
             method: PaymentMethod.midtrans,
-            icon: Icons.bolt_rounded,
-            title: 'Bayar Sekarang',
-            subtitle: 'QRIS, GoPay, ShopeePay, VA',
+            icon: Icons.qr_code_2_rounded,
+            title: 'Bayar via QRIS',
+            subtitle: 'QRIS — Scan / Download QR di aplikasi',
           ),
         ],
       ),
@@ -1141,9 +1148,14 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             value: _shipping == 0 ? 'Gratis' : rupiah(_shipping),
           ),
           MoneyRow(
-            label: 'Biaya layanan (3%)',
-            value: _serviceFee == 0 ? 'Gratis (Subsidi Mikro)' : rupiah(_serviceFee),
-            color: _serviceFee == 0 ? OC.primary : OC.ink,
+            label: 'Biaya layanan aplikasi (Flat)',
+            value: rupiah(_serviceFee),
+            color: OC.ink,
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Flat Rp 1.500/checkout meski pesan banyak produk.',
+            style: TextStyle(fontSize: 11, color: OC.muted),
           ),
         ],
       ),

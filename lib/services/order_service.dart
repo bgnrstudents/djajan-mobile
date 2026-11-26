@@ -329,6 +329,7 @@ class OrderService extends ChangeNotifier {
         final option = options[entry.key]!;
         return {
           'id_umkm': int.tryParse(entry.key) ?? 0,
+          'mode_pesanan': vendor.isPreOrder ? 'pre_order' : 'ready',
           'metode_pengiriman': vendor.delivery == DeliveryMethod.courier
               ? 'kurir'
               : 'pickup',
@@ -355,21 +356,29 @@ class OrderService extends ChangeNotifier {
       throw const OrderException('Server tidak mengembalikan nomor pesanan.');
     }
 
+    final parsedExpiry = backendData['expiry_time'] != null
+        ? DateTime.tryParse(backendData['expiry_time'].toString())
+        : null;
+    final paymentDeadline =
+        isCod ? null : (parsedExpiry ?? now.add(const Duration(hours: 2)));
+
     // Validasi status pesanan yang dibuat
     final initialStatus = _validateOrderStatus(
       current: OrderStatus.waitingPayment,
-      paymentDeadline: isCod ? null : now.add(const Duration(hours: 2)),
+      paymentDeadline: paymentDeadline,
       backendPaymentStatus: backendData['payment_status']?.toString(),
       backendOrderStatus: null,
     );
 
-    final calculatedServiceFee = vendors.fold<double>(
-      0.0,
-      (sum, v) =>
-          sum + (v.subtotal >= 10000 ? (v.subtotal * 0.03).roundToDouble() : 0.0),
-    );
+    final calculatedServiceFee = vendors.isNotEmpty ? 1500.0 : 0.0;
     final serviceFee =
-        (backendData['biaya_layanan'] as num?)?.toDouble() ?? calculatedServiceFee;
+        (backendData['biaya_layanan'] as num?)?.toDouble() ??
+        calculatedServiceFee;
+
+    final qrCodeUrl =
+        (backendData['qr_code_url'] ?? backendData['payment_url'])?.toString();
+    final qrString =
+        (backendData['qr_string'] ?? backendData['snap_token'])?.toString();
 
     final order = Order(
       id: backendOrderId,
@@ -383,14 +392,19 @@ class OrderService extends ChangeNotifier {
       discount: 0,
       status: initialStatus,
       account: accountFor(vendors.first.umkmId),
-      paymentDeadline: isCod ? null : now.add(const Duration(hours: 2)),
-      snapToken: backendData['snap_token']?.toString(),
-      paymentUrl: backendData['payment_url']?.toString(),
+      paymentDeadline: paymentDeadline,
+      snapToken: qrString,
+      paymentUrl: qrCodeUrl,
+      qrCodeUrl: qrCodeUrl,
+      qrString: qrString,
+      expiryTime: parsedExpiry,
     );
 
     // Log jika payment expired saat creation
     if (!isCod && now.isAfter(order.paymentDeadline!)) {
-      debugPrint('Warning: Order ${order.id} created with expired payment deadline');
+      debugPrint(
+        'Warning: Order ${order.id} created with expired payment deadline',
+      );
     }
 
     _orders.add(order);

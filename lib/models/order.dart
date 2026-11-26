@@ -378,6 +378,9 @@ class Order {
   final DateTime? paymentDeadline;
   final String? snapToken;
   final String? paymentUrl;
+  final String? qrCodeUrl;
+  final String? qrString;
+  final DateTime? expiryTime;
   final Uint8List? proofBytes;
   final String? proofName;
   final DateTime? proofUploadedAt;
@@ -408,6 +411,9 @@ class Order {
     this.paymentDeadline,
     this.snapToken,
     this.paymentUrl,
+    this.qrCodeUrl,
+    this.qrString,
+    this.expiryTime,
     this.proofBytes,
     this.proofName,
     this.proofUploadedAt,
@@ -543,9 +549,12 @@ class Order {
         number: '',
         holder: '',
       ),
-      paymentDeadline: _asDate(json['batas_konfirmasi']),
-      snapToken: _asString(json['snap_token']),
-      paymentUrl: _asString(json['payment_url']),
+      paymentDeadline: _asDate(json['batas_konfirmasi'] ?? json['expiry_time']),
+      snapToken: _asString(json['snap_token'] ?? json['qr_string']),
+      paymentUrl: _asString(json['payment_url'] ?? json['qr_code_url']),
+      qrCodeUrl: _asString(json['qr_code_url'] ?? json['payment_url']),
+      qrString: _asString(json['qr_string'] ?? json['snap_token']),
+      expiryTime: _asDate(json['expiry_time'] ?? json['batas_konfirmasi']),
       cancelReason: _asString(json['alasan_batal']),
       cancelledBy: _asString(json['dibatalkan_oleh']),
       cancelledAt: _asDate(json['dibatalkan_pada']),
@@ -588,6 +597,9 @@ class Order {
     DateTime? paymentDeadline,
     String? snapToken,
     String? paymentUrl,
+    String? qrCodeUrl,
+    String? qrString,
+    DateTime? expiryTime,
     Uint8List? proofBytes,
     String? proofName,
     DateTime? proofUploadedAt,
@@ -619,6 +631,9 @@ class Order {
       paymentDeadline: paymentDeadline ?? this.paymentDeadline,
       snapToken: snapToken ?? this.snapToken,
       paymentUrl: paymentUrl ?? this.paymentUrl,
+      qrCodeUrl: qrCodeUrl ?? this.qrCodeUrl,
+      qrString: qrString ?? this.qrString,
+      expiryTime: expiryTime ?? this.expiryTime,
       proofBytes: clearProof ? null : (proofBytes ?? this.proofBytes),
       proofName: clearProof ? null : (proofName ?? this.proofName),
       proofUploadedAt: clearProof

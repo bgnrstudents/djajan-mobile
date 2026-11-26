@@ -7,6 +7,34 @@ import '../../../models/product.dart';
 import '../models/order.dart';
 import '../models/umkm.dart';
 
+/// Grup keranjang per kombinasi (UMKM + Mode Pesanan: Ready Stock vs Pre-Order).
+class CartGroup {
+  final String umkmId;
+  final String umkmName;
+  final String umkmType;
+  final OrderType orderType;
+  final List<CartLine> items;
+
+  const CartGroup({
+    required this.umkmId,
+    required this.umkmName,
+    required this.umkmType,
+    required this.orderType,
+    required this.items,
+  });
+
+  String get key => '${umkmId}_${orderType.name}';
+  bool get isPreOrder => orderType == OrderType.preOrder;
+  double get subtotal => items.fold(0.0, (sum, item) => sum + item.subtotal);
+  int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
+  CartLine get firstLine => items.first;
+  double? get courierFee => firstLine.courierFee;
+  String get pickupLocation => firstLine.pickupLocation;
+  bool get codAvailable =>
+      items.every((item) => item.codAvailable) && !isPreOrder;
+  bool get pickupAvailable => items.every((item) => item.pickupAvailable);
+}
+
 class CartService extends ChangeNotifier {
   CartService._internal();
 
@@ -69,6 +97,25 @@ class CartService extends ChangeNotifier {
     return grouped;
   }
 
+  /// Mengelompokkan item keranjang berdasarkan kombinasi (UMKM + Mode Pesanan).
+  List<CartGroup> get groupedByStoreAndMode {
+    final Map<String, List<CartLine>> grouped = {};
+    for (final item in _items) {
+      final key = '${item.umkmId}_${item.type.name}';
+      grouped.putIfAbsent(key, () => []).add(item);
+    }
+    return grouped.values.map((lines) {
+      final first = lines.first;
+      return CartGroup(
+        umkmId: first.umkmId,
+        umkmName: first.umkmName,
+        umkmType: first.umkmType,
+        orderType: first.type,
+        items: List.unmodifiable(lines),
+      );
+    }).toList();
+  }
+
   /// Menambahkan produk dari halaman Beranda atau Detail Produk
   void addProduct(Product product, {int quantity = 1, OrderType? type}) {
     if (quantity <= 0) return;
@@ -123,8 +170,16 @@ class CartService extends ChangeNotifier {
   }
 
   /// Menghapus produk tertentu dari keranjang
-  void removeProduct(String productId) {
-    _items.removeWhere((l) => l.productId == productId);
+  void removeProduct(String productId, {OrderType? type}) {
+    _items.removeWhere(
+      (l) => l.productId == productId && (type == null || l.type == type),
+    );
+    _changed();
+  }
+
+  /// Menghapus seluruh item untuk grup (UMKM + Mode Pesanan) tertentu setelah checkout
+  void clearGroup(String umkmId, OrderType type) {
+    _items.removeWhere((l) => l.umkmId == umkmId && l.type == type);
     _changed();
   }
 

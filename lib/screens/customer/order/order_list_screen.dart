@@ -8,8 +8,8 @@ import '../../../services/order_service.dart';
 import '../../auth/login_screen.dart';
 import 'order_detail_screen.dart';
 import 'order_payment_screen.dart';
-import 'midtrans_payment_screen.dart';
 import 'order_widgets.dart';
+import 'qris_payment_screen.dart';
 import '../../../widgets/umkm_app_bar.dart';
 
 /// Tab "Pesanan" pada navigasi bawah: daftar pesanan + filter.
@@ -522,7 +522,15 @@ class _OrderListScreenState extends State<OrderListScreen> {
                           MaterialPageRoute(
                             builder: (_) =>
                                 o.paymentMethod == PaymentMethod.midtrans
-                                ? MidtransPaymentScreen(orderId: o.id)
+                                ? QrisPaymentScreen(
+                                    orderId: o.id,
+                                    qrCodeUrl: o.qrCodeUrl ?? o.paymentUrl,
+                                    qrString: o.qrString ?? o.snapToken,
+                                    totalAmount: o.nominalDp > 0
+                                        ? o.nominalDp.toDouble()
+                                        : o.total,
+                                    expiryTime: o.expiryTime ?? o.paymentDeadline,
+                                  )
                                 : OrderPaymentScreen(orderId: o.id),
                           ),
                         );
