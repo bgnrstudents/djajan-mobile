@@ -56,7 +56,6 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
   static final RegExp _polaAdaHuruf = RegExp(r'[A-Za-zÀ-ÖØ-öø-ÿ]');
 
   int? _idKategori;
-  late String _kategori;
 
   late ModePenjualan _mode;
   late String _waktuMasak;
@@ -219,7 +218,6 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
           idProduk: widget.produkToEdit!.idProduk,
           idKategori: _idKategori!,
           namaProduk: _namaCtrl.text.trim(),
-          kategori: _kategori,
           harga: harga,
           deskripsi: _deskripsiCtrl.text.trim(),
           modePenjualan: _mode,
@@ -233,7 +231,6 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
         pesan = await service.tambahProduk(
           idKategori: _idKategori!,
           namaProduk: _namaCtrl.text.trim(),
-          kategori: _kategori,
           harga: harga,
           deskripsi: _deskripsiCtrl.text.trim(),
           modePenjualan: _mode,
@@ -282,7 +279,6 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
       text: (p?.minOrderPO ?? 20).toString(),
     );
     _stokCtrl = TextEditingController(text: (p?.stok ?? 15).toString());
-    _kategori = p?.kategori ?? '';
     _idKategori = p?.idKategori;
     final categoryService = context.read<CategoryService>();
     if (categoryService.categories.isEmpty && !categoryService.loading) {
@@ -537,12 +533,8 @@ class _TambahProdukScreenState extends State<TambahProdukScreen> {
                                     .toList(),
                                 onChanged: (v) {
                                   if (v == null) return;
-                                  final category = categories.firstWhere(
-                                    (c) => c.id == v,
-                                  );
                                   setState(() {
                                     _idKategori = v;
-                                    _kategori = category.name;
                                   });
                                 },
                                 validator: (v) => v == null

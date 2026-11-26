@@ -1084,14 +1084,14 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
   String _labelStatusBayar(String kode) => switch (kode.toLowerCase().trim()) {
     'lunas' || 'paid' || 'settlement' || 'capture' => 'Sudah lunas',
     'dp_terbayar' => 'DP sudah masuk',
-    'bayar_di_tempat' || 'cod' => 'Bayar di tempat (COD)',
+    'bayar_di_tempat' || 'cod' || 'cod_pending' => 'Bayar di tempat (COD)',
     'failed' || 'gagal' || 'expire' || 'deny' || 'cancel' => 'Gagal / Dibatalkan',
     _ => 'Belum dibayar',
   };
 
   Color _warnaStatusBayar(String kode) => switch (kode.toLowerCase().trim()) {
     'lunas' || 'paid' || 'settlement' || 'capture' => AppColors.hijauTua,
-    'dp_terbayar' || 'bayar_di_tempat' || 'cod' => OC.amber,
+    'dp_terbayar' || 'bayar_di_tempat' || 'cod' || 'cod_pending' => OC.amber,
     _ => AppColors.danger,
   };
 
