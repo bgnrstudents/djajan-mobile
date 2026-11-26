@@ -91,8 +91,8 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
           child: SafeArea(
             top: false,
             child: Container(
-              height: 68,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              height: 70,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(28),
@@ -140,9 +140,10 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                               behavior: HitTestBehavior.opaque,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
+                                  vertical: 2,
                                 ),
                                 child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Stack(
@@ -216,7 +217,11 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                                             ? AppBottomNavigation.primaryColor
                                             : AppBottomNavigation.inactiveColor,
                                       ),
-                                      child: Text(item['label'] as String),
+                                      child: Text(
+                                        item['label'] as String,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
