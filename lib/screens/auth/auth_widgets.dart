@@ -1359,6 +1359,13 @@ class AuthValidators {
     return null;
   }
 
+  static String? emailWajib(String? value) {
+    final v = (value ?? '').trim();
+    if (v.isEmpty) return 'Email wajib diisi';
+    if (!_email.hasMatch(v)) return 'Format email belum benar';
+    return null;
+  }
+
   static String? kataSandi(String? value) {
     final v = value ?? '';
     if (v.isEmpty) return 'Kata sandi wajib diisi';

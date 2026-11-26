@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -697,7 +697,7 @@ class ReceiptPdfService {
     );
   }
 
-  /// Mengunduh struk PDF langsung ke perangkat (atau trigger download di web).
+  /// Mengunduh struk PDF dengan memilih folder / lokasi simpan di perangkat.
   static Future<String?> downloadReceipt(BuildContext context, ReceiptData data) async {
     final pdfBytes = await generateReceiptPdf(data);
     final safeId = data.orderId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
@@ -708,29 +708,32 @@ class ReceiptPdfService {
       return fileName;
     }
 
-    Directory? targetDir;
-    if (Platform.isAndroid) {
-      final publicDownloads = Directory('/storage/emulated/0/Download');
-      if (await publicDownloads.exists()) {
-        targetDir = publicDownloads;
-      } else {
-        targetDir = await getExternalStorageDirectory() ??
-            await getApplicationDocumentsDirectory();
-      }
-    } else {
-      targetDir = await getDownloadsDirectory() ??
-          await getApplicationDocumentsDirectory();
-    }
-
     try {
-      final outFile = File('${targetDir.path}${Platform.pathSeparator}$fileName');
-      await outFile.writeAsBytes(pdfBytes, flush: true);
+      final pickedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Simpan Struk PDF',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        bytes: pdfBytes,
+      );
+
+      if (pickedPath == null) {
+        return null;
+      }
+
+      if (!pickedPath.startsWith('content://')) {
+        final outFile = File(pickedPath);
+        if (!await outFile.exists() || await outFile.length() == 0) {
+          await outFile.writeAsBytes(pdfBytes, flush: true);
+        }
+      }
+
       if (context.mounted) {
         final messenger = ScaffoldMessenger.of(context);
         messenger.hideCurrentSnackBar();
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Struk PDF berhasil diunduh ke ${outFile.path}'),
+            content: const Text('Struk PDF berhasil disimpan.'),
             backgroundColor: const Color(0xFF2D6A4F),
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
@@ -741,14 +744,10 @@ class ReceiptPdfService {
           ),
         );
       }
-      return outFile.path;
+      return pickedPath;
     } catch (_) {
-      // Fallback jika scoped storage menolak akses folder Download langsung
-      final docsDir = await getApplicationDocumentsDirectory();
-      final fallbackFile = File('${docsDir.path}${Platform.pathSeparator}$fileName');
-      await fallbackFile.writeAsBytes(pdfBytes, flush: true);
       await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
-      return fallbackFile.path;
+      return fileName;
     }
   }
 

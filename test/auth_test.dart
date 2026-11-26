@@ -82,7 +82,7 @@ void main() {
 
     expect(find.text('Nama Lengkap'), findsOneWidget);
     expect(find.text('Nomor WhatsApp'), findsOneWidget);
-    expect(find.text('Email (Opsional)'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
     expect(find.text('Ulangi Kata Sandi'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('register-submit-button')),
@@ -100,7 +100,7 @@ void main() {
     expect(find.byType(AuthCard), findsOneWidget);
     expect(find.text('Nama Lengkap'), findsOneWidget);
     expect(find.text('Nomor WhatsApp'), findsOneWidget);
-    expect(find.text('Email (Opsional)'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
     expect(find.text('Ulangi Kata Sandi'), findsOneWidget);
     expect(find.text('Daftar dengan Google'), findsOneWidget);
     expect(find.text('Sudah punya akun?'), findsNothing);
@@ -240,6 +240,28 @@ void main() {
 
     expect(cardAfter.width, cardBefore.width);
     expect(headerAfter.height, headerBefore.height);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Halaman daftar mewajibkan email untuk OTP registrasi', (
+    tester,
+  ) async {
+    _useTallScreen(tester);
+    await tester.pumpWidget(_wrap(const RegisterScreen()));
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Budi Santoso');
+    await tester.enterText(fields.at(1), '081234567890');
+    await tester.enterText(fields.at(3), 'rahasia123');
+    await tester.enterText(fields.at(4), 'rahasia123');
+    final submitBtn = find.byKey(const ValueKey('register-submit-button'));
+    await tester.ensureVisible(submitBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(submitBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Email wajib diisi'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

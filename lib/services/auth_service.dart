@@ -141,16 +141,78 @@ class AuthService extends ChangeNotifier {
     required String password,
     required String passwordConfirmation,
   }) async {
-    await _run(() async {
+    try {
+      await _run(() async {
+        final data = await ApiService.post('pelanggan/register', {
+          'nama': nama.trim(),
+          'no_telp': noTelp.trim(),
+          'email': email.trim(),
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        });
+        return data;
+      });
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  Future<GoogleSignInResult> registerStep({
+    required String nama,
+    required String noTelp,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    return _run(() async {
       final data = await ApiService.post('pelanggan/register', {
         'nama': nama.trim(),
         'no_telp': noTelp.trim(),
-        if (email.trim().isNotEmpty) 'email': email.trim(),
+        'email': email.trim(),
         'password': password,
         'password_confirmation': passwordConfirmation,
       });
-      await _setSession(data as Map<String, dynamic>);
-      return null;
+      final map = Map<String, dynamic>.from(data as Map);
+      if (map['requires_otp'] == true) {
+        return GoogleSignInResult(
+          requiresOtp: true,
+          email: map['email']?.toString(),
+          nama: map['nama']?.toString(),
+        );
+      }
+      final session = await _setSession(map);
+      return GoogleSignInResult(session: session);
+    });
+  }
+
+  Future<AuthSession> verifyRegisterOtp({
+    required String email,
+    required String otp,
+  }) async {
+    return _run(() async {
+      final data = await ApiService.post('pelanggan/register/verify-otp', {
+        'email': email.trim(),
+        'otp': otp.trim(),
+      });
+      return await _setSession(Map<String, dynamic>.from(data as Map));
+    });
+  }
+
+  Future<void> resendRegisterOtp({
+    required String nama,
+    required String noTelp,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    await _run(() async {
+      await ApiService.post('pelanggan/register', {
+        'nama': nama.trim(),
+        'no_telp': noTelp.trim(),
+        'email': email.trim(),
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      });
     });
   }
 
