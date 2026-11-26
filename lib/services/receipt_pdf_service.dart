@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart' show BuildContext;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -88,15 +91,20 @@ class ReceiptData {
       }
     }
 
+    final bool isDp = order.nominalDp > 0 && order.sisaBayar > 0;
     String payStatus = 'Belum Lunas';
     if (order.status == OrderStatus.completed) {
       payStatus = 'Lunas';
     } else if (order.paymentMethod == PaymentMethod.cod) {
       payStatus = 'Bayar di Tempat (COD)';
     } else if (order.status == OrderStatus.waitingPayment) {
-      payStatus = 'Menunggu Pembayaran';
+      payStatus = isDp ? 'Menunggu Pembayaran DP' : 'Menunggu Pembayaran';
+    } else if (order.status == OrderStatus.cancelled) {
+      payStatus = order.isRefundSuccess
+          ? 'Refund Selesai'
+          : (order.isRefundPending ? 'Menunggu Refund' : 'Dibatalkan');
     } else {
-      payStatus = 'Diproses / Lunas';
+      payStatus = isDp ? 'DP Terbayar' : 'Lunas (QRIS)';
     }
 
     return ReceiptData(
@@ -160,9 +168,7 @@ class ReceiptData {
           ? 'Diantar Kurir Warga'
           : 'Ambil Sendiri (Pickup)',
       paymentMethod: _paymentLabel(pesanan.metodePembayaran),
-      paymentStatus: pesanan.statusPembayaran == 'lunas'
-          ? 'LUNAS'
-          : pesanan.statusPembayaran.toUpperCase(),
+      paymentStatus: _paymentStatusLabel(pesanan.statusPembayaran),
       items: items,
       subtotal: pesanan.subtotal.toDouble(),
       deliveryFee: pesanan.biayaPengantaran.toDouble(),
@@ -173,11 +179,32 @@ class ReceiptData {
   }
 
   static String _paymentLabel(String method) {
-    return switch (method.trim().toLowerCase()) {
-      'cod' => 'COD',
-      'qris' => 'QRIS',
-      'midtrans' => 'Online (data lama, metode tidak tercatat)',
-      _ => 'Metode pembayaran tidak dikenali',
+    final normalized = method.trim().toLowerCase();
+    if (normalized == 'cod' || normalized.contains('cod')) {
+      return 'COD (Bayar di Tempat)';
+    }
+    if (normalized == 'qris' ||
+        normalized == 'midtrans' ||
+        normalized.contains('qris') ||
+        normalized.contains('midtrans') ||
+        normalized.contains('gopay') ||
+        normalized.contains('snap')) {
+      return 'QRIS';
+    }
+    if (normalized.contains('transfer')) {
+      return 'Transfer Bank';
+    }
+    return normalized.isEmpty ? 'QRIS' : 'QRIS / $normalized';
+  }
+
+  static String _paymentStatusLabel(String status) {
+    return switch (status.trim().toLowerCase()) {
+      'lunas' || 'paid' || 'settlement' || 'capture' => 'LUNAS',
+      'dp_terbayar' => 'DP TERBAYAR',
+      'bayar_di_tempat' || 'cod_pending' => 'BAYAR DI TEMPAT (COD)',
+      'pending' || 'belum_bayar' => 'MENUNGGU PEMBAYARAN',
+      'batal' || 'failed' || 'cancel' || 'expire' => 'DIBATALKAN',
+      _ => status.toUpperCase(),
     };
   }
 }
@@ -668,6 +695,61 @@ class ReceiptPdfService {
         ],
       ),
     );
+  }
+
+  /// Mengunduh struk PDF langsung ke perangkat (atau trigger download di web).
+  static Future<String?> downloadReceipt(BuildContext context, ReceiptData data) async {
+    final pdfBytes = await generateReceiptPdf(data);
+    final safeId = data.orderId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    final fileName = 'Struk_$safeId.pdf';
+
+    if (kIsWeb) {
+      await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+      return fileName;
+    }
+
+    Directory? targetDir;
+    if (Platform.isAndroid) {
+      final publicDownloads = Directory('/storage/emulated/0/Download');
+      if (await publicDownloads.exists()) {
+        targetDir = publicDownloads;
+      } else {
+        targetDir = await getExternalStorageDirectory() ??
+            await getApplicationDocumentsDirectory();
+      }
+    } else {
+      targetDir = await getDownloadsDirectory() ??
+          await getApplicationDocumentsDirectory();
+    }
+
+    try {
+      final outFile = File('${targetDir.path}${Platform.pathSeparator}$fileName');
+      await outFile.writeAsBytes(pdfBytes, flush: true);
+      if (context.mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Struk PDF berhasil diunduh ke ${outFile.path}'),
+            backgroundColor: const Color(0xFF2D6A4F),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Bagikan',
+              textColor: Colors.white,
+              onPressed: () => Printing.sharePdf(bytes: pdfBytes, filename: fileName),
+            ),
+          ),
+        );
+      }
+      return outFile.path;
+    } catch (_) {
+      // Fallback jika scoped storage menolak akses folder Download langsung
+      final docsDir = await getApplicationDocumentsDirectory();
+      final fallbackFile = File('${docsDir.path}${Platform.pathSeparator}$fileName');
+      await fallbackFile.writeAsBytes(pdfBytes, flush: true);
+      await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+      return fallbackFile.path;
+    }
   }
 
   /// Membuka preview & dialog cetak/download PDF di HP

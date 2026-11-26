@@ -455,7 +455,7 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        mainAxisExtent: 260,
+        mainAxisExtent: 268,
       ),
       itemBuilder: (context, index) {
         final product = items[index];

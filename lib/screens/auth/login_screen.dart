@@ -149,8 +149,26 @@ class _LoginScreenState extends State<LoginScreen> {
       _noticeMessage = null;
     });
     try {
-      final session = await context.read<AuthService>().loginWithGoogle();
+      final auth = context.read<AuthService>();
+      final result = await auth.loginWithGoogleStep();
       if (!mounted) return;
+
+      AuthSession? session = result.session;
+      if (result.requiresOtp) {
+        final token = result.idToken;
+        if (token == null || token.isEmpty) {
+          throw ApiException('Token Google tidak valid.');
+        }
+        setState(() => _loading = false);
+        session = await _showGoogleOtpDialog(
+          idToken: token,
+          email: result.email ?? 'email Google Anda',
+        );
+        if (!mounted || session == null) return;
+        setState(() => _loading = true);
+      }
+
+      if (session == null) return;
       if (session.role == AuthRole.umkm) {
         context.read<UmkmDataService>().loadProfileFromLogin(session.data);
         Navigator.pushReplacementNamed(context, AppRoutes.umkmDashboard);
@@ -163,6 +181,180 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<AuthSession?> _showGoogleOtpDialog({
+    required String idToken,
+    required String email,
+  }) async {
+    final otpCtrl = TextEditingController();
+    bool verifying = false;
+    bool resending = false;
+    String? errorMsg;
+
+    try {
+      return await showDialog<AuthSession?>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.mark_email_read_outlined, color: AuthStyle.primary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Verifikasi Email Google',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pendaftaran pertama dengan Google memerlukan verifikasi. Masukkan 6 digit kode OTP yang dikirim ke $email.',
+                  style: const TextStyle(fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: otpCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 6,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '000000',
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                if (errorMsg != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    errorMsg!,
+                    style: const TextStyle(
+                      color: Color(0xFFDC2626),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: verifying || resending
+                        ? null
+                        : () async {
+                            setDialogState(() {
+                              resending = true;
+                              errorMsg = null;
+                            });
+                            try {
+                              await context.read<AuthService>().resendGoogleOtp(
+                                idToken,
+                              );
+                              if (!ctx.mounted) return;
+                              setDialogState(() {
+                                errorMsg = null;
+                              });
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Kode OTP baru telah dikirim.'),
+                                ),
+                              );
+                            } on ApiException catch (e) {
+                              if (ctx.mounted) {
+                                setDialogState(() => errorMsg = e.pesan);
+                              }
+                            } finally {
+                              if (ctx.mounted) {
+                                setDialogState(() => resending = false);
+                              }
+                            }
+                          },
+                    child: Text(
+                      resending ? 'Mengirim...' : 'Kirim Ulang OTP',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: verifying ? null : () => Navigator.pop(ctx, null),
+                child: const Text('Batal'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AuthStyle.primary,
+                ),
+                onPressed: verifying
+                    ? null
+                    : () async {
+                        final otp = otpCtrl.text.trim();
+                        if (otp.length != 6) {
+                          setDialogState(
+                            () => errorMsg = 'Kode OTP harus 6 digit.',
+                          );
+                          return;
+                        }
+                        setDialogState(() {
+                          verifying = true;
+                          errorMsg = null;
+                        });
+                        try {
+                          final session = await context
+                              .read<AuthService>()
+                              .verifyGoogleOtp(idToken: idToken, otp: otp);
+                          if (ctx.mounted) Navigator.pop(ctx, session);
+                        } on ApiException catch (e) {
+                          if (ctx.mounted) {
+                            setDialogState(() {
+                              verifying = false;
+                              errorMsg = e.pesan;
+                            });
+                          }
+                        } catch (e) {
+                          if (ctx.mounted) {
+                            setDialogState(() {
+                              verifying = false;
+                              errorMsg = 'Gagal memverifikasi OTP.';
+                            });
+                          }
+                        }
+                      },
+                child: verifying
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Verifikasi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      otpCtrl.dispose();
     }
   }
 

@@ -109,6 +109,7 @@ class OrderService extends ChangeNotifier {
       if (paymentStatus == 'paid' ||
           paymentStatus == 'settlement' ||
           paymentStatus == 'capture' ||
+          paymentStatus == 'dp_terbayar' ||
           paymentStatus == 'failed') {
         return paymentStatus;
       }
@@ -121,6 +122,9 @@ class OrderService extends ChangeNotifier {
         .map((value) => value?.toString().trim().toLowerCase() ?? '')
         .where((value) => value.isNotEmpty)
         .toList();
+    if (values.any((value) => value == 'dp_terbayar')) {
+      return 'dp_terbayar';
+    }
     if (values.any(
       (value) => value == 'paid' || value == 'settlement' || value == 'capture',
     )) {
@@ -145,7 +149,8 @@ class OrderService extends ChangeNotifier {
   }) {
     if (paymentStatus == 'paid' ||
         paymentStatus == 'settlement' ||
-        paymentStatus == 'capture') {
+        paymentStatus == 'capture' ||
+        paymentStatus == 'dp_terbayar') {
       return OrderStatus.reviewing;
     }
     if (paymentStatus == 'failed' ||
@@ -383,25 +388,44 @@ class OrderService extends ChangeNotifier {
     final qrString =
         (backendData['qr_string'] ?? backendData['snap_token'])?.toString();
 
-    final order = Order(
-      id: backendOrderId,
-      checkoutId: backendOrderId,
-      refId: backendOrderId,
-      createdAt: now,
-      vendors: vendors,
-      recipient: recipient,
-      paymentMethod: paymentMethod,
-      serviceFee: serviceFee,
-      discount: 0,
-      status: initialStatus,
-      account: accountFor(vendors.first.umkmId),
-      paymentDeadline: paymentDeadline,
-      snapToken: qrString,
-      paymentUrl: qrCodeUrl,
-      qrCodeUrl: qrCodeUrl,
-      qrString: qrString,
-      expiryTime: parsedExpiry,
-    );
+    Order order;
+    final rawOrders = backendData['orders'];
+    if (rawOrders is List && rawOrders.isNotEmpty && rawOrders.first is Map) {
+      final firstOrderMap = Map<String, dynamic>.from(rawOrders.first as Map);
+      firstOrderMap['id_checkout'] ??= backendData['id_checkout'];
+      firstOrderMap['qr_code_url'] ??= qrCodeUrl;
+      firstOrderMap['payment_url'] ??= qrCodeUrl;
+      firstOrderMap['qr_string'] ??= qrString;
+      firstOrderMap['snap_token'] ??= qrString;
+      firstOrderMap['expiry_time'] ??= backendData['expiry_time'];
+      firstOrderMap['skema_po'] ??= backendData['skema_po'];
+      firstOrderMap['nominal_dp'] ??= backendData['nominal_dp'];
+      firstOrderMap['sisa_bayar'] ??= backendData['sisa_bayar'];
+      order = Order.fromJson(firstOrderMap);
+    } else {
+      order = Order(
+        id: backendOrderId,
+        checkoutId: backendOrderId,
+        refId: backendOrderId,
+        createdAt: now,
+        vendors: vendors,
+        recipient: recipient,
+        paymentMethod: paymentMethod,
+        serviceFee: serviceFee,
+        discount: 0,
+        status: initialStatus,
+        account: accountFor(vendors.first.umkmId),
+        paymentDeadline: paymentDeadline,
+        snapToken: qrString,
+        paymentUrl: qrCodeUrl,
+        qrCodeUrl: qrCodeUrl,
+        qrString: qrString,
+        expiryTime: parsedExpiry,
+        skemaPo: backendData['skema_po']?.toString(),
+        nominalDp: (backendData['nominal_dp'] as num?)?.toInt() ?? 0,
+        sisaBayar: (backendData['sisa_bayar'] as num?)?.toInt() ?? 0,
+      );
+    }
 
     // Log jika payment expired saat creation
     if (!isCod && now.isAfter(order.paymentDeadline!)) {
@@ -821,8 +845,16 @@ class OrderService extends ChangeNotifier {
   }
 
   Order _replace(Order updated) {
-    final i = _orders.indexWhere((o) => o.id == updated.id);
-    _orders[i] = updated;
+    final i = _orders.indexWhere(
+      (o) =>
+          o.id == updated.id ||
+          (o.checkoutId != null && o.checkoutId == updated.checkoutId),
+    );
+    if (i >= 0) {
+      _orders[i] = updated;
+    } else {
+      _orders.add(updated);
+    }
     notifyListeners();
     return updated;
   }

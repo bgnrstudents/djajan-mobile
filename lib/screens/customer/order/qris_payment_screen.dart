@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../services/api_service.dart';
 import '../../../services/order_service.dart';
 import 'midtrans_payment_screen.dart';
+import 'order_detail_screen.dart';
 import 'order_widgets.dart';
 
 class QrisPaymentScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class QrisPaymentScreen extends StatefulWidget {
   final String? qrString;
   final double? totalAmount;
   final DateTime? expiryTime;
+  final bool openOrderDetailOnExit;
 
   const QrisPaymentScreen({
     super.key,
@@ -26,6 +28,7 @@ class QrisPaymentScreen extends StatefulWidget {
     this.qrString,
     this.totalAmount,
     this.expiryTime,
+    this.openOrderDetailOnExit = false,
   });
 
   @override
@@ -176,9 +179,34 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
     );
 
     if (shouldLeave == true && mounted) {
+      _exitScreen();
+    }
+  }
+
+  void _exitScreen() {
+    if (!mounted) return;
+    if (widget.openOrderDetailOnExit) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => OrderDetailScreen(orderId: widget.orderId),
+        ),
+      );
+    } else {
       Navigator.of(context).pop(_completed);
     }
   }
+
+  bool _isPaidStatus(String? status) =>
+      status == 'paid' ||
+      status == 'dp_terbayar' ||
+      status == 'settlement' ||
+      status == 'capture';
+
+  bool _isFailedStatus(String? status) =>
+      status == 'failed' ||
+      status == 'expire' ||
+      status == 'cancel' ||
+      status == 'deny';
 
   Future<void> _downloadQrImage() async {
     final url = _qrCodeUrl;
@@ -263,10 +291,13 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
       );
       if (!mounted) return;
 
-      final paid =
-          status == 'paid' || status == 'settlement' || status == 'capture';
-      if (paid) {
+      if (_isPaidStatus(status)) {
         await _onPaymentConfirmed();
+        return;
+      }
+
+      if (_isFailedStatus(status)) {
+        await _onPaymentFailed(status!);
         return;
       }
 
@@ -292,12 +323,55 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
     try {
       final status = await _service.refreshPaymentStatus(widget.orderId);
       if (!mounted) return;
-      if (status == 'paid' || status == 'settlement' || status == 'capture') {
+      if (_isPaidStatus(status)) {
         await _onPaymentConfirmed();
+      } else if (_isFailedStatus(status)) {
+        await _onPaymentFailed(status!);
       }
     } on ApiException {
       // Abaikan dan lanjutkan polling siklus berikutnya
     } catch (_) {}
+  }
+
+  Future<void> _onPaymentFailed(String status) async {
+    if (_completed) return;
+    _completed = true;
+    _statusTimer?.cancel();
+    _countdownTimer?.cancel();
+    await _service.syncOrder(widget.orderId);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline_rounded, color: OC.danger, size: 26),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Pembayaran Gagal',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Pembayaran QRIS berstatus ${status.toUpperCase()} sehingga pesanan otomatis dibatalkan.',
+          style: const TextStyle(fontSize: 13.5, color: OC.muted, height: 1.4),
+        ),
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: OC.primary),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Lihat Status Pesanan'),
+          ),
+        ],
+      ),
+    );
+    _exitScreen();
   }
 
   Future<void> _onPaymentConfirmed() async {
@@ -336,7 +410,7 @@ class _QrisPaymentScreenState extends State<QrisPaymentScreen> {
         ],
       ),
     );
-    if (mounted) Navigator.of(context).pop(true);
+    _exitScreen();
   }
 
   @override

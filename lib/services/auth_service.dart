@@ -18,6 +18,22 @@ class AuthSession {
   const AuthSession({required this.role, required this.data});
 }
 
+class GoogleSignInResult {
+  final AuthSession? session;
+  final bool requiresOtp;
+  final String? email;
+  final String? nama;
+  final String? idToken;
+
+  const GoogleSignInResult({
+    this.session,
+    this.requiresOtp = false,
+    this.email,
+    this.nama,
+    this.idToken,
+  });
+}
+
 class AuthService extends ChangeNotifier {
   static const _tokenKey = 'djajan_auth_token';
   static const _roleKey = 'djajan_auth_role';
@@ -138,7 +154,7 @@ class AuthService extends ChangeNotifier {
     });
   }
 
-  Future<AuthSession> loginWithGoogle() async {
+  Future<GoogleSignInResult> loginWithGoogleStep() async {
     return _run(() async {
       if (ApiConfig.googleServerClientId.isEmpty) {
         throw ApiException(
@@ -164,7 +180,17 @@ class AuthService extends ChangeNotifier {
         final data = await ApiService.post('auth/google', {
           'id_token': idToken,
         });
-        return await _setSession(data as Map<String, dynamic>);
+        final map = Map<String, dynamic>.from(data as Map);
+        if (map['requires_otp'] == true) {
+          return GoogleSignInResult(
+            requiresOtp: true,
+            email: map['email']?.toString(),
+            nama: map['nama']?.toString(),
+            idToken: idToken,
+          );
+        }
+        final session = await _setSession(map);
+        return GoogleSignInResult(session: session);
       } on ApiException {
         rethrow;
       } on PlatformException catch (error) {
@@ -173,6 +199,34 @@ class AuthService extends ChangeNotifier {
         throw ApiException('Google Login gagal: $error');
       }
     });
+  }
+
+  Future<AuthSession> verifyGoogleOtp({
+    required String idToken,
+    required String otp,
+  }) async {
+    return _run(() async {
+      final data = await ApiService.post('auth/google/verify-otp', {
+        'id_token': idToken,
+        'otp': otp.trim(),
+      });
+      return await _setSession(Map<String, dynamic>.from(data as Map));
+    });
+  }
+
+  Future<void> resendGoogleOtp(String idToken) async {
+    await _run(() async {
+      await ApiService.post('auth/google', {'id_token': idToken});
+    });
+  }
+
+  Future<AuthSession> loginWithGoogle() async {
+    final result = await loginWithGoogleStep();
+    if (result.session != null) return result.session!;
+    throw ApiException(
+      'Verifikasi OTP diperlukan untuk menyelesaikan pendaftaran Google.',
+      code: 'requires_otp',
+    );
   }
 
   String _googleErrorMessage(PlatformException error) {

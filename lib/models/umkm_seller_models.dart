@@ -270,6 +270,10 @@ extension StatusPesananX on StatusPesanan {
   /// Validasi bahwa transisi status adalah valid
   static bool isValidTransition(StatusPesanan from, StatusPesanan to) {
     if (from == to) return true;
+    if (to == StatusPesanan.ditolak &&
+        (from == StatusPesanan.poBaru || from == StatusPesanan.diterima)) {
+      return true;
+    }
     final fromIndex = statusSequence.indexOf(from);
     final toIndex = statusSequence.indexOf(to);
     return fromIndex >= 0 && toIndex >= 0 && toIndex == fromIndex + 1;

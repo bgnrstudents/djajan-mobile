@@ -273,7 +273,24 @@ class ProductCard extends StatelessWidget {
                                       const SizedBox(height: 1),
                                     ],
                                     price,
-                                    if (isPreOrder && product.minOrderPo > 1) ...[
+                                    if (!isPreOrder && product.stock != null) ...[
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        product.stock! <= 0
+                                            ? 'Stok habis'
+                                            : 'Stok: ${product.stock}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: product.stock! <= 0
+                                              ? const Color(0xFFDC2626)
+                                              : const Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ] else if (isPreOrder &&
+                                        product.minOrderPo > 1) ...[
                                       const SizedBox(height: 1),
                                       Text(
                                         'Min. ${product.minOrderPo} ${product.unit.toLowerCase()}',
@@ -322,7 +339,25 @@ class ProductCard extends StatelessWidget {
                                               const SizedBox(height: 1),
                                             ],
                                             price,
-                                            if (isPreOrder && product.minOrderPo > 1) ...[
+                                            if (!isPreOrder &&
+                                                product.stock != null) ...[
+                                              const SizedBox(height: 1),
+                                              Text(
+                                                product.stock! <= 0
+                                                    ? 'Stok habis'
+                                                    : 'Stok: ${product.stock}',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: product.stock! <= 0
+                                                      ? const Color(0xFFDC2626)
+                                                      : const Color(0xFF15803D),
+                                                ),
+                                              ),
+                                            ] else if (isPreOrder &&
+                                                product.minOrderPo > 1) ...[
                                               const SizedBox(height: 1),
                                               Text(
                                                 'Min. ${product.minOrderPo} ${product.unit.toLowerCase()}',

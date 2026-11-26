@@ -188,7 +188,7 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
       merchantPhone: umkm?.noTelpUsaha,
       merchantAddress: umkm?.alamat,
     );
-    await ReceiptPdfService.printOrDownloadReceipt(context, data);
+    await ReceiptPdfService.downloadReceipt(context, data);
   }
 
   @override
@@ -242,8 +242,8 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.picture_as_pdf_outlined, color: OC.primary),
-                    tooltip: 'Cetak Struk PDF',
+                    icon: const Icon(Icons.download_rounded, color: OC.primary),
+                    tooltip: 'Download Struk PDF',
                     onPressed: () => _cetakStruk(pesanan),
                   ),
                   IconButton(
@@ -972,9 +972,9 @@ class _DetailPesananScreenState extends State<DetailPesananScreen> {
                         ),
                       ),
                       onPressed: () => _cetakStruk(pesanan),
-                      icon: const Icon(Icons.picture_as_pdf_outlined, color: OC.primary),
+                      icon: const Icon(Icons.download_rounded, color: OC.primary),
                       label: const Text(
-                        'Cetak Struk PDF Transaksi',
+                        'Download Struk PDF',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),

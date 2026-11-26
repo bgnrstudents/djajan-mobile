@@ -497,8 +497,51 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildBadges(bool isPO) {
+    final stockWidget = (!isPO && p.stock != null)
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            decoration: BoxDecoration(
+              color: p.stock! <= 0
+                  ? const Color(0xFFFEE2E2)
+                  : const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: p.stock! <= 0
+                    ? const Color(0xFFFECACA)
+                    : const Color(0xFFDCFCE7),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 14,
+                  color: p.stock! <= 0 ? const Color(0xFFDC2626) : primaryGreen,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  p.stock! <= 0
+                      ? 'STOK HABIS'
+                      : 'STOK: ${p.stock} ${p.unit.toUpperCase()}',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.45,
+                    color: p.stock! <= 0
+                        ? const Color(0xFFDC2626)
+                        : primaryGreen,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : null;
+
     if (p.isBothMode) {
-      return Row(
+      return Wrap(
+        spacing: 8,
+        runSpacing: 6,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
@@ -528,10 +571,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
             ),
           ),
+          ?stockWidget,
         ],
       );
     }
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
@@ -560,6 +606,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ],
           ),
         ),
+        ?stockWidget,
       ],
     );
   }
@@ -713,7 +760,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         noticeText = 'Disiapkan fresh mengikuti jadwal pesanan acara Anda.';
       }
     } else {
-      noticeText = 'Siap disiapkan penjual setelah dipesan.';
+      if (p.stock != null) {
+        noticeText = p.stock! <= 0
+            ? 'Stok Ready Stock saat ini sedang habis.'
+            : 'Tersedia ${p.stock} ${p.unit.toLowerCase()}, siap disiapkan penjual setelah dipesan.';
+      } else {
+        noticeText = 'Siap disiapkan penjual setelah dipesan.';
+      }
     }
 
     return Container(
@@ -1150,53 +1203,59 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: primaryGreen,
-                      side: const BorderSide(color: AppColors.garis),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      minimumSize: const Size(0, 46),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+            Builder(
+              builder: (context) {
+                final bool outOfReadyStock =
+                    !isPoActive && p.stock != null && p.stock! <= 0;
+                return Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryGreen,
+                          side: const BorderSide(color: AppColors.garis),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          minimumSize: const Size(0, 46),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: outOfReadyStock ? null : _addToCart,
+                        icon: const Icon(Icons.add_shopping_cart, size: 18),
+                        label: const Text(
+                          '+ Keranjang',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                    onPressed: _addToCart,
-                    icon: const Icon(Icons.add_shopping_cart, size: 18),
-                    label: const Text(
-                      '+ Keranjang',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 5,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      minimumSize: const Size(0, 46),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 5,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          minimumSize: const Size(0, 46),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: outOfReadyStock ? null : _buyNow,
+                        child: Text(
+                          outOfReadyStock ? 'Stok Habis' : 'Pesan Sekarang',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.5,
+                          ),
+                        ),
                       ),
                     ),
-                    onPressed: _buyNow,
-                    child: const Text(
-                      'Pesan Sekarang',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ],
         ),

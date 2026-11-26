@@ -490,12 +490,13 @@ void main() {
     );
 
     test(
-      'UMKM receipts show supported methods and label legacy data accurately',
+      'UMKM receipts show supported methods and DP status accurately',
       () {
         final receipt = ReceiptData.fromUmkmPesanan(
           umkm_models.Pesanan.fromJson({
             'id_pesanan': 'PO-PDF-UMKM',
             'metode_pembayaran': 'midtrans',
+            'status_pembayaran': 'dp_terbayar',
           }),
         );
         final qrisReceipt = ReceiptData.fromUmkmPesanan(
@@ -512,11 +513,9 @@ void main() {
         );
 
         expect(qrisReceipt.paymentMethod, 'QRIS');
-        expect(codReceipt.paymentMethod, 'COD');
-        expect(
-          receipt.paymentMethod,
-          'Online (data lama, metode tidak tercatat)',
-        );
+        expect(codReceipt.paymentMethod, 'COD (Bayar di Tempat)');
+        expect(receipt.paymentMethod, 'QRIS');
+        expect(receipt.paymentStatus, 'DP TERBAYAR');
         expect(receipt.paymentMethod, isNot(contains('Midtrans')));
       },
     );
@@ -812,6 +811,42 @@ void main() {
       );
       expect(order.qrString, '000201010212');
       expect(order.expiryTime, DateTime(2026, 12, 1, 12, 0, 0));
+    });
+
+    test('Order parses PO DP 30% fields and StatusPesanan allows PO rejection', () {
+      final poOrder = Order.fromJson({
+        'id_pesanan': 'PO-DP-01',
+        'id_checkout': 'CHK-DP-01',
+        'nama_pembeli': 'Dina',
+        'no_telp': '081234567890',
+        'alamat_tujuan': 'Jl. Merpati 5',
+        'metode_pembayaran': 'midtrans',
+        'status_pembayaran': 'dp_terbayar',
+        'skema_po': 'DP 30%',
+        'nominal_dp': 9450,
+        'sisa_bayar': 22050,
+        'biaya_layanan': 1500,
+        'items': [
+          {
+            'id_produk': '2',
+            'nama_produk': 'Tumpeng Mini',
+            'satuan': 'porsi',
+            'jumlah': 1,
+            'harga_satuan': 30000,
+          }
+        ],
+      });
+
+      expect(poOrder.skemaPo, 'DP 30%');
+      expect(poOrder.nominalDp, 9450);
+      expect(poOrder.sisaBayar, 22050);
+      expect(
+        umkm_models.StatusPesananX.isValidTransition(
+          umkm_models.StatusPesanan.poBaru,
+          umkm_models.StatusPesanan.ditolak,
+        ),
+        isTrue,
+      );
     });
   });
 }

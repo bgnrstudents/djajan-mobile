@@ -741,6 +741,19 @@ class _CartScreenState extends State<CartScreen> {
                   '${item.variant} • ${rupiah(item.price)} / ${item.unit}',
                   style: const TextStyle(fontSize: 11.5, color: OC.muted),
                 ),
+                if (!isPO && item.stock != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    item.stock! <= 0
+                        ? 'Stok habis'
+                        : 'Stok tersedia: ${item.stock} ${item.unit.toLowerCase()}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: item.stock! <= 0 ? OC.danger : OC.primary,
+                    ),
+                  ),
+                ],
                 if (isPO && item.minOrderPo > 1) ...[
                   const SizedBox(height: 4),
                   Container(
@@ -857,15 +870,19 @@ class _CartScreenState extends State<CartScreen> {
                             borderRadius: const BorderRadius.horizontal(
                               right: Radius.circular(8),
                             ),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 7,
                                 vertical: 3,
                               ),
                               child: Icon(
                                 Icons.add,
                                 size: 16,
-                                color: OC.ink,
+                                color: item.type != OrderType.preOrder &&
+                                        item.stock != null &&
+                                        item.quantity >= item.stock!
+                                    ? OC.faint
+                                    : OC.ink,
                               ),
                             ),
                           ),

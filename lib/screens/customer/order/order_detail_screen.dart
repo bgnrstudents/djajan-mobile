@@ -462,14 +462,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   onPressed: () async {
                     Navigator.pop(ctx);
                     final data = ReceiptData.fromCustomerOrder(o);
-                    await ReceiptPdfService.printOrDownloadReceipt(
+                    await ReceiptPdfService.downloadReceipt(
                       context,
                       data,
                     );
                   },
-                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
+                  icon: const Icon(Icons.download_rounded, size: 20),
                   label: const Text(
-                    'Cetak / Simpan PDF',
+                    'Download PDF',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                   ),
                 ),
@@ -768,11 +768,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         break;
       case OrderStatus.cancelled:
         tag = 'Dibatalkan';
+        final refundNominal =
+            (o.nominalDp > 0 && o.sisaBayar > 0) ? o.nominalDp.toDouble() : o.total;
         if (o.isRefundSuccess) {
           chip = 'Refund Selesai';
           headline = 'Pesanan Dibatalkan & Refund Selesai';
           body =
-              'Dana sebesar ${rupiah(o.total)} telah berhasil dikembalikan ke akun pembayaran Anda.';
+              'Dana sebesar ${rupiah(refundNominal)} telah berhasil dikembalikan ke akun pembayaran Anda.';
           toneBg = OC.mintSoft;
           toneFg = OC.primary;
           icon = Icons.check_circle_outline;
@@ -780,7 +782,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           chip = 'Menunggu Refund';
           headline = 'Pesanan Dibatalkan & Menunggu Refund';
           body =
-              'Pesanan telah dibatalkan. Pengembalian dana ${rupiah(o.total)} sedang diproses oleh pihak Admin/UMKM DJajan.';
+              'Pesanan telah dibatalkan. Pengembalian dana ${rupiah(refundNominal)} sedang diproses oleh pihak Admin/UMKM DJajan.';
           toneBg = const Color(0xFFE8F5E9);
           toneFg = const Color(0xFF047857);
           icon = Icons.hourglass_bottom_rounded;
@@ -1579,31 +1581,53 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         height: 1.3,
                       ),
                     ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => _openProductReview(o, v, i),
-                      style: TextButton.styleFrom(
-                        foregroundColor: OC.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 0),
-                        minimumSize: const Size(40, 30),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      icon: Icon(
-                        i.rating == null
-                            ? Icons.rate_review_outlined
-                            : Icons.edit_outlined,
-                        size: 15,
-                      ),
-                      label: Text(
-                        i.rating == null ? 'Tulis ulasan' : 'Ubah ulasan',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                  if (i.rating == null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => _openProductReview(o, v, i),
+                        style: TextButton.styleFrom(
+                          foregroundColor: OC.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          minimumSize: const Size(40, 30),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: const Icon(
+                          Icons.rate_review_outlined,
+                          size: 15,
+                        ),
+                        label: const Text(
+                          'Tulis ulasan',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
+                    )
+                  else
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified_outlined,
+                            size: 14,
+                            color: OC.primary,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Sudah Diulas',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: OC.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ],
             ),
@@ -2131,15 +2155,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           ),
           const SizedBox(height: 10),
         ],
-        if (o.status == OrderStatus.completed) ...[
+        if (o.status == OrderStatus.completed && !hasReviewed) ...[
           SizedBox(
             width: double.infinity,
             height: 52,
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: hasReviewed
-                    ? const Color(0xFF047857)
-                    : const Color(0xFF10B981),
+                backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -2147,18 +2169,46 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                 elevation: 1,
               ),
               onPressed: () => _openFirstProductReview(o),
-              icon: Icon(
-                hasReviewed ? Icons.rate_review_outlined : Icons.star_rounded,
+              icon: const Icon(
+                Icons.star_rounded,
                 size: 22,
               ),
-              label: Text(
-                hasReviewed ? 'Ubah Ulasan Produk' : 'Beri Ulasan Produk',
-                style: const TextStyle(
+              label: const Text(
+                'Beri Ulasan Produk',
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.2,
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ] else if (o.status == OrderStatus.completed && hasReviewed) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: OC.mintSoft,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFD0E6D5)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.verified_outlined, size: 18, color: OC.primary),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    'Ulasan sudah dikirim & terkunci',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: OC.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
