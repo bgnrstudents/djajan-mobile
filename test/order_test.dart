@@ -22,55 +22,58 @@ void main() {
       expect(OrderStatus.cancelled.canCancel, isFalse);
     });
 
-    test('Order parses cancellation metadata and UMKM name snapshot from JSON', () {
-      final json = {
-        'id_pesanan': 'PO-20261105-ABCD12',
-        'id_checkout': 'CHK-20261105-XYZ',
-        'nama_umkm': 'Dapur Bu Siti',
-        'spesialis_umkm': 'Kue Basah',
-        'alamat_umkm': 'Jl. Kenanga 12',
-        'nama_pembeli': 'Andi',
-        'no_telp': '081234567890',
-        'tanggal_pesan': '2026-11-05 10:00:00',
-        'metode_pengiriman': 'kurir',
-        'alamat_tujuan': 'Jl. Melati 5',
-        'metode_pembayaran': 'midtrans',
-        'status_pembayaran': 'batal',
-        'payment_status': 'cancel',
-        'status_pesanan': 'ditolak',
-        'alasan_batal': 'Salah alamat pengiriman',
-        'dibatalkan_oleh': 'pelanggan',
-        'dibatalkan_pada': '2026-11-05 10:15:00',
-        'status_refund': 'perlu_refund',
-        'biaya_pengantaran': 5000,
-        'biaya_layanan': 0,
-        'items': [
-          {
-            'id_produk': '10',
-            'nama_produk': 'Kue Lumpur',
-            'satuan': 'kotak',
-            'jumlah': 2,
-            'harga_satuan': 15000,
-            'subtotal': 30000,
-          }
-        ],
-      };
+    test(
+      'Order parses cancellation metadata and UMKM name snapshot from JSON',
+      () {
+        final json = {
+          'id_pesanan': 'PO-20261105-ABCD12',
+          'id_checkout': 'CHK-20261105-XYZ',
+          'nama_umkm': 'Dapur Bu Siti',
+          'spesialis_umkm': 'Kue Basah',
+          'alamat_umkm': 'Jl. Kenanga 12',
+          'nama_pembeli': 'Andi',
+          'no_telp': '081234567890',
+          'tanggal_pesan': '2026-11-05 10:00:00',
+          'metode_pengiriman': 'kurir',
+          'alamat_tujuan': 'Jl. Melati 5',
+          'metode_pembayaran': 'midtrans',
+          'status_pembayaran': 'batal',
+          'payment_status': 'cancel',
+          'status_pesanan': 'ditolak',
+          'alasan_batal': 'Salah alamat pengiriman',
+          'dibatalkan_oleh': 'pelanggan',
+          'dibatalkan_pada': '2026-11-05 10:15:00',
+          'status_refund': 'perlu_refund',
+          'biaya_pengantaran': 5000,
+          'biaya_layanan': 0,
+          'items': [
+            {
+              'id_produk': '10',
+              'nama_produk': 'Kue Lumpur',
+              'satuan': 'kotak',
+              'jumlah': 2,
+              'harga_satuan': 15000,
+              'subtotal': 30000,
+            },
+          ],
+        };
 
-      final order = Order.fromJson(json);
+        final order = Order.fromJson(json);
 
-      expect(order.id, 'PO-20261105-ABCD12');
-      expect(order.status, OrderStatus.cancelled);
-      expect(order.vendors.first.umkmName, 'Dapur Bu Siti');
-      expect(order.cancelReason, 'Salah alamat pengiriman');
-      expect(order.cancelledBy, 'pelanggan');
-      expect(order.cancelledAt, isNotNull);
-      expect(order.refundStatus, 'perlu_refund');
-      expect(order.canCancel, isFalse);
-    });
+        expect(order.id, 'PO-20261105-ABCD12');
+        expect(order.status, OrderStatus.cancelled);
+        expect(order.vendors.first.umkmName, 'Dapur Bu Siti');
+        expect(order.cancelReason, 'Salah alamat pengiriman');
+        expect(order.cancelledBy, 'pelanggan');
+        expect(order.cancelledAt, isNotNull);
+        expect(order.refundStatus, 'perlu_refund');
+        expect(order.canCancel, isFalse);
+      },
+    );
 
     test('OrderService rejects cancellation of processing order', () async {
       final service = OrderService();
-      
+
       final order = Order(
         id: 'PO-TEST-1',
         refId: 'PO-TEST-1',
@@ -79,7 +82,12 @@ void main() {
         paymentMethod: PaymentMethod.cod,
         serviceFee: 0,
         discount: 0,
-        account: PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        account: PaymentAccount(
+          bank: 'BRI',
+          bankFullName: '',
+          number: '',
+          holder: '',
+        ),
         recipient: Recipient(
           name: 'Budi Santoso',
           phone: '08123456789',
@@ -120,7 +128,7 @@ void main() {
 
     test('OrderService successfully cancels a waiting payment order', () async {
       final service = OrderService();
-      
+
       final order = Order(
         id: 'PO-TEST-2',
         refId: 'PO-TEST-2',
@@ -129,7 +137,12 @@ void main() {
         paymentMethod: PaymentMethod.cod,
         serviceFee: 0,
         discount: 0,
-        account: PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        account: PaymentAccount(
+          bank: 'BRI',
+          bankFullName: '',
+          number: '',
+          holder: '',
+        ),
         recipient: Recipient(
           name: 'Siti Aminah',
           phone: '08123456788',
@@ -236,14 +249,17 @@ void main() {
       cart.clear();
     });
 
-    test('normalizeWaNumber converts diverse Indonesian phone formats to 628xxx', () {
-      expect(normalizeWaNumber('081234567890'), '6281234567890');
-      expect(normalizeWaNumber('+6281234567890'), '6281234567890');
-      expect(normalizeWaNumber('6281234567890'), '6281234567890');
-      expect(normalizeWaNumber('81234567890'), '6281234567890');
-      expect(normalizeWaNumber('0812-3456-7890'), '6281234567890');
-      expect(normalizeWaNumber(''), '');
-    });
+    test(
+      'normalizeWaNumber converts diverse Indonesian phone formats to 628xxx',
+      () {
+        expect(normalizeWaNumber('081234567890'), '6281234567890');
+        expect(normalizeWaNumber('+6281234567890'), '6281234567890');
+        expect(normalizeWaNumber('6281234567890'), '6281234567890');
+        expect(normalizeWaNumber('81234567890'), '6281234567890');
+        expect(normalizeWaNumber('0812-3456-7890'), '6281234567890');
+        expect(normalizeWaNumber(''), '');
+      },
+    );
 
     test('generateOrderWhatsAppMessage builds detailed order summary', () {
       final order = Order(
@@ -254,7 +270,12 @@ void main() {
         paymentMethod: PaymentMethod.midtrans,
         serviceFee: 0,
         discount: 0,
-        account: const PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
+        account: const PaymentAccount(
+          bank: 'BRI',
+          bankFullName: '',
+          number: '',
+          holder: '',
+        ),
         recipient: const Recipient(
           name: 'Pak Budi',
           phone: '08123456789',
@@ -328,7 +349,8 @@ void main() {
         'jarak_km': 25.0,
         'biaya_ongkir': 0,
         'gratis': false,
-        'pesan': 'Alamat pengiriman berada di luar jangkauan kurir UMKM (10 km).',
+        'pesan':
+            'Alamat pengiriman berada di luar jangkauan kurir UMKM (10 km).',
         'di_luar_jangkauan': true,
       });
 
@@ -345,116 +367,167 @@ void main() {
       expect(OrderStatus.cancelled.canComplete, isFalse);
     });
 
-    test('OrderService completeOrder transitions delivering order to completed', () async {
-      final service = OrderService();
-      final deliveringOrder = Order(
-        id: 'PO-TEST-DELIVERING',
-        refId: 'PO-TEST-DELIVERING',
-        createdAt: DateTime(2026, 11, 7),
-        status: OrderStatus.delivering,
-        paymentMethod: PaymentMethod.cod,
-        serviceFee: 0,
-        discount: 0,
-        account: const PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
-        recipient: const Recipient(
-          name: 'Budi Santoso',
-          phone: '08123456789',
-          address: 'Jl. Desa Kreyongan No. 10',
-        ),
-        vendors: const [
-          OrderVendor(
-            umkmId: '1',
-            umkmName: 'Warung Enak',
-            umkmType: 'Jajanan',
-            type: OrderType.instant,
-            delivery: DeliveryMethod.courier,
-            deliveryFee: 5000,
-            pickupLocation: 'Jl. Kreyongan',
-            items: [
-              OrderItem(
-                productId: '1',
-                productName: 'Kue Cucur',
-                variant: 'Original',
-                unit: 'pcs',
-                imageUrl: '',
-                quantity: 2,
-                price: 2500,
-              ),
-            ],
+    test(
+      'OrderService completeOrder transitions delivering order to completed',
+      () async {
+        final service = OrderService();
+        final deliveringOrder = Order(
+          id: 'PO-TEST-DELIVERING',
+          refId: 'PO-TEST-DELIVERING',
+          createdAt: DateTime(2026, 11, 7),
+          status: OrderStatus.delivering,
+          paymentMethod: PaymentMethod.cod,
+          serviceFee: 0,
+          discount: 0,
+          account: const PaymentAccount(
+            bank: 'BRI',
+            bankFullName: '',
+            number: '',
+            holder: '',
           ),
-        ],
-      );
-
-      service.seedOrders([deliveringOrder]);
-      expect(deliveringOrder.status, OrderStatus.delivering);
-      expect(deliveringOrder.canComplete, isTrue);
-
-      final completed = await service.completeOrder(deliveringOrder.id);
-      expect(completed.status, OrderStatus.completed);
-      expect(completed.canComplete, isFalse);
-    });
-
-    test('ReceiptData formats customer order and generates valid PDF bytes', () async {
-      TestWidgetsFlutterBinding.ensureInitialized();
-
-      final order = Order(
-        id: 'PO-PDF-TEST',
-        refId: 'PO-PDF-TEST',
-        createdAt: DateTime(2026, 11, 8, 14, 30),
-        status: OrderStatus.completed,
-        paymentMethod: PaymentMethod.midtrans,
-        serviceFee: 1000,
-        discount: 2000,
-        account: const PaymentAccount(bank: 'BRI', bankFullName: '', number: '', holder: ''),
-        recipient: const Recipient(
-          name: 'Pak Budi',
-          phone: '081234567890',
-          address: 'Jl. Merpati No. 12, Kreyongan Atas',
-        ),
-        vendors: const [
-          OrderVendor(
-            umkmId: '1',
-            umkmName: 'Warung Bu Siti',
-            umkmType: 'Jajanan',
-            type: OrderType.instant,
-            delivery: DeliveryMethod.courier,
-            deliveryFee: 5000,
-            pickupLocation: 'Jl. Kreyongan',
-            items: [
-              OrderItem(
-                productId: '10',
-                productName: 'Kue Lumpur',
-                variant: 'Pandan',
-                unit: 'kotak',
-                imageUrl: '',
-                quantity: 3,
-                price: 10000,
-              ),
-            ],
+          recipient: const Recipient(
+            name: 'Budi Santoso',
+            phone: '08123456789',
+            address: 'Jl. Desa Kreyongan No. 10',
           ),
-        ],
-      );
+          vendors: const [
+            OrderVendor(
+              umkmId: '1',
+              umkmName: 'Warung Enak',
+              umkmType: 'Jajanan',
+              type: OrderType.instant,
+              delivery: DeliveryMethod.courier,
+              deliveryFee: 5000,
+              pickupLocation: 'Jl. Kreyongan',
+              items: [
+                OrderItem(
+                  productId: '1',
+                  productName: 'Kue Cucur',
+                  variant: 'Original',
+                  unit: 'pcs',
+                  imageUrl: '',
+                  quantity: 2,
+                  price: 2500,
+                ),
+              ],
+            ),
+          ],
+        );
 
-      final data = ReceiptData.fromCustomerOrder(order);
-      expect(data.orderId, 'PO-PDF-TEST');
-      expect(data.merchantName, 'Warung Bu Siti');
-      expect(data.customerName, 'Pak Budi');
-      expect(data.items.length, 1);
-      expect(data.items.first.total, 30000.0);
-      expect(data.subtotal, 30000.0);
-      expect(data.total, 34000.0); // 30000 + 5000 + 1000 - 2000
+        service.seedOrders([deliveringOrder]);
+        expect(deliveringOrder.status, OrderStatus.delivering);
+        expect(deliveringOrder.canComplete, isTrue);
 
-      // Generate PDF bytes
-      final pdfBytes = await ReceiptPdfService.generateReceiptPdf(data);
-      expect(pdfBytes, isNotEmpty);
-      expect(pdfBytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]); // %PDF
-    });
+        final completed = await service.completeOrder(deliveringOrder.id);
+        expect(completed.status, OrderStatus.completed);
+        expect(completed.canComplete, isFalse);
+      },
+    );
+
+    test(
+      'ReceiptData formats customer order and generates valid PDF bytes',
+      () async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+
+        final order = Order(
+          id: 'PO-PDF-TEST',
+          refId: 'PO-PDF-TEST',
+          createdAt: DateTime(2026, 11, 8, 14, 30),
+          status: OrderStatus.completed,
+          paymentMethod: PaymentMethod.midtrans,
+          serviceFee: 1000,
+          discount: 2000,
+          account: const PaymentAccount(
+            bank: 'BRI',
+            bankFullName: '',
+            number: '',
+            holder: '',
+          ),
+          recipient: const Recipient(
+            name: 'Pak Budi',
+            phone: '081234567890',
+            address: 'Jl. Merpati No. 12, Kreyongan Atas',
+          ),
+          vendors: const [
+            OrderVendor(
+              umkmId: '1',
+              umkmName: 'Warung Bu Siti',
+              umkmType: 'Jajanan',
+              type: OrderType.instant,
+              delivery: DeliveryMethod.courier,
+              deliveryFee: 5000,
+              pickupLocation: 'Jl. Kreyongan',
+              items: [
+                OrderItem(
+                  productId: '10',
+                  productName: 'Kue Lumpur',
+                  variant: 'Pandan',
+                  unit: 'kotak',
+                  imageUrl: '',
+                  quantity: 3,
+                  price: 10000,
+                ),
+              ],
+            ),
+          ],
+        );
+
+        final data = ReceiptData.fromCustomerOrder(order);
+        expect(data.orderId, 'PO-PDF-TEST');
+        expect(data.merchantName, 'Warung Bu Siti');
+        expect(data.customerName, 'Pak Budi');
+        expect(data.items.length, 1);
+        expect(data.items.first.total, 30000.0);
+        expect(data.subtotal, 30000.0);
+        expect(data.total, 34000.0); // 30000 + 5000 + 1000 - 2000
+        expect(data.paymentMethod, 'QRIS');
+
+        // Generate PDF bytes
+        final pdfBytes = await ReceiptPdfService.generateReceiptPdf(data);
+        expect(pdfBytes, isNotEmpty);
+        expect(pdfBytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]); // %PDF
+      },
+    );
+
+    test(
+      'UMKM receipts show supported methods and label legacy data accurately',
+      () {
+        final receipt = ReceiptData.fromUmkmPesanan(
+          umkm_models.Pesanan.fromJson({
+            'id_pesanan': 'PO-PDF-UMKM',
+            'metode_pembayaran': 'midtrans',
+          }),
+        );
+        final qrisReceipt = ReceiptData.fromUmkmPesanan(
+          umkm_models.Pesanan.fromJson({
+            'id_pesanan': 'PO-PDF-QRIS',
+            'metode_pembayaran': 'qris',
+          }),
+        );
+        final codReceipt = ReceiptData.fromUmkmPesanan(
+          umkm_models.Pesanan.fromJson({
+            'id_pesanan': 'PO-PDF-COD',
+            'metode_pembayaran': 'cod',
+          }),
+        );
+
+        expect(qrisReceipt.paymentMethod, 'QRIS');
+        expect(codReceipt.paymentMethod, 'COD');
+        expect(
+          receipt.paymentMethod,
+          'Online (data lama, metode tidak tercatat)',
+        );
+        expect(receipt.paymentMethod, isNot(contains('Midtrans')));
+      },
+    );
 
     test('MapNavigationService generates correct Google Maps turn-by-turn navigation URLs', () {
       final dest = const LatLng(-8.1630, 113.7100);
       final origin = const LatLng(-8.1585, 113.7025);
 
-      final uriWithoutOrigin = MapNavigationService.buildGoogleMapsDirUri(destination: dest);
+      final uriWithoutOrigin = MapNavigationService.buildGoogleMapsDirUri(
+        destination: dest,
+      );
       expect(uriWithoutOrigin.scheme, 'https');
       expect(uriWithoutOrigin.host, 'www.google.com');
       expect(uriWithoutOrigin.path, '/maps/dir/');
@@ -563,7 +636,10 @@ void main() {
 
       expect(readyStock.isPreOrder, isFalse);
       // Fallback deadline for ready stock is 30 minutes from now
-      expect(readyStock.sisaWaktuKonfirmasi.inMinutes, inInclusiveRange(28, 30));
+      expect(
+        readyStock.sisaWaktuKonfirmasi.inMinutes,
+        inInclusiveRange(28, 30),
+      );
 
       final preOrderEvent = umkm_models.Pesanan(
         idPesanan: 'PO-EVENT-1',
@@ -588,7 +664,10 @@ void main() {
 
       expect(preOrderEvent.isPreOrder, isTrue);
       // Fallback deadline for pre-order is 24 hours from now
-      expect(preOrderEvent.sisaWaktuKonfirmasi.inHours, inInclusiveRange(23, 24));
+      expect(
+        preOrderEvent.sisaWaktuKonfirmasi.inHours,
+        inInclusiveRange(23, 24),
+      );
     });
 
     test('Cart detection of Pre-Order items for COD disabling (Item B.2)', () {
@@ -628,12 +707,22 @@ void main() {
       );
 
       cart.addCartLine(readyLine);
-      bool hasPreOrder = cart.items.any((item) => item.type == OrderType.preOrder);
-      expect(hasPreOrder, isFalse, reason: 'Ready stock item cart should allow COD');
+      bool hasPreOrder = cart.items.any(
+        (item) => item.type == OrderType.preOrder,
+      );
+      expect(
+        hasPreOrder,
+        isFalse,
+        reason: 'Ready stock item cart should allow COD',
+      );
 
       cart.addCartLine(poLine);
       hasPreOrder = cart.items.any((item) => item.type == OrderType.preOrder);
-      expect(hasPreOrder, isTrue, reason: 'Cart containing Pre-Order product must flag Pre-Order');
+      expect(
+        hasPreOrder,
+        isTrue,
+        reason: 'Cart containing Pre-Order product must flag Pre-Order',
+      );
     });
 
     test('Order refund status getters and cancellation guards (Item B.1)', () {
@@ -645,8 +734,17 @@ void main() {
         paymentMethod: PaymentMethod.midtrans,
         serviceFee: 0,
         discount: 0,
-        account: PaymentAccount(bank: 'BCA', bankFullName: '', number: '', holder: ''),
-        recipient: const Recipient(name: 'Andi', phone: '08123456789', address: 'Kreyongan'),
+        account: PaymentAccount(
+          bank: 'BCA',
+          bankFullName: '',
+          number: '',
+          holder: '',
+        ),
+        recipient: const Recipient(
+          name: 'Andi',
+          phone: '08123456789',
+          address: 'Kreyongan',
+        ),
         vendors: const [],
         refundStatus: 'perlu_refund',
       );
@@ -663,8 +761,17 @@ void main() {
         paymentMethod: PaymentMethod.midtrans,
         serviceFee: 0,
         discount: 0,
-        account: PaymentAccount(bank: 'BCA', bankFullName: '', number: '', holder: ''),
-        recipient: const Recipient(name: 'Andi', phone: '08123456789', address: 'Kreyongan'),
+        account: PaymentAccount(
+          bank: 'BCA',
+          bankFullName: '',
+          number: '',
+          holder: '',
+        ),
+        recipient: const Recipient(
+          name: 'Andi',
+          phone: '08123456789',
+          address: 'Kreyongan',
+        ),
         vendors: const [],
         refundStatus: 'refund_berhasil',
       );

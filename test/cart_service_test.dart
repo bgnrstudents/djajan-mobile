@@ -43,6 +43,30 @@ void main() {
     expect(cart.subtotal, 15000);
   });
 
+  test('ready-stock quantities cannot exceed available stock', () {
+    final product = _product(id: 'stock-30', price: 12000, stock: 30);
+
+    expect(cart.addProduct(product, quantity: 99999), 30);
+    expect(cart.quantityForProduct(product), 30);
+    expect(cart.addProduct(product), 0);
+
+    expect(cart.updateQuantity(product.id, 99999), 30);
+    expect(cart.quantityForProduct(product), 30);
+  });
+
+  test('pre-order quantities are not limited by ready stock', () {
+    final product = _product(
+      id: 'preorder',
+      price: 12000,
+      stock: 0,
+      modePenjualan: 'pre_order',
+      orderType: 'Pre-Order',
+    );
+
+    expect(cart.addProduct(product, quantity: 31), 31);
+    expect(cart.quantityForProduct(product), 31);
+  });
+
   test('cart persists per customer when the session is restored', () async {
     SharedPreferences.setMockInitialValues({});
     await cart.loadForCustomer('cart-test-customer-a');
@@ -196,6 +220,9 @@ Product _product({
   required String id,
   String name = 'Jajanan Djajan',
   required int price,
+  int? stock,
+  String modePenjualan = 'ready',
+  String orderType = 'Pesan Sekarang',
 }) {
   return Product(
     id: id,
@@ -205,7 +232,9 @@ Product _product({
     price: price,
     rating: 4.8,
     category: 'Jajanan',
-    orderType: 'Pesan Sekarang',
+    orderType: orderType,
     imageUrl: '',
+    stock: stock,
+    modePenjualan: modePenjualan,
   );
 }

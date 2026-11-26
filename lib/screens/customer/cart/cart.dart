@@ -76,7 +76,9 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   helperText: isPo
                       ? 'Minimal pemesanan Pre-Order: $minAllowed ${item.unit}'
-                      : 'Ketik 0 jika ingin menghapus dari keranjang',
+                      : item.stock == null
+                          ? 'Ketik 0 jika ingin menghapus dari keranjang'
+                          : 'Stok tersedia: ${item.stock} • Ketik 0 untuk menghapus',
                 ),
               ),
             ],
@@ -121,7 +123,19 @@ class _CartScreenState extends State<CartScreen> {
           'Jumlah disesuaikan ke minimal pemesanan: $minAllowed ${item.unit}',
         );
       }
-      _cartService.updateQuantity(item.productId, finalQty, type: item.type);
+      final appliedQty = _cartService.updateQuantity(
+        item.productId,
+        finalQty,
+        type: item.type,
+      );
+      if (appliedQty < finalQty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Jumlah dibatasi sesuai stok: $appliedQty'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -829,13 +843,17 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                           InkWell(
-                            onTap: () {
-                              _cartService.updateQuantity(
-                                item.productId,
-                                item.quantity + 1,
-                                type: item.type,
-                              );
-                            },
+                            onTap: item.type != OrderType.preOrder &&
+                                    item.stock != null &&
+                                    item.quantity >= item.stock!
+                                ? null
+                                : () {
+                                    _cartService.updateQuantity(
+                                      item.productId,
+                                      item.quantity + 1,
+                                      type: item.type,
+                                    );
+                                  },
                             borderRadius: const BorderRadius.horizontal(
                               right: Radius.circular(8),
                             ),
@@ -844,7 +862,11 @@ class _CartScreenState extends State<CartScreen> {
                                 horizontal: 7,
                                 vertical: 3,
                               ),
-                              child: Icon(Icons.add, size: 16, color: OC.ink),
+                              child: Icon(
+                                Icons.add,
+                                size: 16,
+                                color: OC.ink,
+                              ),
                             ),
                           ),
                         ],

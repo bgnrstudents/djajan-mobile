@@ -319,7 +319,7 @@ class OrderService extends ChangeNotifier {
       groupedLines.putIfAbsent(line.umkmId, () => []).add(line);
     }
     final backendData = await ApiService.postJson('pesanan/checkout', {
-      'metode_pembayaran': isCod ? 'cod' : 'midtrans',
+      'metode_pembayaran': isCod ? 'cod' : 'qris',
       if (recipient.addressId != null) 'id_alamat': recipient.addressId,
       if (recipient.latitude != null) 'latitude': recipient.latitude,
       if (recipient.longitude != null) 'longitude': recipient.longitude,
@@ -341,6 +341,9 @@ class OrderService extends ChangeNotifier {
                 (item) => {
                   'id_produk': int.tryParse(item.productId) ?? 0,
                   'jumlah': item.quantity,
+                  'jenis_pesanan': item.type == OrderType.preOrder
+                      ? 'pre_order'
+                      : 'ready',
                 },
               )
               .toList(),
@@ -477,7 +480,7 @@ class OrderService extends ChangeNotifier {
   Future<Order> confirmCodOrder(String orderId) async {
     final order = _require(orderId);
     if (order.paymentMethod != PaymentMethod.cod) {
-      throw const OrderException('Pesanan ini memakai transfer / QRIS.');
+      throw const OrderException('Pesanan ini memakai pembayaran QRIS.');
     }
 
     // Validasi status pesanan dengan payment expiry

@@ -117,8 +117,8 @@ class CartService extends ChangeNotifier {
   }
 
   /// Menambahkan produk dari halaman Beranda atau Detail Produk
-  void addProduct(Product product, {int quantity = 1, OrderType? type}) {
-    if (quantity <= 0) return;
+  int addProduct(Product product, {int quantity = 1, OrderType? type}) {
+    if (quantity <= 0) return 0;
     final targetType = type ?? product.parsedOrderType;
     final cartLine = product.toCartLine(quantity: quantity, type: targetType);
 
@@ -131,42 +131,82 @@ class CartService extends ChangeNotifier {
 
     if (index >= 0) {
       final existing = _items[index];
-      _items[index] = existing.copyWith(quantity: existing.quantity + quantity);
+      final accepted = _acceptedQuantity(
+        existing,
+        quantity,
+        alreadyInCart: existing.quantity,
+      );
+      if (accepted <= 0) return 0;
+      _items[index] = existing.copyWith(
+        quantity: existing.quantity + accepted,
+        stock: cartLine.stock,
+        clearStock: cartLine.stock == null,
+      );
+      _changed();
+      return accepted;
     } else {
-      _items.add(cartLine);
+      final accepted = _acceptedQuantity(cartLine, quantity);
+      if (accepted <= 0) return 0;
+      _items.add(cartLine.copyWith(quantity: accepted));
+      _changed();
+      return accepted;
     }
-    _changed();
   }
 
   /// Menambahkan CartLine secara langsung
-  void addCartLine(CartLine line) {
+  int addCartLine(CartLine line) {
+    if (line.quantity <= 0) return 0;
     final index = _items.indexWhere(
       (l) => l.productId == line.productId && l.type == line.type,
     );
     if (index >= 0) {
       final existing = _items[index];
-      _items[index] = existing.copyWith(
-        quantity: existing.quantity + line.quantity,
+      final accepted = _acceptedQuantity(
+        existing,
+        line.quantity,
+        alreadyInCart: existing.quantity,
       );
+      if (accepted <= 0) return 0;
+      _items[index] = existing.copyWith(
+        quantity: existing.quantity + accepted,
+        stock: line.stock,
+        clearStock: line.stock == null,
+      );
+      _changed();
+      return accepted;
     } else {
-      _items.add(line);
+      final accepted = _acceptedQuantity(line, line.quantity);
+      if (accepted <= 0) return 0;
+      _items.add(line.copyWith(quantity: accepted));
+      _changed();
+      return accepted;
     }
-    _changed();
   }
 
   /// Mengubah jumlah item produk (jika <= 0, produk akan dihapus)
-  void updateQuantity(String productId, int newQuantity, {OrderType? type}) {
+  int updateQuantity(String productId, int newQuantity, {OrderType? type}) {
     final index = _items.indexWhere(
       (l) => l.productId == productId && (type == null || l.type == type),
     );
-    if (index >= 0) {
-      if (newQuantity <= 0) {
-        _items.removeAt(index);
-      } else {
-        _items[index] = _items[index].copyWith(quantity: newQuantity);
-      }
+    if (index < 0) return 0;
+    if (newQuantity <= 0) {
+      _items.removeAt(index);
       _changed();
+      return 0;
     }
+    final item = _items[index];
+    final stockLimit = _stockLimit(item);
+    if (stockLimit != null && stockLimit <= 0) {
+      _items.removeAt(index);
+      _changed();
+      return 0;
+    }
+    final effectiveQuantity = stockLimit == null
+        ? newQuantity
+        : newQuantity.clamp(1, stockLimit).toInt();
+    _items[index] = item.copyWith(quantity: effectiveQuantity);
+    _changed();
+    return effectiveQuantity;
   }
 
   /// Menghapus produk tertentu dari keranjang
@@ -200,6 +240,7 @@ class CartService extends ChangeNotifier {
   void syncWithCatalog(List<Product> products, {List<Umkm>? umkms}) {
     if (_items.isEmpty) return;
     bool hasChanged = false;
+    final removeIndexes = <int>[];
     for (int i = 0; i < _items.length; i++) {
       final line = _items[i];
       final matchingProduct = products.cast<Product?>().firstWhere(
@@ -228,6 +269,14 @@ class CartService extends ChangeNotifier {
       }
 
       if (matchingProduct != null) {
+        if (_items[i].type != OrderType.preOrder &&
+            !matchingProduct.isPreOrder &&
+            matchingProduct.stock != null &&
+            matchingProduct.stock! <= 0) {
+          removeIndexes.add(i);
+          hasChanged = true;
+          continue;
+        }
         final newType = matchingProduct.isBothMode
             ? line.type // pertahankan pilihan mode pelanggan jika UMKM mengizinkan keduanya
             : matchingProduct.parsedOrderType;
@@ -247,29 +296,60 @@ class CartService extends ChangeNotifier {
           pickupAvailable: matchingProduct.pickupAvailable,
           minOrderPo: matchingProduct.minOrderPo,
           modePenjualan: matchingProduct.modePenjualan,
+          stock: matchingProduct.stock,
+          clearStock: matchingProduct.stock == null,
         );
-        if (updatedLine.productName != _items[i].productName ||
-            updatedLine.unit != _items[i].unit ||
-            updatedLine.imageUrl != _items[i].imageUrl ||
-            updatedLine.price != _items[i].price ||
-            updatedLine.type != _items[i].type ||
-            updatedLine.umkmName != _items[i].umkmName ||
-            updatedLine.umkmType != _items[i].umkmType ||
-            updatedLine.courierFee != _items[i].courierFee ||
-            updatedLine.pickupLocation != _items[i].pickupLocation ||
-            updatedLine.codAvailable != _items[i].codAvailable ||
-            updatedLine.pickupAvailable != _items[i].pickupAvailable ||
-            updatedLine.minOrderPo != _items[i].minOrderPo ||
-            updatedLine.modePenjualan != _items[i].modePenjualan) {
-          _items[i] = updatedLine;
+        final stockLimit = _stockLimit(updatedLine);
+        final withAvailableQuantity = stockLimit != null &&
+                updatedLine.quantity > stockLimit
+            ? updatedLine.copyWith(quantity: stockLimit)
+            : updatedLine;
+        if (withAvailableQuantity.productName != _items[i].productName ||
+            withAvailableQuantity.unit != _items[i].unit ||
+            withAvailableQuantity.imageUrl != _items[i].imageUrl ||
+            withAvailableQuantity.price != _items[i].price ||
+            withAvailableQuantity.type != _items[i].type ||
+            withAvailableQuantity.umkmName != _items[i].umkmName ||
+            withAvailableQuantity.umkmType != _items[i].umkmType ||
+            withAvailableQuantity.courierFee != _items[i].courierFee ||
+            withAvailableQuantity.pickupLocation != _items[i].pickupLocation ||
+            withAvailableQuantity.codAvailable != _items[i].codAvailable ||
+            withAvailableQuantity.pickupAvailable != _items[i].pickupAvailable ||
+            withAvailableQuantity.minOrderPo != _items[i].minOrderPo ||
+            withAvailableQuantity.modePenjualan != _items[i].modePenjualan ||
+            withAvailableQuantity.stock != _items[i].stock ||
+            withAvailableQuantity.quantity != _items[i].quantity) {
+          _items[i] = withAvailableQuantity;
           hasChanged = true;
         }
       }
     }
 
+    for (final index in removeIndexes.reversed) {
+      _items.removeAt(index);
+    }
     if (hasChanged) {
       _changed();
     }
+  }
+
+  int? _stockLimit(CartLine item) {
+    final mode = item.modePenjualan
+        .toLowerCase()
+        .replaceAll(RegExp(r'[-_ ]'), '');
+    return item.type == OrderType.preOrder || mode == 'preorder'
+        ? null
+        : item.stock;
+  }
+
+  int _acceptedQuantity(
+    CartLine item,
+    int requested, {
+    int alreadyInCart = 0,
+  }) {
+    final stockLimit = _stockLimit(item);
+    if (stockLimit == null) return requested;
+    return (stockLimit - alreadyInCart).clamp(0, requested).toInt();
   }
 
   void _changed() {
@@ -321,6 +401,7 @@ class CartService extends ChangeNotifier {
     'pickup_available': item.pickupAvailable,
     'min_order_po': item.minOrderPo,
     'mode_penjualan': item.modePenjualan,
+    'stock': item.stock,
   };
 
   CartLine? _decodeItem(Map<String, dynamic> item) {
@@ -349,6 +430,7 @@ class CartService extends ChangeNotifier {
       pickupAvailable: item['pickup_available'] as bool? ?? true,
       minOrderPo: (item['min_order_po'] as num?)?.toInt() ?? 0,
       modePenjualan: item['mode_penjualan']?.toString() ?? 'ready',
+      stock: (item['stock'] as num?)?.toInt(),
     );
   }
 }

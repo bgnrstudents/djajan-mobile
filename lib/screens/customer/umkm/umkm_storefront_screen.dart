@@ -969,7 +969,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
               const Icon(Icons.star_rounded, color: Color(0xFF5B9E68), size: 24),
               const SizedBox(width: 8),
               const Text(
-                'Ulasan Pembeli',
+                'Ulasan Produk',
                 style: TextStyle(
                   fontSize: 16.5,
                   fontWeight: FontWeight.bold,
@@ -1032,7 +1032,7 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Jadilah pembeli pertama yang memberikan penilaian & ulasan untuk UMKM ini!',
+                    'Belum ada produk yang mendapatkan ulasan dari pelanggan.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
@@ -1052,10 +1052,50 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
                 final nama = (r['nama_pelanggan'] ?? 'Warga DJajan').toString();
                 final komentar = (r['komentar'] ?? '').toString();
                 final tanggal = (r['tanggal'] ?? '').toString();
+                final namaProduk = (r['nama_produk'] ?? 'Produk').toString();
+                final gambarProduk = (r['gambar_url'] ?? '').toString();
+                final idPesanan = (r['id_pesanan'] ?? '').toString();
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        AppNetworkImage(
+                          url: gambarProduk,
+                          width: 42,
+                          height: 42,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                namaProduk,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: textDark,
+                                ),
+                              ),
+                              if (idPesanan.isNotEmpty)
+                                Text(
+                                  'Pesanan $idPesanan',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: textMuted,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         CircleAvatar(

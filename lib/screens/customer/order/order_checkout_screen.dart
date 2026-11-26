@@ -334,7 +334,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     if (_method == PaymentMethod.cod && _hasPreOrder) {
       showToast(
         context,
-        'Pesanan Pre-Order/Katering wajib menggunakan pembayaran online (QRIS/E-Wallet/Transfer).',
+        'Pesanan Pre-Order/Katering wajib menggunakan pembayaran QRIS.',
         error: true,
       );
       return;

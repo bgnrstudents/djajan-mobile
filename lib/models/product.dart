@@ -81,6 +81,7 @@ class Product {
       pickupAvailable: pickupAvailable,
       minOrderPo: minOrderPo,
       modePenjualan: modePenjualan,
+      stock: stock,
     );
   }
 

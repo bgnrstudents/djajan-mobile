@@ -16,6 +16,7 @@ import '../customer/order/order_widgets.dart';
 import '../../widgets/umkm_bottom_navigation.dart';
 import 'tambah_produk_screen.dart';
 import 'pengaturan_screen.dart';
+import 'ulasan_produk_screen.dart';
 
 /// HALAMAN 2 — Dashboard UMKM.
 /// Seluruh isi halaman ini dibaca langsung dari database MySQL
@@ -117,6 +118,13 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
                       _TabBeranda(
                         service: service,
                         onPindahTab: (i) => setState(() => _tab = i),
+                        onShowReviews: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => UlasanProdukScreen(
+                              umkmId: service.profile.idUmkm,
+                            ),
+                          ),
+                        ),
                         onRefresh: _refresh,
                         periodeBulanan: _pendapatanBulanan,
                         onPilihPeriodeBulanan: (value) =>
@@ -150,6 +158,7 @@ class _DashboardUmkmScreenState extends State<DashboardUmkmScreen> {
 class _TabBeranda extends StatelessWidget {
   final UmkmDataService service;
   final ValueChanged<int> onPindahTab;
+  final VoidCallback onShowReviews;
   final Future<void> Function() onRefresh;
   final bool periodeBulanan;
   final ValueChanged<bool> onPilihPeriodeBulanan;
@@ -158,6 +167,7 @@ class _TabBeranda extends StatelessWidget {
   const _TabBeranda({
     required this.service,
     required this.onPindahTab,
+    required this.onShowReviews,
     required this.onRefresh,
     required this.periodeBulanan,
     required this.onPilihPeriodeBulanan,
@@ -423,7 +433,7 @@ class _TabBeranda extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           r.pesanPeringatanCod ??
-                              'Toko Anda memiliki akumulasi komisi COD sebesar ${rupiah(r.sisaKewajibanCod)} yang belum terpotong karena saldo digital kosong.',
+                              'Biaya platform dari pesanan COD sebesar ${rupiah(r.sisaKewajibanCod)} belum tertutup karena saldo penjualan digital belum mencukupi.',
                           style: const TextStyle(
                             fontSize: 11.5,
                             height: 1.4,
@@ -501,6 +511,47 @@ class _TabBeranda extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+
+          const SizedBox(height: 20),
+
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: onShowReviews,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.rate_review_outlined,
+                      color: OC.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ulasan Produk',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Lihat rating dan komentar untuk produk Anda',
+                            style: TextStyle(fontSize: 11, color: OC.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: OC.muted),
+                  ],
+                ),
+              ),
+            ),
           ),
 
           const SizedBox(height: 20),

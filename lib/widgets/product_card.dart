@@ -50,7 +50,13 @@ class ProductCard extends StatelessWidget {
     return AnimatedBuilder(
       animation: cartService,
       builder: (context, _) {
-        final quantity = cartService.quantityForProduct(product);
+        final quantity = cartService.quantityForProduct(
+          product,
+          type: product.parsedOrderType,
+        );
+        final atStockLimit = !product.isPreOrder &&
+            product.stock != null &&
+            quantity >= product.stock!;
         final cartProductId = product.toCartLine().productId;
         final compactFeatured =
             featured && MediaQuery.sizeOf(context).width < 380;
@@ -336,7 +342,8 @@ class ProductCard extends StatelessWidget {
                                         key: ValueKey(
                                           'product-card-add-$cartProductId',
                                         ),
-                                        onTap: product.isOutOfStock
+                                        onTap: product.isOutOfStock ||
+                                                atStockLimit
                                             ? null
                                             : () {
                                                 if (product.isBothMode) {
@@ -458,9 +465,12 @@ class ProductCard extends StatelessWidget {
                                               ),
                                               icon: Icons.add,
                                               featured: featured,
-                                              onTap: product.isOutOfStock
+                                              onTap: product.isOutOfStock ||
+                                                      atStockLimit
                                                   ? () {}
                                                   : () => onAddToCart?.call(),
+                                              enabled: !product.isOutOfStock &&
+                                                  !atStockLimit,
                                             ),
                                           ],
                                         ),
@@ -486,6 +496,7 @@ class ProductCard extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
     bool featured = false,
+    bool enabled = true,
   }) {
     return InkWell(
       key: key,
@@ -494,7 +505,11 @@ class ProductCard extends StatelessWidget {
       child: SizedBox(
         width: featured ? 28 : 30,
         height: 32,
-        child: Icon(icon, size: 16, color: AppColors.hijauTua),
+        child: Icon(
+          icon,
+          size: 16,
+          color: enabled ? AppColors.hijauTua : AppColors.textGrey,
+        ),
       ),
     );
   }
