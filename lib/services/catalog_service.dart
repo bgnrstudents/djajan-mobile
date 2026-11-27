@@ -44,44 +44,57 @@ class CatalogService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.get(
-        'katalog',
-        query: {
-          if (query.trim().isNotEmpty) 'cari': query.trim(),
-          if (category.isNotEmpty && category != 'Semua') 'kategori': category,
-        },
-      ) as Map<String, dynamic>;
-
-      final rawProducts = response['produk'];
-      final rawUmkms = response['umkm'];
-      final rawCategories = response['kategori'];
-
-      products = rawProducts is List
-          ? rawProducts
-                .whereType<Map>()
-                .map(
-                  (item) => Product.fromJson(Map<String, dynamic>.from(item)),
-                )
-                .toList()
-          : const [];
-      umkms = rawUmkms is List
-          ? rawUmkms
-                .whereType<Map>()
-                .map((item) => Umkm.fromJson(Map<String, dynamic>.from(item)))
-                .toList()
-          : const [];
-      CartService().syncWithCatalog(products, umkms: umkms);
-      categories = [
-        'Semua',
-        if (rawCategories is List)
-          ...rawCategories.map((item) => item.toString()),
-      ];
+      await _fetchCatalog(query: query, category: category);
     } on ApiException catch (error) {
       errorMessage = error.pesan;
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Memperbarui data katalog dari server secara senyap tanpa menimpa cache
+  /// jika request gagal (dipakai saat berpindah mode / membuka checkout).
+  Future<void> refreshSilently({String query = '', String category = ''}) async {
+    try {
+      await _fetchCatalog(query: query, category: category);
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> _fetchCatalog({String query = '', String category = ''}) async {
+    final response = await ApiService.get(
+      'katalog',
+      query: {
+        if (query.trim().isNotEmpty) 'cari': query.trim(),
+        if (category.isNotEmpty && category != 'Semua') 'kategori': category,
+      },
+    ) as Map<String, dynamic>;
+
+    final rawProducts = response['produk'];
+    final rawUmkms = response['umkm'];
+    final rawCategories = response['kategori'];
+
+    products = rawProducts is List
+        ? rawProducts
+              .whereType<Map>()
+              .map(
+                (item) => Product.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList()
+        : const [];
+    umkms = rawUmkms is List
+        ? rawUmkms
+              .whereType<Map>()
+              .map((item) => Umkm.fromJson(Map<String, dynamic>.from(item)))
+              .toList()
+        : const [];
+    CartService().syncWithCatalog(products, umkms: umkms);
+    categories = [
+      'Semua',
+      if (rawCategories is List)
+        ...rawCategories.map((item) => item.toString()),
+    ];
   }
 
   List<Product> productsOf(String umkmId) =>

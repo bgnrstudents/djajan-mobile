@@ -7,6 +7,7 @@ import '../../models/umkm_seller_models.dart';
 import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/catalog_service.dart';
 import '../../services/category_service.dart';
 import '../../services/umkm_data_service.dart';
 import '../../widgets/app_widgets.dart';
@@ -103,73 +104,88 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   Future<void> _pilihSkemaPO() async {
     final pilihan = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SafeArea(
+      builder: (ctx) => SafeArea(
         top: false,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(ctx).height * 0.85,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 17, 16, 13),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Skema pembayaran PO',
-                        style: TextStyle(
-                          color: OC.ink,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 17, 16, 13),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Skema pembayaran PO',
+                          style: TextStyle(
+                            color: OC.ink,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                      color: OC.muted,
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: OC.line),
-              ..._skemaOptions.map(
-                (skema) => ListTile(
-                  onTap: () => Navigator.pop(context, skema),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 3,
-                  ),
-                  title: Text(
-                    _labelSkemaPO(skema),
-                    style: TextStyle(
-                      color: skema == _skemaPO ? OC.primary : OC.ink,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _deskripsiSkemaPO(skema),
-                    style: const TextStyle(
-                      color: OC.muted,
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
-                  ),
-                  trailing: Icon(
-                    skema == _skemaPO
-                        ? Icons.radio_button_checked_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: skema == _skemaPO ? OC.primary : OC.faint,
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded),
+                        color: OC.muted,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-            ],
+                const Divider(height: 1, color: OC.line),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ..._skemaOptions.map(
+                          (skema) => ListTile(
+                            onTap: () => Navigator.pop(ctx, skema),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 3,
+                            ),
+                            title: Text(
+                              _labelSkemaPO(skema),
+                              style: TextStyle(
+                                color: skema == _skemaPO ? OC.primary : OC.ink,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Text(
+                              _deskripsiSkemaPO(skema),
+                              style: const TextStyle(
+                                color: OC.muted,
+                                fontSize: 12,
+                                height: 1.3,
+                              ),
+                            ),
+                            trailing: Icon(
+                              skema == _skemaPO
+                                  ? Icons.radio_button_checked_rounded
+                                  : Icons.radio_button_unchecked_rounded,
+                              color: skema == _skemaPO ? OC.primary : OC.faint,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -177,6 +193,10 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
 
     if (pilihan != null && mounted) {
       setState(() => _skemaPO = pilihan);
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      if (mounted) {
+        await _simpanPengaturan(closeWhenStandalone: false);
+      }
     }
   }
 
@@ -408,13 +428,21 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                         width: double.infinity,
                         height: 46,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             setState(() {
                               _skemaOngkir = skemaSementara;
                               _biayaFlatCtrl.text = biayaCtrl.text;
                               _jarakMaksimalCtrl.text = jarakCtrl.text;
                             });
                             Navigator.pop(ctx);
+                            await Future<void>.delayed(
+                              const Duration(milliseconds: 180),
+                            );
+                            if (mounted) {
+                              await _simpanPengaturan(
+                                closeWhenStandalone: false,
+                              );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: OC.primary,
@@ -631,6 +659,13 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         throw ApiException('Mode pelanggan tidak berhasil diaktifkan.');
       }
       context.read<UmkmDataService>().clearState();
+      try {
+        await Provider.of<CatalogService?>(
+          context,
+          listen: false,
+        )?.refreshSilently();
+      } catch (_) {}
+      if (!mounted) return;
       Navigator.of(context, rootNavigator: true)
           .pushNamedAndRemoveUntil(AppRoutes.customerHome, (_) => false);
     } on ApiException catch (error) {
@@ -687,7 +722,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   }
 
   // ------------------------------------------------ Simpan Pengaturan
-  Future<void> _simpanPengaturan() async {
+  Future<void> _simpanPengaturan({bool closeWhenStandalone = true}) async {
     FocusScope.of(context).unfocus();
 
     final service = context.read<UmkmDataService>();
@@ -816,8 +851,15 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       _pickupAktifTersimpan = _pickupAktif;
       _kurirAktifTersimpan = _kurirAktif;
       _skemaOngkirTersimpan = _skemaOngkir;
+      try {
+        await Provider.of<CatalogService?>(
+          context,
+          listen: false,
+        )?.refreshSilently();
+      } catch (_) {}
+      if (!mounted) return;
       pesanSukses(context, pesan);
-      if (!widget.isTab) {
+      if (closeWhenStandalone && !widget.isTab) {
         Navigator.of(context).pop();
       }
     } on ApiException catch (e) {
@@ -1750,7 +1792,11 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Text('ðŸ’¡', style: TextStyle(fontSize: 14)),
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 16,
+                      color: Color(0xFFB45309),
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(

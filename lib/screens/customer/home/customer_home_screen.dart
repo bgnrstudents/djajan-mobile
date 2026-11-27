@@ -58,6 +58,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadLocation();
+        try {
+          Provider.of<CatalogService?>(
+            context,
+            listen: false,
+          )?.refreshSilently();
+        } catch (_) {}
       }
     });
   }

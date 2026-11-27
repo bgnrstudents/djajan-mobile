@@ -98,6 +98,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   void initState() {
     super.initState();
     _loadPrimaryAddress();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        Provider.of<CatalogService?>(context, listen: false)?.refreshSilently();
+      } catch (_) {}
+    });
     _method = widget.initialMethod;
     final Map<String, List<CartLine>> grouped = {};
     for (final l in widget.cartLines) {
@@ -223,17 +229,14 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   int get _qty => widget.cartLines.fold(0, (s, l) => s + l.quantity);
 
   bool get _hasPreOrder => _vendors.any((v) => v.isPreOrder);
-  bool get _isCodAllowed =>
-      _vendors.every((v) => v.codAvailable) && !_hasPreOrder;
 
   String get _skemaPo {
     if (!_hasPreOrder || _vendors.isEmpty) {
       return 'Lunas di Awal (Full Payment)';
     }
     try {
-      final umkm = context.read<CatalogService>().umkmById(
-            _vendors.first.umkmId,
-          );
+      final catalog = Provider.of<CatalogService?>(context);
+      final umkm = catalog?.umkmById(_vendors.first.umkmId);
       if (umkm != null && umkm.skemaPo.trim().isNotEmpty) {
         return umkm.skemaPo;
       }
@@ -243,6 +246,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   bool get _isDp30 => _skemaPo.contains('30%');
   bool get _isDp50 => _skemaPo.contains('50%');
+  bool get _isTanpaDp => _hasPreOrder && _skemaPo.toLowerCase().contains('tanpa dp');
+  bool get _isCodAllowed =>
+      _vendors.every((v) => v.codAvailable) && (!_hasPreOrder || _isTanpaDp);
   bool get _hasDpScheme => _hasPreOrder && (_isDp30 || _isDp50);
   double get _dpRatio => _isDp30 ? 0.30 : (_isDp50 ? 0.50 : 1.0);
   double get _amountDueNow =>
@@ -924,6 +930,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 12.5, color: OC.faint),
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 11),
         ),
       ),
@@ -1001,12 +1012,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   Widget _paymentCard() {
     String codSubtitle = 'Bayar saat pesanan diterima';
-    if (_hasPreOrder) {
-      codSubtitle =
-          'Khusus Pre-Order/Katering wajib pembayaran digital untuk jaminan modal dapur UMKM';
-    } else if (!_vendors.every((v) => v.codAvailable)) {
+    if (!_vendors.every((v) => v.codAvailable)) {
       codSubtitle =
           'Dinonaktifkan oleh ${_vendors.where((v) => !v.codAvailable).map((v) => v.umkmName).join(", ")}';
+    } else if (_hasPreOrder && !_isTanpaDp) {
+      codSubtitle =
+          'Khusus Pre-Order/Katering wajib pembayaran digital untuk jaminan modal dapur UMKM';
     }
 
     return OrderCard(
@@ -1030,18 +1041,20 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: OC.peachSoft,
+                color: _isTanpaDp ? OC.mintSoft : OC.peachSoft,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: OC.line),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.shield_outlined, size: 16, color: OC.primary),
-                  SizedBox(width: 8),
+                  const Icon(Icons.shield_outlined, size: 16, color: OC.primary),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Pesanan berisi Pre-Order / Acara. COD dikunci untuk jaminan pesanan & modal UMKM.',
-                      style: TextStyle(
+                      _isTanpaDp
+                          ? 'Skema Pre-Order UMKM: Tanpa DP. Anda dapat membayar saat pesanan sampai (COD) atau via QRIS.'
+                          : 'Pesanan berisi Pre-Order / Acara. COD dikunci untuk jaminan pesanan & modal UMKM.',
+                      style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                         color: OC.primary,
@@ -1259,6 +1272,43 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+          ] else if (_hasPreOrder) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(height: 1, color: OC.line),
+            ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: OC.mintSoft,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: OC.line),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SKEMA PO: $_skemaPo',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: OC.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _isTanpaDp
+                        ? 'Pembayaran penuh sebesar ${rupiah(_total)} dilakukan saat pesanan sampai.'
+                        : 'Seluruh pembayaran sebesar ${rupiah(_total)} dibayarkan lunas di awal.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: OC.ink,
+                    ),
                   ),
                 ],
               ),

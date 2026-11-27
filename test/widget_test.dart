@@ -347,6 +347,79 @@ void main() {
       expect(find.text('Sisa Pelunasan Nanti'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'OrderCheckoutScreen syncs Lunas di Awal and Tanpa DP changes from CatalogService',
+    (WidgetTester tester) async {
+      final catalog = CatalogService()
+        ..umkms = [
+          Umkm.fromJson({
+            'id_umkm': '99',
+            'nama_usaha': 'Katering PO Fleksibel',
+            'skema_po': 'Lunas di Awal (Full Payment)',
+            'layanan_ambil_sendiri': true,
+            'layanan_kurir': false,
+            'cod_available': true,
+          }),
+        ];
+
+      final poLine = CartLine(
+        productId: 'po_2',
+        productName: 'Tumpeng Mini',
+        variant: 'Komplit',
+        unit: 'porsi',
+        imageUrl: '',
+        quantity: 2,
+        price: 50000,
+        type: OrderType.preOrder,
+        umkmId: '99',
+        umkmName: 'Katering PO Fleksibel',
+        umkmType: 'Katering',
+        pickupLocation: 'Kreongan',
+        pickupAvailable: true,
+        codAvailable: true,
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<CatalogService>.value(
+          value: catalog,
+          child: MaterialApp(
+            home: OrderCheckoutScreen(cartLines: [poLine]),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('TOTAL BAYAR'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('SKEMA PO: Lunas di Awal (Full Payment)'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('SKEMA PO: Lunas di Awal (Full Payment)'), findsOneWidget);
+
+      // Update skema PO di CatalogService ke Tanpa DP lalu notifyListeners()
+      catalog.umkms = [
+        Umkm.fromJson({
+          'id_umkm': '99',
+          'nama_usaha': 'Katering PO Fleksibel',
+          'skema_po': 'Tanpa DP (Bayar Saat Pesanan Sampai)',
+          'layanan_ambil_sendiri': true,
+          'layanan_kurir': false,
+          'cod_available': true,
+        }),
+      ];
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      catalog.notifyListeners();
+      await tester.pump();
+
+      expect(
+        find.text('SKEMA PO: Tanpa DP (Bayar Saat Pesanan Sampai)'),
+        findsOneWidget,
+      );
+    },
+  );
 }
 
 class _BottomNavigationHarness extends StatefulWidget {

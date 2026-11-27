@@ -45,15 +45,16 @@ class ApiConfig {
 
   /// URL publik untuk pengujian Midtrans dari HP melalui tunnel ngrok.
   /// Kosongkan kembali untuk memakai server lokal berdasarkan [pakaiHpAsli].
-  static const String publicBaseUrl =
-      '';
+  static const String publicBaseUrl = 'https://e-djajan.my.id';
 
   /// Web OAuth Client ID untuk Google Sign-In.
   ///
-  /// Berikan saat menjalankan aplikasi dengan:
+  /// Bisa di-override saat menjalankan aplikasi dengan:
   /// --dart-define=GOOGLE_SERVER_CLIENT_ID=web-client-id
   static const String googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '539340491260-6jjauv51linhhukv05rdostsbtnid6ak.apps.googleusercontent.com',
   );
 
   // ------------------------------------------------------------------
