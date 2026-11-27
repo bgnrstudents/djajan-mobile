@@ -36,12 +36,12 @@ class ApiConfig {
   /// IP laptop Anda (cek `ipconfig` -> IPv4 Address).
   /// Isi hanya saat aplikasi dijalankan di HP asli.
   /// Contoh: '192.168.1.128'
-  static const String ipLaptop = '';
+  static const String ipLaptop = '192.168.1.46';
 
   /// Pilih target aplikasi:
   /// - false: laptop/browser atau emulator Android
   /// - true: HP asli yang terhubung ke WiFi yang sama
-  static const bool pakaiHpAsli = false;
+  static const bool pakaiHpAsli = true;
 
   /// URL publik untuk pengujian Midtrans dari HP melalui tunnel ngrok.
   /// Kosongkan kembali untuk memakai server lokal berdasarkan [pakaiHpAsli].
