@@ -235,7 +235,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       return 'Lunas di Awal (Full Payment)';
     }
     try {
-      final catalog = Provider.of<CatalogService?>(context);
+      // Gunakan listen: false agar getter ini aman dipanggil di luar build()
+      // (mis. dari _submit, _isCodAllowed, dll.) dan tidak menyebabkan
+      // black screen saat screen di-pop / di-dispose.
+      final catalog = Provider.of<CatalogService?>(context, listen: false);
       final umkm = catalog?.umkmById(_vendors.first.umkmId);
       if (umkm != null && umkm.skemaPo.trim().isNotEmpty) {
         return umkm.skemaPo;
@@ -433,6 +436,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Subscribe ke CatalogService di sini (dalam build) agar skemaPo
+    // reaktif ketika UMKM mengganti skema, tanpa perlu Provider.of
+    // di getter (yang menyebabkan black screen saat pop).
+    context.watch<CatalogService?>();
     return Scaffold(
       backgroundColor: OC.bg,
       body: Column(
