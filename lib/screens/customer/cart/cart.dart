@@ -304,6 +304,16 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  void _handleBackPressed(BuildContext context) {
+    if (widget.onBack != null) {
+      widget.onBack!();
+      return;
+    }
+    final route = ModalRoute.of(context);
+    if (route != null && !route.isCurrent) return;
+    Navigator.of(context).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -311,8 +321,8 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context, _) {
         final groups = _cartService.groupedByStoreAndMode;
         final bool isEmpty = groups.isEmpty;
-        final needsBackButton =
-            widget.onBack != null || Navigator.canPop(context);
+        final bool canPopRoute = ModalRoute.of(context)?.canPop ?? false;
+        final needsBackButton = widget.onBack != null || canPopRoute;
 
         return Scaffold(
           backgroundColor: OC.bg,
@@ -329,8 +339,7 @@ class _CartScreenState extends State<CartScreen> {
                         child: Row(
                           children: [
                             DjajanBackButton(
-                              onPressed:
-                                  widget.onBack ?? () => Navigator.pop(context),
+                              onPressed: () => _handleBackPressed(context),
                             ),
                             const SizedBox(width: 12),
                             const Expanded(
@@ -460,11 +469,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 onPressed:
                     widget.onExploreProducts ??
-                    () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      }
-                    },
+                    () => _handleBackPressed(context),
                 icon: const Icon(Icons.storefront_outlined),
                 label: const Text(
                   'Mulai Belanja',

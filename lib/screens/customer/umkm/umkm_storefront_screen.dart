@@ -245,7 +245,11 @@ class _UmkmStorefrontScreenState extends State<UmkmStorefrontScreen> {
         ),
         child: IconButton(
           icon: const Icon(Icons.arrow_back, color: textDark, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            final route = ModalRoute.of(context);
+            if (route != null && !route.isCurrent) return;
+            Navigator.of(context).maybePop();
+          },
         ),
       ),
       actions: [

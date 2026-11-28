@@ -389,7 +389,12 @@ class OrderHeader extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back_rounded, color: OC.ink, size: 22),
-            onPressed: onBack ?? () => Navigator.maybePop(context),
+            onPressed: onBack ??
+                () {
+                  final route = ModalRoute.of(context);
+                  if (route != null && !route.isCurrent) return;
+                  Navigator.maybePop(context);
+                },
           ),
           Image.asset(
             'assets/images/logoNoBg.png',

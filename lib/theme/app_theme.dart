@@ -108,6 +108,13 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.latar,
+      // Gunakan transisi ringan tanpa SnapshotWidget agar route pop tidak
+      // memicu layar hitam pada GPU Android OpenGLES tertentu (MediaTek/PowerVR).
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
       fontFamily: fontFamily,
       fontFamilyFallback: const ['Roboto', 'Arial', 'sans-serif'],
       colorScheme: scheme,

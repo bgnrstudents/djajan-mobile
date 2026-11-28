@@ -10,8 +10,10 @@ import 'package:djajan_mobile/screens/customer/umkm/umkm_storefront_screen.dart'
 import 'package:djajan_mobile/services/auth_service.dart';
 import 'package:djajan_mobile/services/cart_service.dart';
 import 'package:djajan_mobile/services/catalog_service.dart';
+import 'package:djajan_mobile/theme/app_theme.dart';
 import 'package:djajan_mobile/widgets/app_bottom_navigation.dart';
 import 'package:djajan_mobile/widgets/product_card.dart';
+import 'package:djajan_mobile/widgets/umkm_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -418,6 +420,68 @@ void main() {
         find.text('SKEMA PO: Tanpa DP (Bayar Saat Pesanan Sampai)'),
         findsOneWidget,
       );
+    },
+  );
+
+  testWidgets(
+    'PO product -> UmkmStorefront -> ProductDetail -> Cart -> Checkout -> back buttons return cleanly without empty Navigator',
+    (WidgetTester tester) async {
+      final cart = CartService()..clear();
+      addTearDown(cart.clear);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => AuthService()),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.theme,
+            home: const CustomerHomeScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Pilih produk PO di beranda -> buka UmkmStorefrontScreen
+      final homeProductFinder = find.text('Nasi Kotak Ayam Geprek');
+      await tester.scrollUntilVisible(
+        homeProductFinder,
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(homeProductFinder);
+      await tester.pumpAndSettle();
+      expect(find.text('Jelajahi menu'), findsOneWidget);
+
+      // 2. Pilih produk PO di UMKM -> buka ProductDetailScreen
+      final storeProductFinder = find.text('Nasi Kotak Ayam Geprek');
+      await tester.ensureVisible(storeProductFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(storeProductFinder);
+      await tester.pumpAndSettle();
+      expect(find.text('Pesan Sekarang'), findsOneWidget);
+
+      // 3. Pesan Sekarang -> masuk CartScreen
+      await tester.tap(find.text('Pesan Sekarang'));
+      await tester.pumpAndSettle();
+      expect(find.text('Keranjang Belanja'), findsOneWidget);
+      expect(find.byType(DjajanBackButton), findsOneWidget);
+
+      // 4. Tekan tombol back di pojok kiri CartScreen -> kembali ke ProductDetailScreen
+      await tester.tap(find.byType(DjajanBackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Deskripsi Produk'), findsOneWidget);
+
+      // 5. Tekan tombol back di ProductDetailScreen -> kembali ke UmkmStorefrontScreen
+      await tester.tap(find.byIcon(Icons.arrow_back).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Jelajahi menu'), findsOneWidget);
+
+      // 6. Tekan tombol back di UmkmStorefrontScreen -> kembali ke CustomerHomeScreen
+      await tester.tap(find.byIcon(Icons.arrow_back).first);
+      await tester.pumpAndSettle();
+      expect(find.text('UMKM di Desa'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }

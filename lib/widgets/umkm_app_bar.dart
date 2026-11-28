@@ -111,7 +111,12 @@ class DjajanBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: tooltip,
-      onPressed: onPressed ?? () => Navigator.of(context).maybePop(),
+      onPressed: onPressed ??
+          () {
+            final route = ModalRoute.of(context);
+            if (route != null && !route.isCurrent) return;
+            Navigator.of(context).maybePop();
+          },
       style: IconButton.styleFrom(
         backgroundColor: _appBarPrimarySoft,
         foregroundColor: AppConfig.primaryColor,
